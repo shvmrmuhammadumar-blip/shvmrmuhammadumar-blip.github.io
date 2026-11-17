@@ -1,4 +1,4 @@
-{
+﻿{
     "expo":  {
                  "name":  "Lumo",
                  "slug":  "lumo",
@@ -47,7 +47,7 @@
                              "favicon":  "./public/favicon.png"
                          },
                  "experiments":  {
-                                     "baseUrl":  "/lumo"
+
                                  }
              }
 }
