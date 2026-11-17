@@ -41,7 +41,7 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EXPO_PUBLIC_CARTO_API_KEY: ${{ vars.EXPO_PUBLIC_CARTO_API_KEY }}
+          # Production uses the OpenStreetMap fallback; CARTO key is localhost-restricted.
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
