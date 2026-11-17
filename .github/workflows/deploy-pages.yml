@@ -43,6 +43,8 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_CARTO_API_KEY: ${{ vars.EXPO_PUBLIC_CARTO_API_KEY }}
 
+      - name: Add SPA fallback for GitHub Pages
+        run: cp dist/index.html dist/404.html
       - name: Disable Jekyll processing
         run: touch dist/.nojekyll
 
