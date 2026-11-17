@@ -18,7 +18,7 @@ type FriendLocation = Coordinate & {
 type PermissionState = 'granted' | 'prompt' | 'denied' | 'unknown' | 'unsupported';
 
 const WORLD_CENTER: [number, number] = [24, 8];
-const CARTO_API_KEY = process.env.EXPO_PUBLIC_CARTO_API_KEY?.trim();
+
 
 function relativeTime(iso: string) {
   const elapsed = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -219,7 +219,7 @@ export default function MapScreenWeb() {
     const mapStyles = document.createElement('style');
     mapStyles.textContent = `
       .leaflet-container { background: #151A20; font-family: Arial, sans-serif; }
-      ${CARTO_API_KEY ? '' : '.leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(88%) saturate(45%); }'}
+      .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(88%) saturate(45%); }
       .leaflet-div-icon.lumo-friend-icon { background: transparent; border: 0; }
       .lumo-friend-icon span {
         display: flex; width: 40px; height: 40px; align-items: center; justify-content: center;
@@ -243,16 +243,10 @@ export default function MapScreenWeb() {
       maxZoom: 19,
       worldCopyJump: true,
     }).setView(WORLD_CENTER, 2);
-    const tileLayer = CARTO_API_KEY
-      ? L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(CARTO_API_KEY)}`, {
-          subdomains: 'abcd',
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        })
-      : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-        });
+    const tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    });
     tileLayer.addTo(map);
     friendLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -559,7 +553,7 @@ export default function MapScreenWeb() {
         </View>
       </View>
 
-      <Text style={styles.attribution}>{CARTO_API_KEY ? '© OpenStreetMap contributors · CARTO' : '© OpenStreetMap contributors'}</Text>
+      <Text style={styles.attribution}>© OpenStreetMap contributors</Text>
     </View>
   );
 }
