@@ -1,50 +1,53 @@
 {
-  "expo": {
-    "name": "Lumo",
-    "slug": "lumo",
-    "version": "1.0.0",
-    "scheme": "lumo",
-    "icon": "./assets/lumo-app-icon.png",
-    "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.lumo",
-      "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Lumo needs access to your photos so you can share them."
-      }
-    },
-    "android": {
-      "package": "com.yourname.lumo",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/lumo-mark.png",
-        "backgroundColor": "#090C12"
-      }
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Lumo needs access to your photos so you can share them."
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Allow Lumo to show your position on the map when you choose.",
-          "locationAlwaysAndWhenInUsePermission": "Allow Lumo to keep your shared location updated for people you follow.",
-          "isIosBackgroundLocationEnabled": true,
-          "isAndroidBackgroundLocationEnabled": true,
-          "isAndroidForegroundServiceEnabled": true
-        }
-      ],
-      "expo-video"
-    ],
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./public/favicon.png"
-    }
-  }
+    "expo":  {
+                 "name":  "Lumo",
+                 "slug":  "lumo",
+                 "version":  "1.0.0",
+                 "scheme":  "lumo",
+                 "icon":  "./assets/lumo-app-icon.png",
+                 "orientation":  "portrait",
+                 "userInterfaceStyle":  "dark",
+                 "ios":  {
+                             "supportsTablet":  true,
+                             "bundleIdentifier":  "com.yourname.lumo",
+                             "infoPlist":  {
+                                               "NSPhotoLibraryUsageDescription":  "Lumo needs access to your photos so you can share them."
+                                           }
+                         },
+                 "android":  {
+                                 "package":  "com.yourname.lumo",
+                                 "adaptiveIcon":  {
+                                                      "foregroundImage":  "./assets/lumo-mark.png",
+                                                      "backgroundColor":  "#090C12"
+                                                  }
+                             },
+                 "plugins":  [
+                                 "expo-router",
+                                 [
+                                     "expo-image-picker",
+                                     {
+                                         "photosPermission":  "Lumo needs access to your photos so you can share them."
+                                     }
+                                 ],
+                                 [
+                                     "expo-location",
+                                     {
+                                         "locationWhenInUsePermission":  "Allow Lumo to show your position on the map when you choose.",
+                                         "locationAlwaysAndWhenInUsePermission":  "Allow Lumo to keep your shared location updated for people you follow.",
+                                         "isIosBackgroundLocationEnabled":  true,
+                                         "isAndroidBackgroundLocationEnabled":  true,
+                                         "isAndroidForegroundServiceEnabled":  true
+                                     }
+                                 ],
+                                 "expo-video"
+                             ],
+                 "web":  {
+                             "bundler":  "metro",
+                             "output":  "single",
+                             "favicon":  "./public/favicon.png"
+                         },
+                 "experiments":  {
+                                     "baseUrl":  "/lumo"
+                                 }
+             }
 }
