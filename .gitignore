@@ -1,0 +1,42 @@
+# Dependencies and generated builds
+node_modules/
+.expo/
+dist/
+web-dist/
+web-dist*/
+
+# Environment variables and credentials
+.env*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials.json
+service-account*.json
+
+# Logs and OS files
+*.log
+.DS_Store
+
+# Local-only Supabase state, editor settings, build outputs, and debug files
+supabase/.temp/
+.vscode/
+.design/
+.lumo-originals*/
+npm-install-debug.txt
+README.txt
+*.apk
+
+# Local backups, design scratch files, and patch archives
+*.bak*
+*.backup*
+*backup*
+*.before-*
+.design/
+design/
+*.zip
+lumo-*-patch*.ps1
+lumo-*-v*.ps1
