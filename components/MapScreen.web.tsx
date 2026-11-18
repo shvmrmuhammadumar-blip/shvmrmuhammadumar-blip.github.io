@@ -13,6 +13,7 @@ type FriendLocation = Coordinate & {
   id: string;
   username: string;
   avatar_url: string | null;
+  accuracy_meters: number | null;
   updated_at: string;
 };
 type PermissionState = 'granted' | 'prompt' | 'denied' | 'unknown' | 'unsupported';
@@ -40,14 +41,35 @@ function getBrowserPosition(): Promise<GeolocationPosition> {
       reject(new Error('Location access requires HTTPS. Use localhost while testing.'));
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      resolve,
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) reject(new Error('Location permission is blocked. Allow it in your browser address-bar settings.'));
-        else if (error.code === error.POSITION_UNAVAILABLE) reject(new Error('Your current location is unavailable.'));
-        else reject(new Error('Location request timed out. Try again.'));
+
+    let bestPosition: GeolocationPosition | null = null;
+    let watchId: number | null = null;
+    let timeoutId: number | null = null;
+    let settled = false;
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (bestPosition) resolve(bestPosition);
+      else reject(error ?? new Error('Your current location is unavailable.'));
+    };
+
+    timeoutId = window.setTimeout(() => finish(), 10000);
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+          bestPosition = position;
+        }
+        if (position.coords.accuracy <= 35) finish();
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) finish(new Error('Location permission is blocked. Allow it in your browser address-bar settings.'));
+        else if (error.code === error.POSITION_UNAVAILABLE) finish(new Error('Your current location is unavailable.'));
+        else finish(new Error('Location request timed out. Try again.'));
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
     );
   });
 }
@@ -81,12 +103,14 @@ export default function MapScreenWeb() {
   const mapRef = useRef<L.Map | null>(null);
   const friendLayerRef = useRef<L.LayerGroup | null>(null);
   const ownMarkerRef = useRef<L.CircleMarker | null>(null);
+  const ownAccuracyCircleRef = useRef<L.Circle | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const lastSavedAtRef = useRef(0);
   const lastSavedCoordinateRef = useRef<Coordinate | null>(null);
 
   const [friends, setFriends] = useState<FriendLocation[]>([]);
   const [myCoordinate, setMyCoordinate] = useState<Coordinate | null>(null);
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [sharingEnabled, setSharingEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,7 +135,7 @@ export default function MapScreenWeb() {
     const [{ data: locations, error: locationsError }, { data: profiles, error: profilesError }] =
       await Promise.all([
         supabase.from('user_locations')
-          .select('user_id, latitude, longitude, updated_at')
+          .select('user_id, latitude, longitude, accuracy_meters, updated_at')
           .in('user_id', ids),
         supabase.from('profiles')
           .select('id, username, avatar_url')
@@ -130,6 +154,7 @@ export default function MapScreenWeb() {
         avatar_url: profile.avatar_url,
         latitude: location.latitude,
         longitude: location.longitude,
+        accuracy_meters: location.accuracy_meters,
         updated_at: location.updated_at,
       }];
     });
@@ -146,7 +171,7 @@ export default function MapScreenWeb() {
     try {
       const { data: state, error } = await supabase
         .from('user_locations')
-        .select('sharing_enabled, latitude, longitude, updated_at')
+        .select('sharing_enabled, latitude, longitude, accuracy_meters, updated_at')
         .eq('user_id', userId)
         .maybeSingle();
       if (error) throw error;
@@ -154,6 +179,7 @@ export default function MapScreenWeb() {
       if (state) {
         const coordinate = { latitude: state.latitude, longitude: state.longitude };
         setMyCoordinate(coordinate);
+        setLocationAccuracy(state.accuracy_meters ?? null);
         lastSavedCoordinateRef.current = coordinate;
         setLastUpdated(state.updated_at);
         lastSavedAtRef.current = Date.now();
@@ -183,19 +209,19 @@ export default function MapScreenWeb() {
         updatePermission();
         permission.addEventListener('change', updatePermission);
         if (permission.state === 'granted') {
-          navigator.geolocation.getCurrentPosition((position) => {
+          void getBrowserPosition().then((position) => {
             if (!mounted) return;
             const coordinate = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             };
             setMyCoordinate(coordinate);
-            mapRef.current?.flyTo([coordinate.latitude, coordinate.longitude], 12, { duration: 0.65 });
-          }, () => undefined, {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 15000,
-          });
+            setLocationAccuracy(position.coords.accuracy);
+            if (position.coords.accuracy > 100) {
+              setMessage(`Your browser location is approximate (±${Math.round(position.coords.accuracy)} m). Check Windows Location Services for better accuracy.`);
+            }
+            mapRef.current?.flyTo([coordinate.latitude, coordinate.longitude], 14, { duration: 0.65 });
+          }).catch(() => undefined);
         }
       }).catch(() => {
         if (mounted) setPermissionState('unknown');
@@ -257,6 +283,7 @@ export default function MapScreenWeb() {
       mapRef.current = null;
       friendLayerRef.current = null;
       ownMarkerRef.current = null;
+      ownAccuracyCircleRef.current = null;
     };
   }, []);
 
@@ -285,22 +312,55 @@ export default function MapScreenWeb() {
       ownMarkerRef.current.remove();
       ownMarkerRef.current = null;
     }
+    if (ownAccuracyCircleRef.current) {
+      ownAccuracyCircleRef.current.remove();
+      ownAccuracyCircleRef.current = null;
+    }
     if (myCoordinate) {
+      if (locationAccuracy !== null && Number.isFinite(locationAccuracy) && locationAccuracy > 0) {
+        ownAccuracyCircleRef.current = L.circle(
+          [myCoordinate.latitude, myCoordinate.longitude],
+          {
+            radius: locationAccuracy,
+            color: '#9EBEAE',
+            weight: 1,
+            opacity: 0.75,
+            fillColor: '#9EBEAE',
+            fillOpacity: 0.12,
+            interactive: false,
+          },
+        ).addTo(map);
+      }
       ownMarkerRef.current = L.circleMarker(
         [myCoordinate.latitude, myCoordinate.longitude],
         { radius: 8, color: '#F1F4F7', weight: 3, fillColor: '#F1F4F7', fillOpacity: 1 },
       ).addTo(map);
       const ownLabel = document.createElement('span');
-      ownLabel.textContent = sharingEnabled ? 'Your live location' : 'Your location (private)';
+      const accuracyLabel = locationAccuracy !== null ? ` · ±${Math.round(locationAccuracy)} m` : '';
+      ownLabel.textContent = `${sharingEnabled ? 'Your live location' : 'Your location (private)'}${accuracyLabel}`;
       ownMarkerRef.current.bindTooltip(ownLabel);
     }
-  }, [myCoordinate, sharingEnabled]);
+  }, [myCoordinate, locationAccuracy, sharingEnabled]);
 
   useEffect(() => {
     const layer = friendLayerRef.current;
     if (!layer) return;
     layer.clearLayers();
     friends.forEach((friend) => {
+      if (friend.accuracy_meters !== null && friend.accuracy_meters > 0) {
+        L.circle(
+          [friend.latitude, friend.longitude],
+          {
+            radius: friend.accuracy_meters,
+            color: '#9EBEAE',
+            weight: 1,
+            opacity: 0.65,
+            fillColor: '#9EBEAE',
+            fillOpacity: 0.08,
+            interactive: false,
+          },
+        ).addTo(layer);
+      }
       const initial = (friend.username.trim()[0] || 'U').toUpperCase();
       const icon = L.divIcon({
         className: 'lumo-friend-icon',
@@ -310,7 +370,8 @@ export default function MapScreenWeb() {
       });
       const marker = L.marker([friend.latitude, friend.longitude], { icon }).addTo(layer);
       const label = document.createElement('span');
-      label.textContent = `@${friend.username} · ${relativeTime(friend.updated_at)}`;
+      const accuracyLabel = friend.accuracy_meters !== null ? ` · ±${Math.round(friend.accuracy_meters)} m` : '';
+      label.textContent = `@${friend.username} · ${relativeTime(friend.updated_at)}${accuracyLabel}`;
       marker.bindTooltip(label, { direction: 'top', offset: [0, -18] });
       marker.on('click', () => {
         mapRef.current?.flyTo([friend.latitude, friend.longitude], 13, { duration: 0.55 });
@@ -326,6 +387,7 @@ export default function MapScreenWeb() {
         longitude: position.coords.longitude,
       };
       setMyCoordinate(coordinate);
+      setLocationAccuracy(position.coords.accuracy);
       const elapsed = Date.now() - lastSavedAtRef.current;
       const moved = lastSavedCoordinateRef.current
         ? distanceMeters(lastSavedCoordinateRef.current, coordinate)
@@ -341,7 +403,7 @@ export default function MapScreenWeb() {
       setMessage(error.code === error.PERMISSION_DENIED
         ? 'Browser location permission was revoked. Re-enable it in site settings.'
         : 'Your browser could not refresh the live location.');
-    }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 });
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
     watchIdRef.current = watchId;
     return () => {
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
@@ -366,7 +428,11 @@ export default function MapScreenWeb() {
         longitude: position.coords.longitude,
       };
       setMyCoordinate(coordinate);
-      mapRef.current?.flyTo([coordinate.latitude, coordinate.longitude], 14, { duration: 0.7 });
+      setLocationAccuracy(position.coords.accuracy);
+      if (position.coords.accuracy > 100) {
+        setMessage(`Location is approximate (±${Math.round(position.coords.accuracy)} m). The browser cannot determine a more precise position right now.`);
+      }
+      mapRef.current?.flyTo([coordinate.latitude, coordinate.longitude], 16, { duration: 0.7 });
       setPermissionState('granted');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not get your location.');
@@ -392,6 +458,7 @@ export default function MapScreenWeb() {
           longitude: position.coords.longitude,
         };
         setMyCoordinate(coordinate);
+        setLocationAccuracy(position.coords.accuracy);
         lastSavedCoordinateRef.current = coordinate;
         lastSavedAtRef.current = Date.now();
         setLastUpdated(new Date().toISOString());
@@ -549,6 +616,7 @@ export default function MapScreenWeb() {
               permissionState === 'denied' ? 'Browser location permission: blocked' :
                 permissionState === 'unsupported' ? 'This browser does not support geolocation' :
                   'Location is only requested when you choose to locate or share'}
+            {locationAccuracy !== null ? ` · Accuracy ±${Math.round(locationAccuracy)} m` : ''}
           </Text>
         </View>
       </View>
@@ -594,7 +662,7 @@ const styles = StyleSheet.create({
   webNote: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 9 },
   webNoteText: { color: colors.muted, fontSize: 9, flex: 1, lineHeight: 13 },
   updatedText: { color: colors.dim, fontSize: 9, marginTop: 6, marginLeft: 4 },
-  messageText: { color: colors.danger, fontSize: 10, marginTop: 7, lineHeight: 15 },
+  messageText: { color: '#D8B879', fontSize: 10, marginTop: 7, lineHeight: 15 },
   friendList: { gap: 14, paddingVertical: 10, paddingHorizontal: 2 },
   friendItem: { width: 64, alignItems: 'center' },
   friendAvatar: { width: 41, height: 41, borderRadius: 21, borderWidth: 2, borderColor: colors.success },
