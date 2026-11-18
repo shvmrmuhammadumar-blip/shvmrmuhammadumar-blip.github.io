@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import {
+  activateLiveSession,
   getLiveSession,
   getMyLiveParticipant,
   joinLiveSession,
@@ -14,6 +15,7 @@ import {
   loadLiveMessages,
   loadLiveParticipants,
   requestLiveStage,
+  releaseLiveGuestRequest,
   respondToLiveStageRequest,
   sendLiveMessage,
   takeLiveStage,
@@ -60,6 +62,7 @@ export default function LiveSessionScreen() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
+  const hostActivationRef = useRef(false);
 
   const isHost = live?.host_id === userId && role === 'host';
   const guests = useMemo(() => participants.filter(item => item.role === 'guest' && item.status === 'joined'), [participants]);
@@ -230,7 +233,8 @@ export default function LiveSessionScreen() {
         .from('live_guest_requests')
         .update({ status: 'cancelled' })
         .eq('id', myRequest.id)
-        .eq('requester_id', userId);
+        .eq('requester_id', userId)
+        .in('status', ['pending', 'accepted']);
       if (cancelError) throw cancelError;
       await refreshGuestRequests();
     } catch (cause) {
@@ -291,6 +295,20 @@ export default function LiveSessionScreen() {
     }
   };
 
+  const releaseRequest = async (requestId: string) => {
+    if (working) return;
+    setWorking(true);
+    setError(null);
+    try {
+      await releaseLiveGuestRequest(requestId);
+      await refreshGuestRequests();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not release this guest seat.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const moderateGuest = async (targetUserId: string, action: 'mute' | 'unmute' | 'remove') => {
     if (working) return;
     setWorking(true);
@@ -334,6 +352,19 @@ export default function LiveSessionScreen() {
     }
   };
 
+  const handleConnectionChange = useCallback((nextConnected: boolean) => {
+    setConnected(nextConnected);
+    if (!nextConnected || !userId || !live || !isHost || live.status !== 'starting' || hostActivationRef.current) return;
+
+    hostActivationRef.current = true;
+    void activateLiveSession(sessionId, userId, live.created_at)
+      .then(() => refreshSession())
+      .catch((cause) => {
+        hostActivationRef.current = false;
+        setError(cause instanceof Error ? cause.message : 'The live stage could not be published.');
+      });
+  }, [isHost, live, refreshSession, sessionId, userId]);
+
   if (loading) {
     return <View style={styles.fullState}><ActivityIndicator color="#C9D9A4" size="large" /><Text style={styles.stateText}>Opening the live room</Text></View>;
   }
@@ -360,7 +391,14 @@ export default function LiveSessionScreen() {
     );
   }
 
-  const guestSlots = Math.max(0, 3 - guests.length);
+  const acceptedReservations = requests.filter(
+    item => item.status === 'accepted' && !guests.some(guest => guest.user_id === item.requester_id),
+  );
+  const hostRequestRows = requests.filter(
+    item => item.status === 'pending' || (item.status === 'accepted' && !guests.some(guest => guest.user_id === item.requester_id)),
+  );
+  const pendingRequestCount = requests.filter(item => item.status === 'pending').length;
+  const guestSlots = Math.max(0, 3 - guests.length - acceptedReservations.length);
   const canRequestStage = role === 'viewer' && myRequest?.status !== 'pending' && myRequest?.status !== 'accepted';
   const canJoinAcceptedStage = role === 'viewer' && myRequest?.status === 'accepted';
 
@@ -369,7 +407,7 @@ export default function LiveSessionScreen() {
       <View style={styles.topBar}>
         <Pressable style={styles.backButton} onPress={() => router.back()}><Ionicons name="chevron-back" size={20} color="#F2F5F7" /></Pressable>
         <View style={styles.topTitle}>
-          <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.livePillText}>LIVE</Text></View>
+          <View style={styles.livePill}><View style={[styles.liveDot, live.status === 'starting' && styles.liveDotStarting]} /><Text style={styles.livePillText}>{live.status === 'starting' ? 'PREPARING' : 'LIVE'}</Text></View>
           <Text style={styles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
         </View>
         <View style={styles.viewerBadge}><Ionicons name="eye-outline" size={13} color="#F2F5F7" /><Text style={styles.viewerBadgeText}>{viewers.length.toLocaleString()}</Text></View>
@@ -391,7 +429,7 @@ export default function LiveSessionScreen() {
       {error ? <View style={styles.inlineError}><Ionicons name="alert-circle-outline" size={16} color="#D8B879" /><Text style={styles.inlineErrorText}>{error}</Text></View> : null}
 
       <View style={styles.videoCard}>
-        <LiveRoom key={`${sessionId}-${role}`} sessionId={sessionId} onConnectionChange={setConnected} />
+        <LiveRoom key={`${sessionId}-${role}`} sessionId={sessionId} onConnectionChange={handleConnectionChange} />
       </View>
 
       <View style={styles.sessionMeta}>
@@ -402,21 +440,29 @@ export default function LiveSessionScreen() {
       {isHost ? (
         <View style={styles.hostPanel}>
           <View style={styles.panelHeader}>
-            <View><Text style={styles.panelEyebrow}>YOUR STAGE</Text><Text style={styles.panelTitle}>Guest requests <Text style={styles.panelCount}>{requests.length}</Text></Text></View>
+            <View><Text style={styles.panelEyebrow}>YOUR STAGE</Text><Text style={styles.panelTitle}>Guest requests <Text style={styles.panelCount}>{pendingRequestCount}</Text></Text></View>
             <View style={styles.slotsBadge}><Text style={styles.slotsText}>{guestSlots} SEATS LEFT</Text></View>
           </View>
 
-          {requests.length ? requests.map(item => (
+          {hostRequestRows.length ? hostRequestRows.map(item => (
             <View key={item.id} style={styles.requestRow}>
               <View style={styles.requestAvatar}><Text style={styles.requestInitial}>{avatarInitial(item.requester?.username)}</Text></View>
               <View style={styles.requestCopy}>
                 <Text style={styles.requestName}>@{item.requester?.username ?? 'lumo_member'}</Text>
-                <Text style={styles.requestCaption}>Wants to join your stage · {ago(item.created_at)}</Text>
+                <Text style={styles.requestCaption}>{item.status === 'accepted' ? 'Approved · waiting to join' : 'Wants to join your stage · ' + ago(item.created_at)}</Text>
               </View>
-              <Pressable style={styles.declineButton} onPress={() => void reviewRequest(item.id, 'declined')} disabled={working}><Ionicons name="close" size={17} color="#E6A1A1" /></Pressable>
-              <Pressable style={styles.acceptButton} onPress={() => void reviewRequest(item.id, 'accepted')} disabled={working || guestSlots <= 0}>
-                <Ionicons name="checkmark" size={17} color="#11161C" />
-              </Pressable>
+              {item.status === 'pending' ? (
+                <>
+                  <Pressable style={styles.declineButton} onPress={() => void reviewRequest(item.id, 'declined')} disabled={working}><Ionicons name="close" size={17} color="#E6A1A1" /></Pressable>
+                  <Pressable style={styles.acceptButton} onPress={() => void reviewRequest(item.id, 'accepted')} disabled={working || guestSlots <= 0}>
+                    <Ionicons name="checkmark" size={17} color="#11161C" />
+                  </Pressable>
+                </>
+              ) : (
+                <Pressable style={styles.removeGuestButton} onPress={() => void releaseRequest(item.id)} disabled={working} accessibilityRole="button" accessibilityLabel="Release reserved guest seat">
+                  <Ionicons name="close-circle-outline" size={18} color="#E9A1A1" />
+                </Pressable>
+              )}
             </View>
           )) : (
             <View style={styles.noRequests}><Ionicons name="hand-left-outline" size={20} color="#8C9A8A" /><Text style={styles.noRequestsText}>Your audience can request a seat. You decide who joins.</Text></View>
@@ -460,10 +506,16 @@ export default function LiveSessionScreen() {
             <Text style={styles.slotCount}>{guests.length}/3</Text>
           </View>
           {canJoinAcceptedStage ? (
-            <Pressable style={styles.requestStageButton} onPress={() => void joinStage()} disabled={working}>
-              {working ? <ActivityIndicator color="#11161C" /> : <Ionicons name="mic" size={17} color="#11161C" />}
-              <Text style={styles.requestStageButtonText}>Your request was accepted — join stage</Text>
-            </Pressable>
+            <>
+              <Pressable style={styles.requestStageButton} onPress={() => void joinStage()} disabled={working}>
+                {working ? <ActivityIndicator color="#11161C" /> : <Ionicons name="mic" size={17} color="#11161C" />}
+                <Text style={styles.requestStageButtonText}>Your request was accepted — join stage</Text>
+              </Pressable>
+              <View style={styles.waitingRow}>
+                <Text style={styles.waitingText}>Your spot is approved.</Text>
+                <Pressable onPress={() => void cancelRequest()} disabled={working}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+              </View>
+            </>
           ) : myRequest?.status === 'pending' ? (
             <View style={styles.waitingRow}>
               <View style={styles.waitingIndicator}><ActivityIndicator color="#C9D9A4" size="small" /></View>
@@ -514,7 +566,7 @@ export default function LiveSessionScreen() {
 
       <View style={styles.connectionFooter}>
         <View style={[styles.connectionDot, connected && styles.connectionDotActive]} />
-        <Text style={styles.connectionText}>{connected ? 'Secure video connection active' : 'Connecting to the live video room'}</Text>
+        <Text style={styles.connectionText}>{connected ? (live.status === 'starting' ? 'Preparing your live stage' : 'Secure video connection active') : 'Connecting to the live video room'}</Text>
       </View>
     </ScrollView>
   );
@@ -528,6 +580,7 @@ const styles = StyleSheet.create({
   topTitle: { flex: 1, gap: 3 },
   livePill: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F16D73' },
+  liveDotStarting: { backgroundColor: '#D8B879' },
   livePillText: { color: '#F3A8A9', fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
   topLiveTitle: { color: '#F2F5F7', fontSize: 13, fontWeight: '900' },
   viewerBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#171D24', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },

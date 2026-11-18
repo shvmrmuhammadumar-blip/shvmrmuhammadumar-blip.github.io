@@ -18,10 +18,14 @@ type Props = {
   onConnectionChange?: (connected: boolean) => void;
 };
 
-function NativeLiveStage({ role }: { role: LiveRole }) {
+function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?: () => void }) {
   const tracks = useTracks([Track.Source.Camera]);
   const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
   const publishable = role === 'host' || role === 'guest';
+
+  useEffect(() => {
+    if (publishable && isCameraEnabled && isMicrophoneEnabled) onStageReady?.();
+  }, [publishable, isCameraEnabled, isMicrophoneEnabled, onStageReady]);
 
   const renderTrack = ({ item }: { item: TrackReferenceOrPlaceholder }) => {
     if (!isTrackReference(item)) return null;
@@ -159,11 +163,19 @@ export default function LiveRoomNative({ sessionId, onConnectionChange }: Props)
         audio={publishable}
         video={publishable}
         options={{ adaptiveStream: { pixelDensity: 'screen' }, dynacast: true }}
-        onConnected={() => onConnectionChangeRef.current?.(true)}
+        onConnected={() => {
+          if (!publishable) onConnectionChangeRef.current?.(true);
+        }}
         onDisconnected={() => onConnectionChangeRef.current?.(false)}
-        onError={(roomError) => setError(roomError.message)}
+        onError={(roomError) => {
+          setError(roomError.message);
+          onConnectionChangeRef.current?.(false);
+        }}
       >
-        <NativeLiveStage role={connection.role} />
+        <NativeLiveStage
+          role={connection.role}
+          onStageReady={() => onConnectionChangeRef.current?.(true)}
+        />
       </LiveKitRoom>
     </View>
   );

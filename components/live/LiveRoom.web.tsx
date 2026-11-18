@@ -132,9 +132,6 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
           return;
         }
 
-        setConnected(true);
-        onConnectionChangeRef.current?.(true);
-
         if (credentials.role === 'host' || credentials.role === 'guest') {
           await room.localParticipant.enableCameraAndMicrophone();
           const camera = room.localParticipant.getTrackPublication(Track.Source.Camera);
@@ -144,6 +141,9 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
           setCameraEnabled(true);
           setMicEnabled(true);
         }
+
+        setConnected(true);
+        onConnectionChangeRef.current?.(true);
 
         room.remoteParticipants.forEach(participant => {
           participant.trackPublications.forEach(publication => {

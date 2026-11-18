@@ -195,22 +195,35 @@ export async function createLiveSession(input: {
     throw new Error(providerMessage || errorMessage(tokenError, 'LUMO LIVE could not connect to its video service.'));
   }
 
-  const { data: liveSession, error: startError } = await db
-    .from('live_sessions')
-    .update({ status: 'live', started_at: new Date().toISOString() })
-    .eq('id', session.id)
-    .eq('host_id', input.userId)
-    .select('id')
-    .single();
-
-  if (startError || !liveSession) {
-    await db.from('live_sessions')
-      .update({ status: 'failed', ended_at: new Date().toISOString() })
-      .eq('id', session.id);
-    throw startError ?? new Error('Could not start this live.');
-  }
-
+  // Keep the session in "starting" until the host's media connection is ready.
+  // The room-token check above validates configuration; it does not prove a live stream exists.
   return session as LiveSession;
+}
+
+export async function activateLiveSession(sessionId: string, userId: string, createdAt: string) {
+  const { data, error } = await db
+    .from('live_sessions')
+    .update({ status: 'live', started_at: createdAt })
+    .eq('id', sessionId)
+    .eq('host_id', userId)
+    .eq('status', 'starting')
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (data) return;
+
+  const { data: current, error: readError } = await db
+    .from('live_sessions')
+    .select('status')
+    .eq('id', sessionId)
+    .eq('host_id', userId)
+    .maybeSingle();
+
+  if (readError) throw readError;
+  if (current?.status !== 'live') {
+    throw new Error('The live room connected, but its stage could not be published.');
+  }
 }
 
 export async function getLiveConnectionToken(sessionId: string) {
@@ -243,7 +256,7 @@ export async function loadGuestRequests(sessionId: string) {
     .from('live_guest_requests')
     .select('id, session_id, requester_id, status, created_at, requester:profiles!live_guest_requests_requester_id_fkey(id, username, avatar_url)')
     .eq('session_id', sessionId)
-    .eq('status', 'pending')
+    .in('status', ['pending', 'accepted'])
     .order('created_at', { ascending: true });
 
   if (error) throw error;
@@ -272,6 +285,19 @@ export async function respondToLiveStageRequest(requestId: string, status: 'acce
     .eq('status', 'pending');
 
   if (error) throw error;
+}
+
+export async function releaseLiveGuestRequest(requestId: string) {
+  const { data, error } = await db
+    .from('live_guest_requests')
+    .update({ status: 'cancelled' })
+    .eq('id', requestId)
+    .eq('status', 'accepted')
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('This reserved stage seat is no longer active.');
 }
 
 export async function takeLiveStage(sessionId: string, userId: string) {
