@@ -1,5 +1,6 @@
 import '../global.css';
 import '../lib/location-sharing';
+import '../lib/livekit-register';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Stack } from 'expo-router';

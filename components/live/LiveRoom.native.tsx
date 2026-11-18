@@ -1,0 +1,194 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  AudioSession,
+  LiveKitRoom,
+  VideoTrack,
+  isTrackReference,
+  useLocalParticipant,
+  useTracks,
+} from '@livekit/react-native';
+import { Track } from 'livekit-client';
+import type { TrackReferenceOrPlaceholder } from '@livekit/react-native';
+import { getLiveConnectionToken, type LiveRole } from '../../lib/live';
+
+type Props = {
+  sessionId: string;
+  onConnectionChange?: (connected: boolean) => void;
+};
+
+function NativeLiveStage({ role }: { role: LiveRole }) {
+  const tracks = useTracks([Track.Source.Camera]);
+  const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
+  const publishable = role === 'host' || role === 'guest';
+
+  const renderTrack = ({ item }: { item: TrackReferenceOrPlaceholder }) => {
+    if (!isTrackReference(item)) return null;
+    return (
+      <View style={styles.videoTile}>
+        <VideoTrack
+          trackRef={item}
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+          objectFit="cover"
+          mirror={item.participant.isLocal}
+        />
+        <View style={styles.videoLabel}>
+          <Text style={styles.videoLabelText} numberOfLines={1}>
+            {item.participant.isLocal ? 'You' : item.participant.name || item.participant.identity}
+          </Text>
+          {item.participant.isLocal ? <Text style={styles.youTag}>YOU</Text> : null}
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.stageBody}>
+      {tracks.length ? (
+        <FlatList
+          data={tracks}
+          renderItem={renderTrack}
+          keyExtractor={(item, index) => isTrackReference(item) ? `${item.participant.identity}:${item.publication.trackSid}` : `empty-${index}`}
+          numColumns={2}
+          columnWrapperStyle={styles.videoRow}
+          contentContainerStyle={styles.videoGrid}
+        />
+      ) : (
+        <View style={styles.placeholder}>
+          <Ionicons name="people-outline" size={34} color="#9AA5B2" />
+          <Text style={styles.placeholderTitle}>The stage is ready</Text>
+          <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+        </View>
+      )}
+
+      {publishable ? (
+        <View style={styles.controls}>
+          <Pressable
+            onPress={() => void localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)}
+            style={[styles.controlButton, !isMicrophoneEnabled && styles.controlDisabled]}
+          >
+            <Ionicons name={isMicrophoneEnabled ? 'mic' : 'mic-off'} size={19} color="#F2F5F7" />
+            <Text style={styles.controlText}>{isMicrophoneEnabled ? 'Mute' : 'Unmute'}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => void localParticipant.setCameraEnabled(!isCameraEnabled)}
+            style={[styles.controlButton, !isCameraEnabled && styles.controlDisabled]}
+          >
+            <Ionicons name={isCameraEnabled ? 'videocam' : 'videocam-off'} size={19} color="#F2F5F7" />
+            <Text style={styles.controlText}>{isCameraEnabled ? 'Camera' : 'Camera off'}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Text style={styles.viewerNote}>Your microphone and camera stay off while watching.</Text>
+      )}
+    </View>
+  );
+}
+
+export default function LiveRoomNative({ sessionId, onConnectionChange }: Props) {
+  const [connection, setConnection] = useState<{ url: string; token: string; role: LiveRole } | null>(null);
+  const [connecting, setConnecting] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const onConnectionChangeRef = useRef(onConnectionChange);
+
+  useEffect(() => {
+    onConnectionChangeRef.current = onConnectionChange;
+  }, [onConnectionChange]);
+
+  useEffect(() => {
+    let active = true;
+    const connect = async () => {
+      try {
+        setConnecting(true);
+        setError(null);
+        await AudioSession.startAudioSession();
+        const credentials = await getLiveConnectionToken(sessionId);
+        if (active) setConnection(credentials);
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Could not connect to this live.');
+      } finally {
+        if (active) setConnecting(false);
+      }
+    };
+    void connect();
+
+    return () => {
+      active = false;
+      onConnectionChangeRef.current?.(false);
+      void AudioSession.stopAudioSession();
+    };
+  }, [sessionId]);
+
+  if (connecting) {
+    return (
+      <View style={styles.placeholder}>
+        <ActivityIndicator color="#C9D9A4" size="large" />
+        <Text style={styles.placeholderTitle}>Entering the live room</Text>
+        <Text style={styles.placeholderCopy}>Securely connecting your session</Text>
+      </View>
+    );
+  }
+
+  if (error || !connection) {
+    return (
+      <View style={styles.placeholder}>
+        <Ionicons name="videocam-off-outline" size={34} color="#D8B879" />
+        <Text style={styles.placeholderTitle}>Video is not connected</Text>
+        <Text style={styles.placeholderCopy}>{error || 'Live connection is unavailable.'}</Text>
+      </View>
+    );
+  }
+
+  const publishable = connection.role === 'host' || connection.role === 'guest';
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.stageHeader}>
+        <View style={styles.stageStatus}>
+          <View style={styles.liveDot} />
+          <Text style={styles.stageStatusText}>LIVE CONNECTION</Text>
+        </View>
+        <Text style={styles.stageMeta}>{publishable ? 'Your camera is on stage' : 'You are watching'}</Text>
+      </View>
+      <LiveKitRoom
+        key={sessionId}
+        serverUrl={connection.url}
+        token={connection.token}
+        connect
+        audio={publishable}
+        video={publishable}
+        options={{ adaptiveStream: { pixelDensity: 'screen' }, dynacast: true }}
+        onConnected={() => onConnectionChangeRef.current?.(true)}
+        onDisconnected={() => onConnectionChangeRef.current?.(false)}
+        onError={(roomError) => setError(roomError.message)}
+      >
+        <NativeLiveStage role={connection.role} />
+      </LiveKitRoom>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { width: '100%', gap: 10 },
+  stageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  stageStatus: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: 'rgba(232, 85, 92, 0.16)' },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#F16D73' },
+  stageStatusText: { fontSize: 9, fontWeight: '900', letterSpacing: 1.2, color: '#FFD3D3' },
+  stageMeta: { fontSize: 10, color: '#9AA5B2' },
+  stageBody: { width: '100%', gap: 12 },
+  videoGrid: { gap: 8 },
+  videoRow: { gap: 8 },
+  videoTile: { flex: 1, minWidth: 0, height: 205, borderRadius: 17, overflow: 'hidden', backgroundColor: '#171D24', position: 'relative' },
+  videoLabel: { position: 'absolute', left: 9, right: 9, bottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(7,10,14,0.72)', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 9 },
+  videoLabelText: { color: '#F2F5F7', fontSize: 10, fontWeight: '800', flex: 1 },
+  youTag: { color: '#D6E3B4', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+  placeholder: { minHeight: 210, borderRadius: 18, backgroundColor: '#151A21', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center', padding: 22, gap: 10 },
+  placeholderTitle: { color: '#F2F5F7', fontSize: 14, fontWeight: '800', textAlign: 'center' },
+  placeholderCopy: { color: '#9AA5B2', fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  controls: { flexDirection: 'row', justifyContent: 'center', gap: 10, alignItems: 'center' },
+  controlButton: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#202831', borderWidth: 1, borderColor: '#39434D', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  controlDisabled: { backgroundColor: '#3A292C', borderColor: '#6D3B43' },
+  controlText: { color: '#F2F5F7', fontSize: 10, fontWeight: '800' },
+  viewerNote: { color: '#9AA5B2', fontSize: 10, textAlign: 'center' },
+});
