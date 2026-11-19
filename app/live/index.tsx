@@ -81,9 +81,15 @@ export default function LiveScreen() {
           <View style={styles.brandMark}><Ionicons name="radio" size={19} color="#0D1117" /></View>
           <Text style={styles.brand}>LUMO <Text style={styles.brandLive}>LIVE</Text></Text>
         </View>
-        <Pressable style={styles.refreshButton} onPress={() => void load(true)} accessibilityLabel="Refresh live sessions">
-          {refreshing ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="refresh" size={18} color={colors.text} />}
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.homeButton} onPress={() => router.replace('/' as never)} accessibilityRole="button" accessibilityLabel="Go to Home">
+            <Ionicons name="home-outline" size={15} color={colors.text} />
+            <Text style={styles.homeButtonText}>Home</Text>
+          </Pressable>
+          <Pressable style={styles.refreshButton} onPress={() => void load(true)} accessibilityLabel="Refresh live sessions">
+            {refreshing ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="refresh" size={18} color={colors.text} />}
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.hero}>
@@ -237,6 +243,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#090C12' },
   content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 42, gap: 20, width: '100%', maxWidth: 920, alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  homeButton: { height: 38, paddingHorizontal: 11, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440' },
+  homeButtonText: { color: colors.text, fontSize: 10, fontWeight: '800' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#C9D9A4', alignItems: 'center', justifyContent: 'center' },
   brand: { color: '#F2F5F7', fontSize: 17, fontWeight: '900', letterSpacing: 1.3 },
