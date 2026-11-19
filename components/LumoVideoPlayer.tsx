@@ -43,14 +43,15 @@ export default function LumoVideoPlayer({
   style,
   topInset = 0,
   bottomInset = 16,
-  autoPlay = true,
-  muteOnAutoplay = false,
+  autoPlay = false,
+  muteOnAutoplay = true,
   compact = false,
   onOpenClip,
   analytics,
 }: Props) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = false;
+    p.muted = true;
     p.timeUpdateEventInterval = 0.25;
   });
 
@@ -64,7 +65,7 @@ export default function LumoVideoPlayer({
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speedIndex, setSpeedIndex] = useState(0);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const { session } = useAuth();
   const viewerId = session?.user.id ?? '';
   const sessionKeyRef = useRef<string | null>(null);
@@ -116,6 +117,8 @@ export default function LumoVideoPlayer({
   useEffect(() => {
     if (!autoPlay) {
       player.pause();
+      player.muted = muteOnAutoplay;
+      setMuted(muteOnAutoplay);
       return;
     }
 

@@ -151,7 +151,7 @@ export default function VideoScreen() {
               onOpenUser={(userId) => router.push(`/user/${userId}`)}
               onShare={handleShare}
               onOpenVideo={(post) => router.push(`/post-viewer/${post.id}`)}
-              autoPlayVideo={index === 0}
+              autoPlayVideo={false}
             />
           )}
         />

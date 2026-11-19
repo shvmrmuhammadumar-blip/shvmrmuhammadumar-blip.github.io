@@ -38,7 +38,6 @@ export default function Feed() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [forwardSource, setForwardSource] = useState<ForwardSource | null>(null);
-  const [activeVideoPostId, setActiveVideoPostId] = useState<string | null>(null);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 55,
@@ -47,14 +46,6 @@ export default function Feed() {
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems, changed }: { viewableItems: ViewToken[]; changed: ViewToken[] }) => {
-      const activeVideo = viewableItems.find(({ item, isViewable }) => {
-        const post = item as Post;
-        return (
-          isViewable &&
-          (post.media_type === "video" || Boolean(post.video_url))
-        );
-      });
-
       changed.forEach(({ item, isViewable }) => {
         if (!isViewable) return;
         const post = item as Post;
@@ -69,9 +60,6 @@ export default function Feed() {
         });
       });
 
-      setActiveVideoPostId(
-        activeVideo ? (activeVideo.item as Post).id : null,
-      );
     },
   ).current;
 
@@ -212,7 +200,7 @@ export default function Feed() {
   return (
     <>
       <FlatList
-      data={posts}
+      data={[]}
       keyExtractor={(p) => p.id}
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
@@ -224,7 +212,7 @@ export default function Feed() {
       renderItem={({ item }) => (
         <PostCard
           post={item}
-          autoPlayVideo={activeVideoPostId === item.id}
+          autoPlayVideo={false}
           myId={me}
           onLike={onLike}
           onOpenComments={(p) => router.push(`/post/${p.id}`)}

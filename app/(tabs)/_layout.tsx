@@ -510,6 +510,7 @@ export default function TabsLayout() {
             title: '',
             tabBarLabel: () => null,
             tabBarIcon: () => <CenterCreateIcon />,
+            tabBarIconStyle: { transform: [{ translateY: -9 }] },
           }}
         />
 
