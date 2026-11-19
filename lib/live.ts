@@ -145,6 +145,34 @@ export async function joinLiveSession(sessionId: string, userId: string) {
   return data as LiveParticipant;
 }
 
+const LIVE_STARTING_STALE_AFTER_MS = 2 * 60 * 1000;
+
+async function findActiveLiveSession(hostId: string) {
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - LIVE_STARTING_STALE_AFTER_MS).toISOString();
+
+  const { error: staleError } = await db
+    .from('live_sessions')
+    .update({ status: 'failed', ended_at: now.toISOString() })
+    .eq('host_id', hostId)
+    .eq('status', 'starting')
+    .lt('created_at', staleBefore);
+
+  if (staleError) throw staleError;
+
+  const { data, error } = await db
+    .from('live_sessions')
+    .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
+    .eq('host_id', hostId)
+    .in('status', ['starting', 'live'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as LiveSession | null;
+}
+
 export async function createLiveSession(input: {
   userId: string;
   title: string;
@@ -152,6 +180,9 @@ export async function createLiveSession(input: {
   category: LiveCategory;
   audience: LiveAudience;
 }) {
+  const activeSession = await findActiveLiveSession(input.userId);
+  if (activeSession) return activeSession;
+
   const { data: session, error: createError } = await db
     .from('live_sessions')
     .insert({
@@ -165,7 +196,13 @@ export async function createLiveSession(input: {
     .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
     .single();
 
-  if (createError) throw createError;
+  if (createError) {
+    if (createError.code === '23505') {
+      const racedSession = await findActiveLiveSession(input.userId);
+      if (racedSession) return racedSession;
+    }
+    throw createError;
+  }
 
   const { error: participantError } = await db
     .from('live_participants')

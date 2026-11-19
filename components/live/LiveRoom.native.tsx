@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   AudioSession,
@@ -21,6 +21,7 @@ type Props = {
 function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?: () => void }) {
   const tracks = useTracks([Track.Source.Camera]);
   const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
+  const [fullscreen, setFullscreen] = useState(false);
   const publishable = role === 'host' || role === 'guest';
 
   useEffect(() => {
@@ -30,7 +31,7 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
   const renderTrack = ({ item }: { item: TrackReferenceOrPlaceholder }) => {
     if (!isTrackReference(item)) return null;
     return (
-      <View style={styles.videoTile}>
+      <View style={[styles.videoTile, tracks.length === 1 && styles.singleVideoTile]}>
         <VideoTrack
           trackRef={item}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
@@ -47,46 +48,107 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
     );
   };
 
-  return (
-    <View style={styles.stageBody}>
-      {tracks.length ? (
-        <FlatList
-          data={tracks}
-          renderItem={renderTrack}
-          keyExtractor={(item, index) => isTrackReference(item) ? `${item.participant.identity}:${item.publication.trackSid}` : `empty-${index}`}
-          numColumns={2}
-          columnWrapperStyle={styles.videoRow}
-          contentContainerStyle={styles.videoGrid}
-        />
-      ) : (
-        <View style={styles.placeholder}>
-          <Ionicons name="people-outline" size={34} color="#9AA5B2" />
-          <Text style={styles.placeholderTitle}>The stage is ready</Text>
-          <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
-        </View>
-      )}
+  const renderGrid = (isFullscreen = false) => (
+    <FlatList
+      key={tracks.length > 1 ? 'live-grid-two-columns' : 'live-grid-one-column'}
+      data={tracks}
+      renderItem={renderTrack}
+      keyExtractor={(item, index) => isTrackReference(item) ? `${item.participant.identity}:${item.publication.trackSid}` : `empty-${index}`}
+      numColumns={tracks.length > 1 ? 2 : 1}
+      columnWrapperStyle={tracks.length > 1 ? styles.videoRow : undefined}
+      contentContainerStyle={[
+        styles.videoGrid,
+        tracks.length === 1 && styles.singleVideoGrid,
+        isFullscreen && styles.fullscreenVideoGrid,
+      ]}
+    />
+  );
 
-      {publishable ? (
-        <View style={styles.controls}>
+  const renderControls = () => publishable ? (
+    <View style={styles.controls}>
+      <Pressable
+        onPress={() => void localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)}
+        style={[styles.controlButton, !isMicrophoneEnabled && styles.controlDisabled]}
+      >
+        <Ionicons name={isMicrophoneEnabled ? 'mic' : 'mic-off'} size={19} color="#F2F5F7" />
+        <Text style={styles.controlText}>{isMicrophoneEnabled ? 'Mute' : 'Unmute'}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => void localParticipant.setCameraEnabled(!isCameraEnabled)}
+        style={[styles.controlButton, !isCameraEnabled && styles.controlDisabled]}
+      >
+        <Ionicons name={isCameraEnabled ? 'videocam' : 'videocam-off'} size={19} color="#F2F5F7" />
+        <Text style={styles.controlText}>{isCameraEnabled ? 'Camera' : 'Camera off'}</Text>
+      </Pressable>
+    </View>
+  ) : (
+    <Text style={styles.viewerNote}>Your microphone and camera stay off while watching.</Text>
+  );
+
+  return (
+    <>
+      <View style={styles.stageBody}>
+        <View style={styles.stageHeader}>
+          <View style={styles.stageStatus}>
+            <View style={styles.liveDot} />
+            <Text style={styles.stageStatusText}>LIVE STAGE</Text>
+          </View>
           <Pressable
-            onPress={() => void localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)}
-            style={[styles.controlButton, !isMicrophoneEnabled && styles.controlDisabled]}
+            onPress={() => setFullscreen(true)}
+            style={styles.fullscreenButton}
+            accessibilityRole="button"
+            accessibilityLabel="Open full screen live"
           >
-            <Ionicons name={isMicrophoneEnabled ? 'mic' : 'mic-off'} size={19} color="#F2F5F7" />
-            <Text style={styles.controlText}>{isMicrophoneEnabled ? 'Mute' : 'Unmute'}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => void localParticipant.setCameraEnabled(!isCameraEnabled)}
-            style={[styles.controlButton, !isCameraEnabled && styles.controlDisabled]}
-          >
-            <Ionicons name={isCameraEnabled ? 'videocam' : 'videocam-off'} size={19} color="#F2F5F7" />
-            <Text style={styles.controlText}>{isCameraEnabled ? 'Camera' : 'Camera off'}</Text>
+            <Ionicons name="expand-outline" size={18} color="#F2F5F7" />
           </Pressable>
         </View>
-      ) : (
-        <Text style={styles.viewerNote}>Your microphone and camera stay off while watching.</Text>
-      )}
-    </View>
+
+        {!fullscreen ? (
+          tracks.length ? renderGrid() : (
+            <View style={styles.placeholder}>
+              <Ionicons name="people-outline" size={34} color="#9AA5B2" />
+              <Text style={styles.placeholderTitle}>The stage is ready</Text>
+              <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+            </View>
+          )
+        ) : null}
+
+        {!fullscreen ? renderControls() : null}
+      </View>
+
+      {fullscreen ? (
+        <Modal visible animationType="fade" onRequestClose={() => setFullscreen(false)} statusBarTranslucent>
+          <View style={styles.fullscreenContainer}>
+            <View style={styles.fullscreenHeader}>
+              <View style={styles.stageStatus}>
+                <View style={styles.liveDot} />
+                <Text style={styles.stageStatusText}>LUMO LIVE</Text>
+              </View>
+              <Pressable
+                onPress={() => setFullscreen(false)}
+                style={styles.fullscreenButton}
+                accessibilityRole="button"
+                accessibilityLabel="Exit full screen live"
+              >
+                <Ionicons name="contract-outline" size={19} color="#F2F5F7" />
+              </Pressable>
+            </View>
+
+            <View style={styles.fullscreenStage}>
+              {tracks.length ? renderGrid(true) : (
+                <View style={styles.placeholder}>
+                  <Ionicons name="people-outline" size={34} color="#9AA5B2" />
+                  <Text style={styles.placeholderTitle}>The stage is ready</Text>
+                  <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+                </View>
+              )}
+            </View>
+
+            {renderControls()}
+          </View>
+        </Modal>
+      ) : null}
+    </>
   );
 }
 
@@ -183,19 +245,26 @@ export default function LiveRoomNative({ sessionId, onConnectionChange }: Props)
 
 const styles = StyleSheet.create({
   container: { width: '100%', gap: 10 },
-  stageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  stageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  fullscreenButton: { width: 34, height: 34, borderRadius: 11, backgroundColor: '#202831', borderWidth: 1, borderColor: '#39434D', alignItems: 'center', justifyContent: 'center' },
   stageStatus: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: 'rgba(232, 85, 92, 0.16)' },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#F16D73' },
   stageStatusText: { fontSize: 9, fontWeight: '900', letterSpacing: 1.2, color: '#FFD3D3' },
   stageMeta: { fontSize: 10, color: '#9AA5B2' },
   stageBody: { width: '100%', gap: 12 },
-  videoGrid: { gap: 8 },
-  videoRow: { gap: 8 },
-  videoTile: { flex: 1, minWidth: 0, height: 205, borderRadius: 17, overflow: 'hidden', backgroundColor: '#171D24', position: 'relative' },
+  videoGrid: { gap: 8, width: '100%', flexGrow: 1 },
+  singleVideoGrid: { alignItems: 'center' },
+  fullscreenVideoGrid: { justifyContent: 'center', alignItems: 'center' },
+  videoRow: { gap: 8, width: '100%' },
+  videoTile: { flex: 1, minWidth: 0, aspectRatio: 1, borderRadius: 17, overflow: 'hidden', backgroundColor: '#171D24', position: 'relative' },
+  singleVideoTile: { flex: 0, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  fullscreenContainer: { flex: 1, backgroundColor: '#05070B', paddingHorizontal: 14, paddingTop: 34, paddingBottom: 26 },
+  fullscreenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  fullscreenStage: { flex: 1, justifyContent: 'center', paddingVertical: 14 },
   videoLabel: { position: 'absolute', left: 9, right: 9, bottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(7,10,14,0.72)', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 9 },
   videoLabelText: { color: '#F2F5F7', fontSize: 10, fontWeight: '800', flex: 1 },
   youTag: { color: '#D6E3B4', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
-  placeholder: { minHeight: 210, borderRadius: 18, backgroundColor: '#151A21', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center', padding: 22, gap: 10 },
+  placeholder: { width: '100%', maxWidth: 560, aspectRatio: 1, alignSelf: 'center', borderRadius: 18, backgroundColor: '#151A21', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center', padding: 22, gap: 10 },
   placeholderTitle: { color: '#F2F5F7', fontSize: 14, fontWeight: '800', textAlign: 'center' },
   placeholderCopy: { color: '#9AA5B2', fontSize: 11, textAlign: 'center', lineHeight: 16 },
   controls: { flexDirection: 'row', justifyContent: 'center', gap: 10, alignItems: 'center' },
