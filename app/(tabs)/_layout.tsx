@@ -462,6 +462,15 @@ export default function TabsLayout() {
                   </Pressable>
                 ) : null}
                 <Pressable
+                  onPress={() => router.push('/search')}
+                  style={styles.headerIconBtn}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Search people"
+                >
+                  <Ionicons name="search-outline" size={23} color={colors.text} />
+                </Pressable>
+                <Pressable
                   onPress={() => router.push('/create')}
                   style={styles.headerIconBtn}
                   hitSlop={8}
