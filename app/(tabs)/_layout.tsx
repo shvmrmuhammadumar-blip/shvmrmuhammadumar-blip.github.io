@@ -168,6 +168,7 @@ const appNavigation: { label: string; path: string; icon: IconName; section: 'ma
   { label: 'Mini Apps', path: '/mini-apps', icon: 'apps-outline', section: 'more' },
   { label: 'Live', path: '/live', icon: 'radio-outline', section: 'more' },
   { label: 'Wallet', path: '/wallet', icon: 'wallet-outline', section: 'more' },
+  { label: 'Create', path: '/create', icon: 'add-circle-outline', section: 'more' },
   { label: 'Profile', path: '/profile', icon: 'person-circle-outline', section: 'more' },
 ];
 
@@ -416,10 +417,6 @@ export default function TabsLayout() {
                 );
               })}
             </ScrollView>
-            <Pressable style={[styles.sidebarCreate, !isDesktop && styles.sidebarCreateCompact]} onPress={() => navigateTo('/create')} accessibilityRole="button" accessibilityLabel="Create a post">
-              <Ionicons name="add" size={21} color={colors.bg} />
-              {isDesktop ? <Text style={styles.sidebarCreateText}>Create</Text> : null}
-            </Pressable>
           </View>
         ) : null}
         <View style={styles.tabsColumn}>
@@ -505,17 +502,6 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-          name="create"
-          options={{
-            title: '',
-            tabBarLabel: () => null,
-            tabBarIcon: () => <CenterCreateIcon />,
-            tabBarItemStyle: { marginTop: -12 },
-            tabBarIconStyle: { marginTop: -5, transform: [{ translateY: -5 }] },
-          }}
-        />
-
-        <Tabs.Screen
           name="messages"
           options={{
             title: 'Messages',
@@ -534,6 +520,24 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
+          name="wallet"
+          options={{
+            title: 'Wallet',
+            headerShown: false,
+            tabBarIcon: icon('wallet', 'wallet-outline'),
+          }}
+        />
+
+        <Tabs.Screen
+          name="create"
+          options={{
+            title: '',
+            tabBarLabel: () => null,
+            tabBarIcon: () => <CenterCreateIcon />,
+          }}
+        />
+
+        <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
@@ -547,7 +551,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="studio" options={{ href: null, headerShown: false }} />
         <Tabs.Screen name="events" options={{ href: null, headerShown: false }} />
         <Tabs.Screen name="mini-apps" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="wallet" options={{ href: null, headerShown: false }} />
       </Tabs>
         </View>
       </View>
@@ -825,9 +828,6 @@ const styles = StyleSheet.create({
   sidebarItemSelected: { backgroundColor: colors.surfaceSoft, borderWidth: 1, borderColor: colors.glassBorder },
   sidebarLabel: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   sidebarLabelSelected: { color: colors.text, fontWeight: '700' },
-  sidebarCreate: { minHeight: 44, borderRadius: 14, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, paddingHorizontal: 12 },
-  sidebarCreateCompact: { width: 46, height: 46, borderRadius: 16 },
-  sidebarCreateText: { color: colors.bg, fontSize: 13, fontWeight: '800' },
   moduleOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
   moduleSheet: { backgroundColor: colors.surface, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 28, maxHeight: '78%' },
   moduleSheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
@@ -888,9 +888,9 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   createButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: colors.accent,
     borderWidth: 1,
     borderColor: 'rgba(242,245,247,0.22)',
@@ -900,9 +900,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.22,
     shadowRadius: 6,
-    elevation: 3,
-    marginBottom: 8,
-    transform: [{ translateY: -5 }],
+    elevation: 2,
+    marginBottom: 0,
   },
   notifOverlay: {
     flex: 1,
