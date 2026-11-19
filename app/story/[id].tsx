@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { Image } from 'expo-image';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +32,16 @@ export default function StoryViewer() {
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const currentStory = stories[index];
+  const storyPlayer = useVideoPlayer(null, (player) => {
+    player.loop = false;
+    player.muted = false;
+    player.volume = 1;
+  });
+  const nextStory = useCallback(() => {
+    if (index < stories.length - 1) setIndex(index + 1);
+    else router.back();
+  }, [index, stories.length, router]);
 
   useEffect(() => {
     let active = true;
@@ -38,7 +49,7 @@ export default function StoryViewer() {
       try {
         const { data, error } = await supabase
           .from('stories')
-          .select('id, user_id, image_url, created_at, profiles(username, avatar_url)')
+          .select('id, user_id, image_url, video_url, media_type, created_at, profiles(username, avatar_url)')
           .eq('user_id', id)
           .gte('created_at', dayAgoIso())
           .order('created_at', { ascending: true });
@@ -61,7 +72,6 @@ export default function StoryViewer() {
   }, [id]);
 
   useEffect(() => {
-    const currentStory = stories[index];
     if (!currentStory) return;
     void trackContentOpen({
       ownerId: currentStory.user_id,
@@ -71,17 +81,37 @@ export default function StoryViewer() {
     });
   }, [stories, index, me]);
 
-  // Auto-advance every few seconds; close after the last story.
   useEffect(() => {
-    if (loading || stories.length === 0) return;
-    const timer = setTimeout(() => {
-      if (index < stories.length - 1) setIndex(index + 1);
-      else router.back();
-    }, SLIDE_MS);
-    return () => clearTimeout(timer);
-  }, [index, stories, loading, router]);
+    let active = true;
+    if (currentStory?.video_url) {
+      void storyPlayer.replaceAsync(currentStory.video_url)
+        .then(() => { if (active) storyPlayer.play(); })
+        .catch((error) => {
+          if (active) setLoadError(error instanceof Error ? error.message : 'This story video could not be played.');
+        });
+    } else {
+      storyPlayer.pause();
+      void storyPlayer.replaceAsync(null);
+    }
+    return () => {
+      active = false;
+      storyPlayer.pause();
+    };
+  }, [storyPlayer, currentStory?.video_url]);
 
-  const next = () => (index < stories.length - 1 ? setIndex(index + 1) : router.back());
+  useEffect(() => {
+    if (!currentStory?.video_url) return;
+    const subscription = storyPlayer.addListener('playToEnd', nextStory);
+    return () => subscription.remove();
+  }, [storyPlayer, currentStory?.video_url, nextStory]);
+
+  // Photo stories advance automatically; video stories advance when playback ends.
+  useEffect(() => {
+    if (loading || !currentStory || currentStory.video_url) return;
+    const timer = setTimeout(nextStory, SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [index, currentStory?.video_url, loading, nextStory]);
+
   const prev = () => setIndex(Math.max(0, index - 1));
 
   const removeCurrent = () => {
@@ -130,15 +160,17 @@ export default function StoryViewer() {
     );
   }
 
-  const story = stories[index];
+  const story = currentStory;
 
   return (
     <View style={styles.black}>
-      {story.image_url ? <Image source={{ uri: story.image_url }} style={StyleSheet.absoluteFill} contentFit="contain" /> : null}
+      {story.image_url ? <Image source={{ uri: story.image_url }} style={StyleSheet.absoluteFill} contentFit="contain" /> : story.video_url ? (
+        <VideoView player={storyPlayer} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} />
+      ) : null}
 
       <View style={[StyleSheet.absoluteFill, { flexDirection: 'row' }]}>
         <Pressable style={{ flex: 1 }} onPress={prev} />
-        <Pressable style={{ flex: 2 }} onPress={next} />
+        <Pressable style={{ flex: 2 }} onPress={nextStory} />
       </View>
 
       <SafeAreaView style={styles.top} pointerEvents="box-none">

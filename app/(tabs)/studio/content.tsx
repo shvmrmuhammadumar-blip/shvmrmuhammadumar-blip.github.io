@@ -11,7 +11,7 @@ import { colors } from '../../../lib/theme';
 
 type ContentFilter = 'all' | 'photos' | 'videos' | 'stories';
 type PostRow = { id: string; caption: string | null; media_type: string; created_at: string; image_url: string | null; video_url: string | null };
-type StoryRow = { id: string; image_url: string; created_at: string };
+type StoryRow = { id: string; image_url: string | null; video_url: string | null; media_type: string; created_at: string };
 
 const filters: { key: ContentFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -39,7 +39,7 @@ export default function StudioContentScreen() {
         .order('created_at', { ascending: false })
         .limit(80),
       supabase.from('stories')
-        .select('id, image_url, created_at')
+        .select('id, image_url, video_url, media_type, created_at')
         .eq('user_id', userId)
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
@@ -101,7 +101,11 @@ export default function StudioContentScreen() {
           <View style={styles.contentList}>
             {stories.map((story) => (
               <Pressable key={story.id} onPress={() => router.push(`/story/${userId}`)} style={styles.contentRow} accessibilityRole="button">
-                <Image source={{ uri: story.image_url }} style={styles.thumbnail} contentFit="cover" />
+                {story.image_url ? (
+                  <Image source={{ uri: story.image_url }} style={styles.thumbnail} contentFit="cover" />
+                ) : (
+                  <View style={styles.thumbnailFallback}><Ionicons name="play" size={18} color={colors.muted} /></View>
+                )}
                 <View style={styles.contentCopy}>
                   <Text style={styles.contentTitle}>Story</Text>
                   <Text style={styles.contentMeta}>Active · {new Date(story.created_at).toLocaleString()}</Text>

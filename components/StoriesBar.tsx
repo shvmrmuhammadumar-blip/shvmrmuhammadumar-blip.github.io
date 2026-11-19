@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { dayAgoIso, pickImage, uploadImage } from '../lib/api';
+import { dayAgoIso, pickPostMedia, uploadPostMedia } from '../lib/api';
 import { colors } from '../lib/theme';
 import type { MiniProfile } from '../lib/types';
 
@@ -66,11 +66,19 @@ export default function StoriesBar() {
   const addStory = async () => {
     if (busy) return;
     try {
-      const uri = await pickImage([9, 16]);
-      if (!uri) return;
+      const media = await pickPostMedia();
+      if (!media) return;
       setBusy(true);
-      const url = await uploadImage(uri, me, 'story');
-      const { error } = await supabase.from('stories').insert({ user_id: me, image_url: url });
+      const uploaded = await uploadPostMedia(media, me, 'story');
+      const { error } = await (supabase as any).from('stories').insert({
+        user_id: me,
+        image_url: media.type === 'image' ? uploaded.publicUrl : null,
+        video_url: media.type === 'video' ? uploaded.publicUrl : null,
+        media_type: media.type,
+        media_path: uploaded.path,
+        media_mime_type: media.mimeType,
+        media_file_name: media.fileName,
+      });
       if (error) throw error;
       await load();
     } catch (e: any) {

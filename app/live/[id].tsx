@@ -3,8 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, Text
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../../../lib/auth';
-import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
 import {
   activateLiveSession,
   getLiveSession,
@@ -24,8 +24,8 @@ import {
   type LiveParticipant,
   type LiveRole,
   type LiveSession,
-} from '../../../lib/live';
-import LiveRoom from '../../../components/live/LiveRoom';
+} from '../../lib/live';
+import LiveRoom from '../../components/live/LiveRoom';
 
 const db = supabase as any;
 
@@ -343,10 +343,11 @@ export default function LiveSessionScreen() {
 
   const shareLive = async () => {
     const liveUrl = `https://shvmrmuhammadumar-blip.github.io/live/${sessionId}`;
+    const appUrl = `lumo://live/${sessionId}`;
     try {
       await Share.share({
         title: 'LUMO LIVE',
-        message: `Join my LUMO LIVE room:\n${liveUrl}\n\nLIVE ID: ${sessionId}`,
+        message: `Join my LUMO LIVE room:\nOpen in LUMO: ${appUrl}\nWeb link: ${liveUrl}\n\nLIVE ID: ${sessionId}`,
         url: liveUrl,
       });
     } catch (cause) {
@@ -430,7 +431,7 @@ export default function LiveSessionScreen() {
           <View style={styles.livePill}><View style={[styles.liveDot, live.status === 'starting' && styles.liveDotStarting]} /><Text style={styles.livePillText}>{live.status === 'starting' ? 'PREPARING' : 'LIVE'}</Text></View>
           <Text style={styles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
         </View>
-        <View style={styles.viewerBadge}><Ionicons name="eye-outline" size={13} color="#F2F5F7" /><Text style={styles.viewerBadgeText}>{viewers.length.toLocaleString()}</Text></View>
+        <View style={styles.viewerBadge}><Ionicons name="people-outline" size={13} color="#F2F5F7" /><Text style={styles.viewerBadgeText}>{participants.length.toLocaleString()}</Text></View>
         <Pressable style={styles.shareButton} onPress={() => void shareLive()} accessibilityRole="button" accessibilityLabel="Share live room">
           <Ionicons name="share-social-outline" size={17} color="#F2F5F7" />
         </Pressable>

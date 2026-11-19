@@ -41,6 +41,7 @@ function Gate() {
     >
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="live" options={{ headerShown: false }} />
         <Stack.Screen name="settings/activity" options={{ title: 'Your activity' }} />
         <Stack.Screen name="creator-studio" options={{ headerShown: false, animation: 'fade', presentation: 'fullScreenModal' }} />
         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../../lib/auth';
-import { colors } from '../../../lib/theme';
-import { createLiveSession, LIVE_CATEGORIES, type LiveAudience, type LiveCategory } from '../../../lib/live';
+import { useAuth } from '../../lib/auth';
+import { colors } from '../../lib/theme';
+import { createLiveSession, LIVE_CATEGORIES, type LiveAudience, type LiveCategory } from '../../lib/live';
 
 export default function CreateLiveScreen() {
   const router = useRouter();

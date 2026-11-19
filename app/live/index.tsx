@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
 import { LIVE_CATEGORIES, listLiveSessions, type LiveCategory, type LiveSession } from '../../lib/live';
 
-type LiveCardData = LiveSession & { viewer_count: number };
+type LiveCardData = LiveSession & { participant_count: number };
 
 export default function LiveScreen() {
   const router = useRouter();
@@ -186,7 +186,7 @@ export default function LiveScreen() {
               <View style={styles.featuredShade} />
               <View style={styles.featuredTop}>
                 <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.livePillText}>LIVE NOW</Text></View>
-                <View style={styles.viewerPill}><Ionicons name="eye-outline" size={12} color="#F2F5F7" /><Text style={styles.viewerText}>{featured.viewer_count.toLocaleString()}</Text></View>
+                <View style={styles.viewerPill}><Ionicons name="people-outline" size={12} color="#F2F5F7" /><Text style={styles.viewerText}>{featured.participant_count.toLocaleString()}</Text></View>
               </View>
               <View style={styles.featuredInfo}>
                 <Text style={styles.featuredCategory}>{categoryLabel(featured.category).toUpperCase()}</Text>
@@ -209,7 +209,7 @@ export default function LiveScreen() {
                   )}
                   <View style={styles.cardMediaShade} />
                   <View style={styles.cardLiveTag}><View style={styles.liveDot} /><Text style={styles.livePillText}>LIVE</Text></View>
-                  <View style={styles.cardViewerTag}><Ionicons name="eye-outline" size={11} color="#F2F5F7" /><Text style={styles.viewerText}>{item.viewer_count}</Text></View>
+                  <View style={styles.cardViewerTag}><Ionicons name="people-outline" size={11} color="#F2F5F7" /><Text style={styles.viewerText}>{item.participant_count}</Text></View>
                 </View>
                 <View style={styles.cardInfo}>
                   <Text style={styles.cardCategory}>{categoryLabel(item.category).toUpperCase()}</Text>

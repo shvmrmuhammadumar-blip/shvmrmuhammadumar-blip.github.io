@@ -61,7 +61,7 @@ function icon(active: IconName, inactive: IconName) {
 function CenterCreateIcon() {
   return (
     <View style={styles.createButton}>
-      <Ionicons name="add" size={30} color={colors.bg} />
+      <Ionicons name="add" size={25} color={colors.bg} />
     </View>
   );
 }
@@ -545,7 +545,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="studio" options={{ href: null, headerShown: false }} />
         <Tabs.Screen name="events" options={{ href: null, headerShown: false }} />
         <Tabs.Screen name="mini-apps" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="live" options={{ href: null, headerShown: false }} />
         <Tabs.Screen name="wallet" options={{ href: null, headerShown: false }} />
       </Tabs>
         </View>
@@ -887,18 +886,20 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   createButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.lime,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: colors.accent,
+    borderWidth: 1,
+    borderColor: 'rgba(242,245,247,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.lime,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 0,
   },
   notifOverlay: {
     flex: 1,

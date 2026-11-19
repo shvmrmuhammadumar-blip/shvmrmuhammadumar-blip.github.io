@@ -87,15 +87,14 @@ export async function listLiveSessions(category?: LiveCategory | 'all') {
       .from('live_participants')
       .select('id', { count: 'exact', head: true })
       .eq('session_id', session.id)
-      .eq('status', 'joined')
-      .eq('role', 'viewer');
+      .eq('status', 'joined');
     return { id: session.id, count: countError ? 0 : count ?? 0 };
   }));
 
   const countById = new Map(counts.map((item) => [item.id, item.count]));
   return sessions.map((session) => ({
     ...session,
-    viewer_count: countById.get(session.id) ?? 0,
+    participant_count: countById.get(session.id) ?? 0,
   }));
 }
 

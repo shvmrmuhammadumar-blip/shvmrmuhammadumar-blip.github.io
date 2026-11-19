@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import type { MessageType, Post } from './types';
 
@@ -84,6 +85,7 @@ export async function pickPostMedia(): Promise<PickedPostMedia | null> {
     allowsEditing: false,
     quality: 0.85,
     videoMaxDuration: 180,
+    ...(Platform.OS === 'android' ? { legacy: true, defaultTab: 'photos' as const } : {}),
   });
 
   if (result.canceled || !result.assets[0]) return null;
@@ -194,6 +196,7 @@ export async function pickImage(aspect: [number, number] = [1, 1]): Promise<stri
     allowsEditing: true,
     aspect,
     quality: 0.7,
+    ...(Platform.OS === 'android' ? { legacy: true, defaultTab: 'photos' as const } : {}),
   });
   if (result.canceled || !result.assets[0]) return null;
   return result.assets[0].uri;
@@ -222,6 +225,7 @@ export async function uploadImage(uri: string, userId: string, kind: string): Pr
 export async function uploadPostMedia(
   media: PickedPostMedia,
   userId: string,
+  mediaKind: 'post' | 'story' = 'post',
 ): Promise<{ path: string; publicUrl: string }> {
   const response = await fetch(media.uri);
   if (!response.ok) {
@@ -263,7 +267,7 @@ export async function uploadPostMedia(
       (media.type === "video" ? "mp4" : "jpg");
 
   const uniquePart = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const path = `${userId}/post-${uniquePart}.${extension}`;
+  const path = `${userId}/${mediaKind}-${uniquePart}.${extension}`;
 
   const { error } = await supabase.storage.from("images").upload(path, buffer, {
     contentType: media.mimeType || inferMimeType(media.fileName, media.type),

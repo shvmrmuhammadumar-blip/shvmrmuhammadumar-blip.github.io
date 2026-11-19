@@ -2133,19 +2133,34 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          image_url: string
+          image_url: string | null
+          video_url: string | null
+          media_type: string
+          media_path: string | null
+          media_mime_type: string | null
+          media_file_name: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          image_url: string
+          image_url?: string | null
+          video_url?: string | null
+          media_type?: string
+          media_path?: string | null
+          media_mime_type?: string | null
+          media_file_name?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          image_url?: string
+          image_url?: string | null
+          video_url?: string | null
+          media_type?: string
+          media_path?: string | null
+          media_mime_type?: string | null
+          media_file_name?: string | null
           user_id?: string
         }
         Relationships: [

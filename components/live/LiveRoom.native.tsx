@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View }
 import { Ionicons } from '@expo/vector-icons';
 import {
   AudioSession,
+  AndroidAudioTypePresets,
   LiveKitRoom,
   VideoTrack,
   isTrackReference,
@@ -168,7 +169,15 @@ export default function LiveRoomNative({ sessionId, onConnectionChange }: Props)
       try {
         setConnecting(true);
         setError(null);
+        await AudioSession.configureAudio({
+          android: {
+            preferredOutputList: ['bluetooth', 'headset', 'speaker', 'earpiece'],
+            audioTypeOptions: AndroidAudioTypePresets.communication,
+          },
+          ios: { defaultOutput: 'speaker' },
+        });
         await AudioSession.startAudioSession();
+        await AudioSession.setDefaultRemoteAudioTrackVolume(1);
         const credentials = await getLiveConnectionToken(sessionId);
         if (active) setConnection(credentials);
       } catch (cause) {

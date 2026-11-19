@@ -137,8 +137,11 @@ export type Story = {
   id: ID;
   user_id: ID;
   image_url?: string | null;
+  video_url?: string | null;
   media_url?: string | null;
   media_path?: string | null;
+  media_mime_type?: string | null;
+  media_file_name?: string | null;
   media_type?: MediaType | null;
   caption?: string | null;
   created_at: string;

@@ -64,6 +64,8 @@ function TrackTile({ entry, single = false }: { entry: TrackEntry; single?: bool
 
 export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
   const roomRef = useRef<Room | null>(null);
+  const audioContainerRef = useRef<HTMLDivElement | null>(null);
+  const audioElementsRef = useRef<Map<string, { track: RemoteTrack; element: HTMLAudioElement }>>(new Map());
   const onConnectionChangeRef = useRef(onConnectionChange);
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const addTrack = useCallback((track: LocalTrack | RemoteTrack, identity: string, name: string, sid: string, local: boolean) => {
@@ -95,10 +98,29 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
     roomRef.current = room;
 
     const onSubscribed = (track: RemoteTrack, publication: { trackSid: string; source?: Track.Source }, participant: { identity: string; name?: string }) => {
+      if (track.kind === Track.Kind.Audio) {
+        const element = track.attach() as HTMLAudioElement;
+        element.autoplay = true;
+        element.muted = false;
+        element.volume = 1;
+        element.style.display = 'none';
+        audioContainerRef.current?.appendChild(element);
+        audioElementsRef.current.set(publication.trackSid, { track, element });
+        void element.play()
+          .then(() => { if (active) setAudioBlocked(false); })
+          .catch(() => { if (active) setAudioBlocked(true); });
+        return;
+      }
       if (track.kind !== Track.Kind.Video || publication.source !== Track.Source.Camera) return;
       addTrack(track, participant.identity, participant.name || participant.identity, publication.trackSid, false);
     };
     const onUnsubscribed = (track: RemoteTrack, publication: { trackSid: string }) => {
+      const audioEntry = audioElementsRef.current.get(publication.trackSid);
+      if (audioEntry) {
+        audioEntry.track.detach(audioEntry.element);
+        audioEntry.element.remove();
+        audioElementsRef.current.delete(publication.trackSid);
+      }
       setTracks(current => current.filter(item => item.id !== publication.trackSid && item.track !== track));
     };
     const onLocalPublished = (publication: { track?: LocalTrack; trackSid: string; source?: Track.Source }) => {
@@ -175,10 +197,28 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
       active = false;
       onConnectionChangeRef.current?.(false);
       room.removeAllListeners();
+      audioElementsRef.current.forEach(({ track, element }) => {
+        track.detach(element);
+        element.remove();
+      });
+      audioElementsRef.current.clear();
       void room.disconnect();
       if (roomRef.current === room) roomRef.current = null;
     };
   }, [sessionId, addTrack]);
+
+  const enableRemoteAudio = async () => {
+    let blocked = false;
+    await Promise.all([...audioElementsRef.current.values()].map(async ({ element }) => {
+      try {
+        element.muted = false;
+        await element.play();
+      } catch {
+        blocked = true;
+      }
+    }));
+    setAudioBlocked(blocked);
+  };
 
   const toggleCamera = async () => {
     const room = roomRef.current;
@@ -258,11 +298,18 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
   return (
     <>
       <View style={styles.container}>
+        <div ref={audioContainerRef} aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }} />
         <View style={styles.stageHeader}>
           <View style={styles.stageStatus}>
             <View style={styles.liveDot} />
             <Text style={styles.stageStatusText}>{connected ? 'CONNECTED' : connecting ? 'CONNECTING' : 'OFFLINE'}</Text>
           </View>
+          {audioBlocked ? (
+            <Pressable onPress={() => void enableRemoteAudio()} style={styles.audioEnableButton} accessibilityRole="button" accessibilityLabel="Enable live audio">
+              <Ionicons name="volume-high-outline" size={15} color="#11161C" />
+              <Text style={styles.audioEnableText}>Enable sound</Text>
+            </Pressable>
+          ) : null}
           <Pressable
             onPress={() => setFullscreen(true)}
             style={styles.fullscreenButton}
@@ -308,6 +355,8 @@ const styles = StyleSheet.create({
   container: { width: '100%', gap: 10 },
   stageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   fullscreenButton: { width: 34, height: 34, borderRadius: 11, backgroundColor: '#202831', borderWidth: 1, borderColor: '#39434D', alignItems: 'center', justifyContent: 'center' },
+  audioEnableButton: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#B9C7D6', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  audioEnableText: { color: '#090C12', fontSize: 9, fontWeight: '900' },
   stageStatus: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: 'rgba(232, 85, 92, 0.16)' },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#F16D73' },
   stageStatusText: { fontSize: 9, fontWeight: '900', letterSpacing: 1.2, color: '#FFD3D3' },
