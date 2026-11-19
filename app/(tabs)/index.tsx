@@ -144,6 +144,10 @@ export default function Feed() {
 
   const header = (
     <View style={styles.feedHeader}>
+      <Pressable style={styles.profileSearch} onPress={() => router.push('/search')} accessibilityRole="button" accessibilityLabel="Search profiles">
+        <Ionicons name="search-outline" size={18} color={colors.muted} />
+        <Text style={styles.profileSearchText}>Search people and profiles</Text>
+      </Pressable>
       <StoriesBar />
       <View style={styles.filterRow}>
         <Pressable onPress={() => setFilter('for-you')} accessibilityRole="tab"
@@ -201,6 +205,8 @@ const styles = StyleSheet.create({
   list: { backgroundColor: colors.bg },
   listContent: { paddingBottom: 24, flexGrow: 1 },
   feedHeader: { paddingTop: 8, paddingBottom: 4 },
+  profileSearch: { minHeight: 43, flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  profileSearchText: { color: colors.muted, fontSize: 13, fontWeight: '500' },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, maxWidth: 960, width: '100%', alignSelf: 'center' },
   filterTab: { minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   filterTabActive: { backgroundColor: colors.surfaceRaised, borderColor: colors.accent },

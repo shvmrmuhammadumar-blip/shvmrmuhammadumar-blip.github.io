@@ -66,7 +66,7 @@ function CenterCreateIcon() {
   );
 }
 
-function BrandTitle() {
+function BrandTitle({ showWord = true }: { showWord?: boolean }) {
   return (
     <View style={styles.brandTitle}>
       <Image
@@ -74,7 +74,7 @@ function BrandTitle() {
         style={styles.brandMark}
         contentFit="contain"
       />
-      <Text style={styles.brandText}>Lumo</Text>
+      {showWord ? <Text style={styles.brandText}>Lumo</Text> : null}
     </View>
   );
 }
@@ -447,7 +447,7 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Lumo',
-            headerTitle: () => <BrandTitle />,
+            headerTitle: () => <BrandTitle showWord={isTablet} />,
             headerRight: () => (
               <View style={styles.headerRight}>
                 {!isTablet ? (
@@ -466,7 +466,7 @@ export default function TabsLayout() {
                   style={styles.headerIconBtn}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Search people"
+                  accessibilityLabel="Search profiles"
                 >
                   <Ionicons name="search-outline" size={23} color={colors.text} />
                 </Pressable>
