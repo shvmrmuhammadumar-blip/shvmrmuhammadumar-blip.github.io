@@ -23,6 +23,7 @@ export type LiveHost = {
 
 export type LiveSession = {
   id: string;
+  live_code: string;
   host_id: string;
   title: string;
   description: string;
@@ -71,7 +72,7 @@ function errorMessage(error: unknown, fallback: string) {
 export async function listLiveSessions(category?: LiveCategory | 'all') {
   let query = db
     .from('live_sessions')
-    .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at, host:profiles!live_sessions_host_id_fkey(id, username, avatar_url)')
+    .select('id, live_code, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at, host:profiles!live_sessions_host_id_fkey(id, username, avatar_url)')
     .eq('status', 'live')
     .order('started_at', { ascending: false })
     .limit(30);
@@ -101,12 +102,24 @@ export async function listLiveSessions(category?: LiveCategory | 'all') {
 export async function getLiveSession(sessionId: string) {
   const { data, error } = await db
     .from('live_sessions')
-    .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at, host:profiles!live_sessions_host_id_fkey(id, username, avatar_url)')
+    .select('id, live_code, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at, host:profiles!live_sessions_host_id_fkey(id, username, avatar_url)')
     .eq('id', sessionId)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) throw new Error('This live is no longer available.');
+  return data as LiveSession;
+}
+
+export async function getLiveSessionByCode(liveCode: string) {
+  const { data, error } = await db
+    .from('live_sessions')
+    .select('id, live_code, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at, host:profiles!live_sessions_host_id_fkey(id, username, avatar_url)')
+    .eq('live_code', liveCode)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('No live room matches this LIVE ID.');
   return data as LiveSession;
 }
 
@@ -161,7 +174,7 @@ async function findActiveLiveSession(hostId: string) {
 
   const { data, error } = await db
     .from('live_sessions')
-    .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
+    .select('id, live_code, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
     .eq('host_id', hostId)
     .in('status', ['starting', 'live'])
     .order('created_at', { ascending: false })
@@ -192,7 +205,7 @@ export async function createLiveSession(input: {
       audience: input.audience,
       status: 'starting',
     })
-    .select('id, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
+    .select('id, live_code, host_id, title, description, category, audience, status, room_name, cover_url, started_at, created_at')
     .single();
 
   if (createError) {

@@ -4,10 +4,12 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
+import { Alert } from '../../lib/alert';
 import { supabase } from '../../lib/supabase';
 import {
   activateLiveSession,
   getLiveSession,
+  getLiveSessionByCode,
   getMyLiveParticipant,
   joinLiveSession,
   leaveLiveStage,
@@ -43,7 +45,7 @@ function avatarInitial(name?: string | null) {
 
 export default function LiveSessionScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const sessionId = String(params.id ?? '');
+  const requestedLiveId = String(params.id ?? '');
   const router = useRouter();
   const { session: authSession } = useAuth();
   const { width: windowWidth } = useWindowDimensions();
@@ -51,6 +53,7 @@ export default function LiveSessionScreen() {
   const userId = authSession?.user.id;
 
   const [live, setLive] = useState<LiveSession | null>(null);
+  const [sessionId, setSessionId] = useState('');
   const [participant, setParticipant] = useState<LiveParticipant | null>(null);
   const [role, setRole] = useState<LiveRole>('viewer');
   const [participants, setParticipants] = useState<LiveParticipant[]>([]);
@@ -64,6 +67,7 @@ export default function LiveSessionScreen() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
+  const [isDeveloper, setIsDeveloper] = useState(false);
   const hostActivationRef = useRef(false);
 
   const isHost = live?.host_id === userId && role === 'host';
@@ -128,12 +132,26 @@ export default function LiveSessionScreen() {
 
   useEffect(() => {
     let active = true;
+    if (!userId) { setIsDeveloper(false); return () => { active = false; }; }
+    void db.rpc('is_platform_developer').then(({ data, error: roleError }: { data: boolean | null; error: unknown }) => {
+      if (active) setIsDeveloper(!roleError && data === true);
+    }).catch(() => { if (active) setIsDeveloper(false); });
+    return () => { active = false; };
+  }, [userId]);
+
+  useEffect(() => {
+    let active = true;
     const initialise = async () => {
+      setSessionId('');
+      setLive(null);
+      setEnded(false);
       if (!userId) {
         setLoading(false);
         return;
       }
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) {
+      const isShortCode = /^[0-9]{8}$/.test(requestedLiveId);
+      const isLegacyUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedLiveId);
+      if (!isShortCode && !isLegacyUuid) {
         setError('This LIVE ID is not valid.');
         setLoading(false);
         return;
@@ -141,17 +159,20 @@ export default function LiveSessionScreen() {
       setLoading(true);
       setError(null);
       try {
-        const nextLive = await getLiveSession(sessionId);
+        const nextLive = isShortCode
+          ? await getLiveSessionByCode(requestedLiveId)
+          : await getLiveSession(requestedLiveId);
         if (!active) return;
+        setSessionId(nextLive.id);
         setLive(nextLive);
         if (nextLive.status === 'ended' || nextLive.status === 'failed') {
           setEnded(true);
           return;
         }
 
-        let myParticipant = await getMyLiveParticipant(sessionId, userId);
+        let myParticipant = await getMyLiveParticipant(nextLive.id, userId);
         if ((!myParticipant || myParticipant.status !== 'joined') && nextLive.status === 'live') {
-          myParticipant = await joinLiveSession(sessionId, userId);
+          myParticipant = await joinLiveSession(nextLive.id, userId);
         }
         if (!active) return;
         if (!myParticipant || myParticipant.status !== 'joined') {
@@ -168,7 +189,7 @@ export default function LiveSessionScreen() {
     };
     void initialise();
     return () => { active = false; };
-  }, [sessionId, userId]);
+  }, [requestedLiveId, userId]);
 
   useEffect(() => {
     if (!live || !userId || ended) return;
@@ -341,13 +362,46 @@ export default function LiveSessionScreen() {
     }
   };
 
+  const applyLiveBan = async (target: LiveParticipant, duration: '1_week' | '1_month' | '1_year' | 'permanent') => {
+    if (!isDeveloper || !userId || target.user_id === userId || working) return;
+    setWorking(true);
+    setError(null);
+    try {
+      const { data, error: banError } = await supabase.functions.invoke('livekit-platform-ban', {
+        body: { targetUserId: target.user_id, duration, reason: 'LIVE qoidalarini buzish yoki 18+ kontent' },
+      });
+      if (banError || data?.error || !data?.success) throw new Error(data?.error || banError?.message || 'LIVE ban qoyilmadi.');
+      if (target.user_id === live?.host_id) {
+        setEnded(true);
+        setLive(current => current ? { ...current, status: 'ended' } : current);
+      }
+      await refreshParticipants();
+      const durationLabel = ({ '1_week': '1 hafta', '1_month': '1 oy', '1_year': '1 yil', permanent: 'butunlay' } as const)[duration];
+      Alert.alert('LIVE ban qoyildi', '@' + (target.host?.username ?? 'user') + ' uchun ' + durationLabel + ' muddatga LIVE cheklovi berildi.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'LIVE ban qoyilmadi.');
+    } finally { setWorking(false); }
+  };
+
+  const openLiveBanOptions = (target: LiveParticipant) => {
+    if (!isDeveloper || target.user_id === userId) return;
+    Alert.alert('LIVE ban berish', '@' + (target.host?.username ?? 'user') + ' hisobining LIVE huquqini cheklash', [
+      { text: '1 hafta', onPress: () => void applyLiveBan(target, '1_week') },
+      { text: '1 oy', onPress: () => void applyLiveBan(target, '1_month') },
+      { text: '1 yil', onPress: () => void applyLiveBan(target, '1_year') },
+      { text: 'Butunlay', style: 'destructive', onPress: () => void applyLiveBan(target, 'permanent') },
+      { text: 'Bekor qilish', style: 'cancel' },
+    ]);
+  };
+
   const shareLive = async () => {
-    const liveUrl = `https://shvmrmuhammadumar-blip.github.io/live/${sessionId}`;
-    const appUrl = `lumo://live/${sessionId}`;
+    const liveCode = live?.live_code ?? sessionId;
+    const liveUrl = 'https://shvmrmuhammadumar-blip.github.io/live/' + liveCode;
+    const appUrl = 'lumo://live/' + liveCode;
     try {
       await Share.share({
         title: 'LUMO LIVE',
-        message: `Join my LUMO LIVE room:\nOpen in LUMO: ${appUrl}\nWeb link: ${liveUrl}\n\nLIVE ID: ${sessionId}`,
+        message: `Join my LUMO LIVE room:\nOpen in LUMO: ${appUrl}\nWeb link: ${liveUrl}\n\nLIVE ID: ${liveCode}`,
         url: liveUrl,
       });
     } catch (cause) {
@@ -440,9 +494,9 @@ export default function LiveSessionScreen() {
       <View style={styles.liveIdCard}>
         <View style={styles.liveIdCopy}>
           <Text style={styles.liveIdLabel}>LUMO LIVE ID</Text>
-          <Text style={styles.liveIdValue} selectable>{sessionId}</Text>
+          <Text style={styles.liveIdValue} selectable>{live.live_code}</Text>
         </View>
-        <Text style={styles.liveIdHint}>HOLD TO COPY</Text>
+        <Text style={styles.liveIdHint}>8-DIGIT CODE</Text>
       </View>
 
       <View style={styles.roomHeading}>
@@ -470,6 +524,30 @@ export default function LiveSessionScreen() {
         <Text style={styles.sessionCategory}>{live.category.toUpperCase()}</Text>
         <Text style={styles.sessionDescription}>{live.description || 'Come into the conversation and be part of the moment.'}</Text>
       </View>
+
+      {isDeveloper ? (
+        <View style={styles.developerPanel}>
+          <View style={styles.panelHeader}>
+            <View><Text style={styles.panelEyebrow}>DEVELOPER TOOLS</Text><Text style={styles.panelTitle}>LIVE moderation</Text></View>
+            <View style={styles.developerBadge}><Text style={styles.developerBadgeText}>DEVELOPER</Text></View>
+          </View>
+          <Text style={styles.developerDescription}>Qoidani buzgan yoki 18+ efir qilgan foydalanuvchiga LIVE cheklovi bering.</Text>
+          {participants.map(target => (
+            <View key={target.user_id} style={styles.developerUserRow}>
+              <View style={styles.developerUserCopy}>
+                <Text style={styles.developerUserName}>@{target.host?.username ?? 'lumo_member'}</Text>
+                <Text style={styles.developerUserRole}>{target.role.toUpperCase()}</Text>
+              </View>
+              {target.user_id === userId ? <Text style={styles.developerSelf}>YOU</Text> : (
+                <Pressable style={styles.developerBanButton} onPress={() => openLiveBanOptions(target)} disabled={working}>
+                  <Ionicons name="ban-outline" size={14} color="#FFE0E0" /><Text style={styles.developerBanText}>BAN</Text>
+                </Pressable>
+              )}
+            </View>
+          ))}
+          {!participants.length ? <Text style={styles.developerDescription}>Hozircha qatnashchilar yoq.</Text> : null}
+        </View>
+      ) : null}
 
       {isHost ? (
         <View style={styles.hostPanel}>
@@ -650,6 +728,17 @@ const styles = StyleSheet.create({
   sessionMeta: { gap: 4, paddingHorizontal: 2 },
   sessionCategory: { color: '#C3D19E', fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },
   sessionDescription: { color: '#AEB8C3', fontSize: 11, lineHeight: 16 },
+  developerPanel: { backgroundColor: '#191417', borderWidth: 1, borderColor: '#694148', borderRadius: 16, padding: 13, gap: 11 },
+  developerBadge: { backgroundColor: '#3A2428', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6 },
+  developerBadgeText: { color: '#F0B4B4', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+  developerDescription: { color: '#B8A4A5', fontSize: 9, lineHeight: 14 },
+  developerUserRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, backgroundColor: '#211A1D', borderRadius: 11, padding: 9 },
+  developerUserCopy: { flex: 1, gap: 3 },
+  developerUserName: { color: '#F2F5F7', fontSize: 10, fontWeight: '900' },
+  developerUserRole: { color: '#8F7F82', fontSize: 7, fontWeight: '900', letterSpacing: 1 },
+  developerSelf: { color: '#91A076', fontSize: 8, fontWeight: '900' },
+  developerBanButton: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#5A2D34', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  developerBanText: { color: '#FFE0E0', fontSize: 8, fontWeight: '900', letterSpacing: 0.7 },
   hostPanel: { backgroundColor: '#11171E', borderWidth: 1, borderColor: '#2B3440', borderRadius: 18, padding: 13, gap: 11 },
   panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   panelEyebrow: { color: '#7F8B99', fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },

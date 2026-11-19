@@ -34,7 +34,7 @@ export default function CreateLiveScreen() {
         category,
         audience,
       });
-      router.replace(`/live/${live.id}` as never);
+      router.replace('/live/' + live.live_code as never);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not start your live.');
     } finally {

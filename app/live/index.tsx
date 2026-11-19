@@ -59,15 +59,18 @@ export default function LiveScreen() {
   const featured = sessions[0];
   const otherSessions = useMemo(() => featured ? sessions.filter(item => item.id !== featured.id) : sessions, [sessions, featured]);
 
-  const openSession = (id: string) => router.push(`/live/${id}` as never);
+  const openSession = (liveCode: string) => router.push('/live/' + liveCode as never);
   const joinById = () => {
-    const match = liveIdInput.trim().match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-    if (!match) {
-      setJoinError('Enter a valid LUMO LIVE ID or paste its link.');
+    const input = liveIdInput.trim();
+    const codeMatch = input.match(/(?:^|\/)([0-9]{8})(?:[/?#]|$)/);
+    const uuidMatch = input.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    const identifier = /^[0-9]{8}$/.test(input) ? input : codeMatch?.[1] ?? uuidMatch?.[0];
+    if (!identifier) {
+      setJoinError('Enter an 8-digit LUMO LIVE ID or paste its link.');
       return;
     }
     setJoinError(null);
-    router.push(`/live/${match[0]}` as never);
+    router.push('/live/' + identifier as never);
   };
   const categoryLabel = (category: string) => LIVE_CATEGORIES.find(item => item.key === category)?.label ?? 'Live';
 
@@ -174,7 +177,7 @@ export default function LiveScreen() {
       ) : (
         <>
           {featured ? (
-            <Pressable style={styles.featuredCard} onPress={() => openSession(featured.id)}>
+            <Pressable style={styles.featuredCard} onPress={() => openSession(featured.live_code)}>
               {featured.cover_url ? (
                 <Image source={{ uri: featured.cover_url }} style={styles.featuredImage} contentFit="cover" />
               ) : (
@@ -202,7 +205,7 @@ export default function LiveScreen() {
 
           <View style={styles.cardGrid}>
             {otherSessions.map(item => (
-              <Pressable key={item.id} style={styles.liveCard} onPress={() => openSession(item.id)}>
+              <Pressable key={item.id} style={styles.liveCard} onPress={() => openSession(item.live_code)}>
                 <View style={styles.cardMedia}>
                   {item.cover_url ? <Image source={{ uri: item.cover_url }} style={styles.cardImage} contentFit="cover" /> : (
                     <View style={styles.cardFallback}><Ionicons name="radio" size={27} color="rgba(220,230,200,0.38)" /></View>
