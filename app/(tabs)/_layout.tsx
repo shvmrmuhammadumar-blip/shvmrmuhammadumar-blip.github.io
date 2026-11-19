@@ -510,7 +510,8 @@ export default function TabsLayout() {
             title: '',
             tabBarLabel: () => null,
             tabBarIcon: () => <CenterCreateIcon />,
-            tabBarIconStyle: { transform: [{ translateY: -9 }] },
+            tabBarItemStyle: { marginTop: -12 },
+            tabBarIconStyle: { marginTop: -5, transform: [{ translateY: -5 }] },
           }}
         />
 
@@ -900,7 +901,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 6,
     elevation: 3,
-    marginBottom: 0,
+    marginBottom: 8,
+    transform: [{ translateY: -5 }],
   },
   notifOverlay: {
     flex: 1,

@@ -78,6 +78,15 @@ export default function LiveScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.brandRow}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/' as never)}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={8}
+          >
+            <Ionicons name="chevron-back" size={19} color={colors.text} />
+          </Pressable>
           <View style={styles.brandMark}><Ionicons name="radio" size={19} color="#0D1117" /></View>
           <Text style={styles.brand}>LUMO <Text style={styles.brandLive}>LIVE</Text></Text>
         </View>
@@ -246,7 +255,8 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   homeButton: { height: 38, paddingHorizontal: 11, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440' },
   homeButtonText: { color: colors.text, fontSize: 10, fontWeight: '800' },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  backButton: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440' },
   brandMark: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#C9D9A4', alignItems: 'center', justifyContent: 'center' },
   brand: { color: '#F2F5F7', fontSize: 17, fontWeight: '900', letterSpacing: 1.3 },
   brandLive: { color: '#F16D73', fontWeight: '900' },
