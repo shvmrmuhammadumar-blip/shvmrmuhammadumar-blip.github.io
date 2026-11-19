@@ -94,14 +94,15 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
     });
     roomRef.current = room;
 
-    const onSubscribed = (track: RemoteTrack, publication: { trackSid: string }, participant: { identity: string; name?: string }) => {
+    const onSubscribed = (track: RemoteTrack, publication: { trackSid: string; source?: Track.Source }, participant: { identity: string; name?: string }) => {
+      if (track.kind !== Track.Kind.Video || publication.source !== Track.Source.Camera) return;
       addTrack(track, participant.identity, participant.name || participant.identity, publication.trackSid, false);
     };
     const onUnsubscribed = (track: RemoteTrack, publication: { trackSid: string }) => {
       setTracks(current => current.filter(item => item.id !== publication.trackSid && item.track !== track));
     };
-    const onLocalPublished = (publication: { track?: LocalTrack; trackSid: string }) => {
-      if (!publication.track) return;
+    const onLocalPublished = (publication: { track?: LocalTrack; trackSid: string; source?: Track.Source }) => {
+      if (!publication.track || publication.track.kind !== Track.Kind.Video || publication.source !== Track.Source.Camera) return;
       const local = room.localParticipant;
       addTrack(publication.track, local.identity, local.name || 'You', publication.trackSid, true);
     };
@@ -151,7 +152,7 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
             if (publication.track) {
               onSubscribed(
                 publication.track as RemoteTrack,
-                { trackSid: publication.trackSid },
+                { trackSid: publication.trackSid, source: publication.source },
                 participant,
               );
             }
