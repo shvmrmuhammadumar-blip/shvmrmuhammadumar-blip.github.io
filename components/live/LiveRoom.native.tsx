@@ -37,7 +37,7 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
           trackRef={item}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
           objectFit="cover"
-          mirror={item.participant.isLocal}
+          mirror={false}
         />
         <View style={styles.videoLabel}>
           <Text style={styles.videoLabelText} numberOfLines={1}>

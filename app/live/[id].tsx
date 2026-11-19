@@ -437,6 +437,14 @@ export default function LiveSessionScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.liveIdCard}>
+        <View style={styles.liveIdCopy}>
+          <Text style={styles.liveIdLabel}>LUMO LIVE ID</Text>
+          <Text style={styles.liveIdValue} selectable>{sessionId}</Text>
+        </View>
+        <Text style={styles.liveIdHint}>HOLD TO COPY</Text>
+      </View>
+
       <View style={styles.roomHeading}>
         <View style={styles.hostIdentity}>
           <View style={styles.hostAvatar}>
@@ -621,6 +629,11 @@ const styles = StyleSheet.create({
   viewerBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#171D24', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
   shareButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center' },
   viewerBadgeText: { color: '#F2F5F7', fontSize: 9, fontWeight: '800' },
+  liveIdCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 13, paddingVertical: 10, borderRadius: 13, backgroundColor: '#111920', borderWidth: 1, borderColor: '#2B3940' },
+  liveIdCopy: { flex: 1, minWidth: 0, gap: 4 },
+  liveIdLabel: { color: '#91A076', fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },
+  liveIdValue: { color: '#E7EDF1', fontSize: 10, fontWeight: '700', letterSpacing: 0.35, fontVariant: ['tabular-nums'] },
+  liveIdHint: { color: '#91A076', fontSize: 7, fontWeight: '900', letterSpacing: 0.7 },
   roomHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   hostIdentity: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1 },
   hostAvatar: { width: 38, height: 38, borderRadius: 14, backgroundColor: '#C9D9A4', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
