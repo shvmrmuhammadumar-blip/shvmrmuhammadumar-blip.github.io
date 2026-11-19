@@ -12,6 +12,7 @@ import {
   getLiveSessionByCode,
   getMyLiveParticipant,
   joinLiveSession,
+  leaveLiveRoom,
   leaveLiveStage,
   loadGuestRequests,
   loadLiveMessages,
@@ -69,6 +70,7 @@ export default function LiveSessionScreen() {
   const [ended, setEnded] = useState(false);
   const [isDeveloper, setIsDeveloper] = useState(false);
   const hostActivationRef = useRef(false);
+  const leavingLiveRef = useRef(false);
 
   const isHost = live?.host_id === userId && role === 'host';
   const guests = useMemo(() => participants.filter(item => item.role === 'guest' && item.status === 'joined'), [participants]);
@@ -76,7 +78,7 @@ export default function LiveSessionScreen() {
   const displayName = live?.host?.username ?? 'LUMO creator';
 
   const refreshParticipants = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId || leavingLiveRef.current) return;
     try {
       setParticipants(await loadLiveParticipants(sessionId));
       if (!userId || live?.status !== 'live') return;
@@ -409,6 +411,43 @@ export default function LiveSessionScreen() {
     }
   };
 
+  const leaveLiveToHome = async () => {
+    if (!userId || !sessionId || working || leavingLiveRef.current) return;
+    leavingLiveRef.current = true;
+    setWorking(true);
+    setError(null);
+    try {
+      if (isHost) {
+        const { data, error: functionError } = await supabase.functions.invoke('livekit-end-session', {
+          body: { sessionId },
+        });
+        if (functionError || data?.error || !data?.success) {
+          throw new Error(data?.error || functionError?.message || 'Could not end this live.');
+        }
+      } else {
+        await leaveLiveRoom(sessionId, userId);
+      }
+      setEnded(true);
+      router.replace('/' as never);
+    } catch (cause) {
+      leavingLiveRef.current = false;
+      setError(cause instanceof Error ? cause.message : 'Could not leave this live. Please retry.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirmLeaveLive = () => {
+    if (isHost) {
+      Alert.alert('End your LIVE?', 'Leaving as the host will end the broadcast for everyone.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'End LIVE and go Home', style: 'destructive', onPress: () => void leaveLiveToHome() },
+      ]);
+      return;
+    }
+    void leaveLiveToHome();
+  };
+
   const finishLive = async () => {
     if (!userId || working) return;
     setWorking(true);
@@ -480,7 +519,9 @@ export default function LiveSessionScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.topBar}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}><Ionicons name="chevron-back" size={20} color="#F2F5F7" /></Pressable>
+        <Pressable style={styles.homeButton} onPress={confirmLeaveLive} disabled={working} accessibilityRole="button" accessibilityLabel="Leave LIVE and go Home">
+          {working ? <ActivityIndicator size="small" color="#F2F5F7" /> : <><Ionicons name="home-outline" size={16} color="#F2F5F7" /><Text style={styles.homeButtonText}>Home</Text></>}
+        </Pressable>
         <View style={styles.topTitle}>
           <View style={styles.livePill}><View style={[styles.liveDot, live.status === 'starting' && styles.liveDotStarting]} /><Text style={styles.livePillText}>{live.status === 'starting' ? 'PREPARING' : 'LIVE'}</Text></View>
           <Text style={styles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
@@ -697,7 +738,8 @@ const styles = StyleSheet.create({
   chatColumn: { minWidth: 0 },
   chatColumnWide: { width: 360, maxWidth: '40%' },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  backButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center' },
+  homeButton: { minWidth: 66, height: 36, paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  homeButtonText: { color: '#F2F5F7', fontSize: 10, fontWeight: '800' },
   topTitle: { flex: 1, gap: 3 },
   livePill: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F16D73' },

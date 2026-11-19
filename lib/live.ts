@@ -380,6 +380,23 @@ export async function leaveLiveStage(sessionId: string, userId: string) {
   await joinLiveSession(sessionId, userId);
 }
 
+export async function leaveLiveRoom(sessionId: string, userId: string) {
+  const { error: requestError } = await db
+    .from('live_guest_requests')
+    .update({ status: 'cancelled' })
+    .eq('session_id', sessionId)
+    .eq('requester_id', userId)
+    .in('status', ['pending', 'accepted']);
+  if (requestError) throw requestError;
+
+  const { error: participantError } = await db
+    .from('live_participants')
+    .delete()
+    .eq('session_id', sessionId)
+    .eq('user_id', userId);
+  if (participantError) throw participantError;
+}
+
 export async function removeLiveGuest(sessionId: string, userId: string) {
   const { error: requestError } = await db
     .from('live_guest_requests')
