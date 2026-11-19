@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,6 +19,8 @@ export default function LiveScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveIdInput, setLiveIdInput] = useState('');
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   const load = useCallback(async (quiet = false) => {
     if (!userId) return;
@@ -58,6 +60,15 @@ export default function LiveScreen() {
   const otherSessions = useMemo(() => featured ? sessions.filter(item => item.id !== featured.id) : sessions, [sessions, featured]);
 
   const openSession = (id: string) => router.push(`/live/${id}` as never);
+  const joinById = () => {
+    const match = liveIdInput.trim().match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    if (!match) {
+      setJoinError('Enter a valid LUMO LIVE ID or paste its link.');
+      return;
+    }
+    setJoinError(null);
+    router.push(`/live/${match[0]}` as never);
+  };
   const categoryLabel = (category: string) => LIVE_CATEGORIES.find(item => item.key === category)?.label ?? 'Live';
 
   return (
@@ -92,6 +103,34 @@ export default function LiveScreen() {
             <Text style={styles.goLiveText}>Go live</Text>
           </Pressable>
         </View>
+      </View>
+
+      <View style={styles.joinByIdCard}>
+        <View style={styles.joinByIdHeading}>
+          <View style={styles.joinByIdIcon}><Ionicons name="key-outline" size={17} color="#D6E3B4" /></View>
+          <View style={styles.joinByIdCopy}>
+            <Text style={styles.joinByIdTitle}>Have a LIVE ID?</Text>
+            <Text style={styles.joinByIdSubtitle}>Open a shared room by ID. Followers-only rooms still require access.</Text>
+          </View>
+        </View>
+        <View style={styles.joinByIdRow}>
+          <TextInput
+            value={liveIdInput}
+            onChangeText={value => { setLiveIdInput(value); setJoinError(null); }}
+            placeholder="Paste live ID or link"
+            placeholderTextColor="#74808D"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.joinByIdInput}
+            onSubmitEditing={joinById}
+            returnKeyType="go"
+          />
+          <Pressable style={styles.joinByIdButton} onPress={joinById}>
+            <Text style={styles.joinByIdButtonText}>Join</Text>
+            <Ionicons name="arrow-forward" size={15} color="#11161C" />
+          </Pressable>
+        </View>
+        {joinError ? <Text style={styles.joinByIdError}>{joinError}</Text> : null}
       </View>
 
       <View style={styles.sectionHeader}>
@@ -218,6 +257,17 @@ const styles = StyleSheet.create({
   heroPeopleText: { color: '#DCE6D7', fontSize: 9, fontWeight: '800' },
   goLiveButton: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#C9D9A4', borderRadius: 12, paddingHorizontal: 13, paddingVertical: 10 },
   goLiveText: { color: '#11161C', fontSize: 11, fontWeight: '900' },
+  joinByIdCard: { padding: 14, gap: 11, borderRadius: 18, backgroundColor: '#111920', borderWidth: 1, borderColor: '#2B3940' },
+  joinByIdHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  joinByIdIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: '#25302A', alignItems: 'center', justifyContent: 'center' },
+  joinByIdCopy: { flex: 1, gap: 3 },
+  joinByIdTitle: { color: '#F2F5F7', fontSize: 12, fontWeight: '900' },
+  joinByIdSubtitle: { color: '#8F9CA7', fontSize: 9, lineHeight: 14 },
+  joinByIdRow: { flexDirection: 'row', gap: 8 },
+  joinByIdInput: { flex: 1, minWidth: 0, minHeight: 43, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: '#303B45', backgroundColor: '#0B1117', color: '#F2F5F7', fontSize: 11 },
+  joinByIdButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#C9D9A4' },
+  joinByIdButtonText: { color: '#11161C', fontSize: 10, fontWeight: '900' },
+  joinByIdError: { color: '#E6A1A1', fontSize: 10 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   sectionEyebrow: { color: '#7F8B99', fontSize: 8, fontWeight: '900', letterSpacing: 1.7 },
   sectionTitle: { color: '#F2F5F7', fontSize: 21, fontWeight: '900', marginTop: 3 },

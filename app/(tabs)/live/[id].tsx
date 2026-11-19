@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -46,6 +46,8 @@ export default function LiveSessionScreen() {
   const sessionId = String(params.id ?? '');
   const router = useRouter();
   const { session: authSession } = useAuth();
+  const { width: windowWidth } = useWindowDimensions();
+  const wideLayout = windowWidth >= 920;
   const userId = authSession?.user.id;
 
   const [live, setLive] = useState<LiveSession | null>(null);
@@ -127,7 +129,12 @@ export default function LiveSessionScreen() {
   useEffect(() => {
     let active = true;
     const initialise = async () => {
-      if (!userId || !sessionId) {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) {
+        setError('This LIVE ID is not valid.');
         setLoading(false);
         return;
       }
@@ -334,6 +341,19 @@ export default function LiveSessionScreen() {
     }
   };
 
+  const shareLive = async () => {
+    const liveUrl = `https://shvmrmuhammadumar-blip.github.io/live/${sessionId}`;
+    try {
+      await Share.share({
+        title: 'LUMO LIVE',
+        message: `Join my LUMO LIVE room:\n${liveUrl}\n\nLIVE ID: ${sessionId}`,
+        url: liveUrl,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not share this live.');
+    }
+  };
+
   const finishLive = async () => {
     if (!userId || working) return;
     setWorking(true);
@@ -411,6 +431,9 @@ export default function LiveSessionScreen() {
           <Text style={styles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
         </View>
         <View style={styles.viewerBadge}><Ionicons name="eye-outline" size={13} color="#F2F5F7" /><Text style={styles.viewerBadgeText}>{viewers.length.toLocaleString()}</Text></View>
+        <Pressable style={styles.shareButton} onPress={() => void shareLive()} accessibilityRole="button" accessibilityLabel="Share live room">
+          <Ionicons name="share-social-outline" size={17} color="#F2F5F7" />
+        </Pressable>
       </View>
 
       <View style={styles.roomHeading}>
@@ -428,7 +451,9 @@ export default function LiveSessionScreen() {
 
       {error ? <View style={styles.inlineError}><Ionicons name="alert-circle-outline" size={16} color="#D8B879" /><Text style={styles.inlineErrorText}>{error}</Text></View> : null}
 
-      <View style={styles.videoCard}>
+      <View style={[styles.roomColumns, wideLayout && styles.roomColumnsWide]}>
+        <View style={styles.stageColumn}>
+          <View style={styles.videoCard}>
         <LiveRoom key={`${sessionId}-${role}`} sessionId={sessionId} onConnectionChange={handleConnectionChange} />
       </View>
 
@@ -530,7 +555,9 @@ export default function LiveSessionScreen() {
           )}
         </View>
       )}
+        </View>
 
+        <View style={[styles.chatColumn, wideLayout && styles.chatColumnWide]}>
       <View style={styles.chatCard}>
         <View style={styles.panelHeader}>
           <View><Text style={styles.panelEyebrow}>THE ROOM</Text><Text style={styles.panelTitle}>Live chat <Text style={styles.panelCount}>{messages.length}</Text></Text></View>
@@ -563,6 +590,8 @@ export default function LiveSessionScreen() {
           </Pressable>
         </View>
       </View>
+        </View>
+      </View>
 
       <View style={styles.connectionFooter}>
         <View style={[styles.connectionDot, connected && styles.connectionDotActive]} />
@@ -574,7 +603,12 @@ export default function LiveSessionScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#090C12' },
-  content: { paddingHorizontal: 15, paddingTop: 14, paddingBottom: 38, gap: 14, width: '100%', maxWidth: 960, alignSelf: 'center' },
+  content: { paddingHorizontal: 15, paddingTop: 14, paddingBottom: 38, gap: 14, width: '100%', maxWidth: 1240, alignSelf: 'center' },
+  roomColumns: { gap: 14 },
+  roomColumnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  stageColumn: { flex: 1, minWidth: 0, gap: 14 },
+  chatColumn: { minWidth: 0 },
+  chatColumnWide: { width: 360, maxWidth: '40%' },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   backButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center' },
   topTitle: { flex: 1, gap: 3 },
@@ -584,6 +618,7 @@ const styles = StyleSheet.create({
   livePillText: { color: '#F3A8A9', fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
   topLiveTitle: { color: '#F2F5F7', fontSize: 13, fontWeight: '900' },
   viewerBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#171D24', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
+  shareButton: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#171D24', borderWidth: 1, borderColor: '#2B3440', alignItems: 'center', justifyContent: 'center' },
   viewerBadgeText: { color: '#F2F5F7', fontSize: 9, fontWeight: '800' },
   roomHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   hostIdentity: { flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1 },

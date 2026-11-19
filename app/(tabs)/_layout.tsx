@@ -564,8 +564,22 @@ export default function TabsLayout() {
               <View><Text style={styles.moduleSheetEyebrow}>LUMO ECOSYSTEM</Text><Text style={styles.moduleSheetTitle}>Explore modules</Text></View>
               <Pressable style={styles.sheetCloseBtn} onPress={() => setModulesVisible(false)} accessibilityRole="button" accessibilityLabel="Close modules"><Ionicons name="close" size={20} color={colors.text} /></Pressable>
             </View>
+            <Pressable
+              style={styles.moduleLiveFeature}
+              onPress={() => navigateTo('/live')}
+              accessibilityRole="button"
+              accessibilityLabel="Open LUMO LIVE"
+            >
+              <View style={styles.moduleLiveFeatureIcon}><Ionicons name="radio" size={22} color="#10151A" /></View>
+              <View style={styles.moduleLiveFeatureCopy}>
+                <Text style={styles.moduleLiveFeatureEyebrow}>LIVE BROADCASTS</Text>
+                <Text style={styles.moduleLiveFeatureTitle}>Open LUMO LIVE</Text>
+                <Text style={styles.moduleLiveFeatureSubtitle}>Watch a room or start your own stage</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={19} color="#D9E7BC" />
+            </Pressable>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.moduleGrid}>
-              {appNavigation.filter((item) => item.path !== '/').map((item) => (
+              {appNavigation.filter((item) => item.path !== '/' && item.path !== '/live').map((item) => (
                 <Pressable key={item.path} onPress={() => navigateTo(item.path)} style={styles.moduleGridItem} accessibilityRole="button">
                   <View style={styles.moduleGridIcon}><Ionicons name={item.icon} size={21} color={colors.accentStrong} /></View>
                   <Text style={styles.moduleGridLabel}>{item.label}</Text>
@@ -815,9 +829,15 @@ const styles = StyleSheet.create({
   sidebarCreateText: { color: colors.bg, fontSize: 13, fontWeight: '800' },
   moduleOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
   moduleSheet: { backgroundColor: colors.surface, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 28, maxHeight: '78%' },
-  moduleSheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
+  moduleSheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
   moduleSheetEyebrow: { color: colors.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1.6 },
   moduleSheetTitle: { color: colors.text, fontSize: 21, fontWeight: '800', marginTop: 4 },
+  moduleLiveFeature: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 13, paddingVertical: 12, borderRadius: 17, borderWidth: 1, borderColor: 'rgba(201,217,164,0.32)', backgroundColor: '#18211F', marginBottom: 15 },
+  moduleLiveFeatureIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#C9D9A4', alignItems: 'center', justifyContent: 'center' },
+  moduleLiveFeatureCopy: { flex: 1, gap: 2 },
+  moduleLiveFeatureEyebrow: { color: '#C9D9A4', fontSize: 8, fontWeight: '900', letterSpacing: 1.4 },
+  moduleLiveFeatureTitle: { color: '#F2F5F7', fontSize: 13, fontWeight: '900' },
+  moduleLiveFeatureSubtitle: { color: '#A3B0A1', fontSize: 9 },
   moduleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   moduleGridItem: { width: '31%', minWidth: 86, minHeight: 84, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 8 },
   moduleGridIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.surfaceSoft, alignItems: 'center', justifyContent: 'center' },
