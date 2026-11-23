@@ -85,6 +85,7 @@ function Gate() {
       </Stack.Protected>
 
       <Stack.Protected guard={!signedIn}>
+        <Stack.Screen name="lumo/index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>
