@@ -42,7 +42,7 @@ export default function Login() {
         />
         <Text style={lumoStyles.logo}>Lumo</Text>
         <Text style={lumoStyles.setup}>
-          Supabase is not set up yet.{'\n\n'}Copy .env.example to .env, add your project URL and anon key, then restart the app
+          Supabase is not set up yet. Copy .env.example to .env, add your project URL and anon key, then restart the app
           with "npx expo start -c".
         </Text>
       </View>
