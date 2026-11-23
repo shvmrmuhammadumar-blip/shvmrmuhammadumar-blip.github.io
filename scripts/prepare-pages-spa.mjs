@@ -16,7 +16,7 @@ const restoreRoute = `<script>
 </script>`;
 
 if (!html.includes('__lumo_route')) {
-  html = html.replace('<head>', '<head>\\n' + restoreRoute);
+  html = html.replace('<head>', '<head>\n' + restoreRoute);
 }
 await writeFile(indexPath, html, 'utf8');
 
