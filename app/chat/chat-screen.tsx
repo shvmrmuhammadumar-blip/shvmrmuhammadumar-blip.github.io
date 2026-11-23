@@ -47,6 +47,10 @@ import {
 } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 import type { Message, MessageReaction, MessageType } from "../../lib/types";
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+import { colors } from '../../lib/theme';
+import { useDirectCalls } from '../../lib/direct-calls';
+
 
 const MESSAGE_SELECT =
   "id, sender_id, receiver_id, body, created_at, read_at, edited_at, reply_to, forwarded_from, forwarded_from_type, forwarded_from_id, forwarded_from_sender, forwarded_from_chat, message_type, media_path, media_mime_type, message_reactions(user_id, reaction)";
@@ -65,20 +69,20 @@ function isMissingMessagingUpgrade(error: { code?: string } | null): boolean {
 }
 
 const palette = {
-  canvas: "#090C12",
-  surface: "#12161C",
-  surfaceRaised: "#1A2029",
-  surfaceSoft: "#20252D",
-  ink: "#F2F5F7",
-  muted: "#9AA5B2",
-  mutedDim: "#697263",
-  line: "#2B3440",
-  accent: "#B9C7D6",
-  accentStrong: "#E0E8F0",
-  accentTint: "#1E2717",
-  lime: "#B9C7D6",
-  incoming: "#151914",
-  danger: "#FF647C",
+  get canvas() { return colors.bg; },
+  get surface() { return colors.surface; },
+  get surfaceRaised() { return colors.surfaceRaised; },
+  get surfaceSoft() { return colors.surfaceSoft; },
+  get ink() { return colors.text; },
+  get muted() { return colors.muted; },
+  get mutedDim() { return colors.dim; },
+  get line() { return colors.border; },
+  get accent() { return colors.accent; },
+  get accentStrong() { return colors.accentStrong; },
+  get accentTint() { return colors.accentDark; },
+  get lime() { return colors.accent; },
+  get incoming() { return colors.chatIncoming; },
+  get danger() { return colors.danger; },
 };
 
 const STICKER_CATEGORIES = [
@@ -184,11 +188,12 @@ function DecorativeOrb({
   color: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
     <View
       pointerEvents="none"
       style={[
-        styles.decorativeOrb,
+        lumoStyles.decorativeOrb,
         {
           width: size,
           height: size,
@@ -202,12 +207,14 @@ function DecorativeOrb({
 }
 
 export default function Chat() {
+  const lumoStyles = useThemedStyles(styles);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const otherId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const { session } = useAuth();
   const router = useRouter();
   const me = session?.user.id;
+  const { startCall, starting: callStarting, call: activeCall } = useDirectCalls();
   const listRef = useRef<FlatList<Message>>(null);
 
   const [profile, setProfile] = useState<{
@@ -251,6 +258,7 @@ export default function Chat() {
     const timer = setInterval(() => setCallDuration((d) => d + 1), 1000);
     return () => clearInterval(timer);
   }, [callType]);
+
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [pendingMedia, setPendingMedia] = useState<PickedChatMedia | null>(
@@ -1280,30 +1288,30 @@ export default function Chat() {
   }, [highlightedMessageId]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView style={lumoStyles.safeArea} edges={["top", "left", "right"]}>
       <Stack.Screen
         options={{
           headerShown: false,
           title: profile?.username ?? "Chat",
         }}
       />
-      <StatusBar barStyle="light-content" backgroundColor={palette.canvas} />
+      <StatusBar barStyle="light-content" />
 
       <KeyboardAvoidingView
-        style={styles.screen}
+        style={lumoStyles.screen}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 18}
       >
-        <View style={styles.header}>
+        <View style={lumoStyles.header}>
           <DecorativeOrb
             size={120}
-            color="rgba(216,255,114,0.10)"
-            style={styles.headerOrbOne}
+            color={resolveThemeColor("rgba(216,255,114,0.10)", "color")}
+            style={lumoStyles.headerOrbOne}
           />
           <DecorativeOrb
             size={74}
-            color="rgba(216,255,114,0.06)"
-            style={styles.headerOrbTwo}
+            color={resolveThemeColor("rgba(216,255,114,0.06)", "color")}
+            style={lumoStyles.headerOrbTwo}
           />
 
           <Pressable
@@ -1312,70 +1320,72 @@ export default function Chat() {
             accessibilityLabel="Go back"
             hitSlop={10}
             style={({ pressed }) => [
-              styles.backButton,
-              pressed && styles.pressed,
+              lumoStyles.backButton,
+              pressed && lumoStyles.pressed,
             ]}
           >
             <Ionicons name="arrow-back" size={20} color={palette.ink} />
           </Pressable>
 
           <Pressable
-            style={styles.profilePressable}
+            style={lumoStyles.profilePressable}
             onPress={() => otherId && router.push(`/user/${otherId}`)}
             accessibilityRole="button"
             accessibilityLabel="View profile"
           >
-            <View style={styles.avatarRing}>
+            <View style={lumoStyles.avatarRing}>
               <Avatar
                 uri={profile?.avatar_url}
                 name={profile?.username}
                 size={43}
               />
-              <View style={styles.avatarSpark}>
+              <View style={lumoStyles.avatarSpark}>
                 <Ionicons name="sparkles" size={9} color={palette.canvas} />
               </View>
             </View>
 
-            <View style={styles.headerText}>
-              <Text style={styles.headerName} numberOfLines={1}>
+            <View style={lumoStyles.headerText}>
+              <Text style={lumoStyles.headerName} numberOfLines={1}>
                 {profile?.username ?? "Lumo user"}
               </Text>
-              <View style={styles.headerSubline}>
+              <View style={lumoStyles.headerSubline}>
                 <View
                   style={[
-                    styles.headerMiniDot,
+                    lumoStyles.headerMiniDot,
                     { backgroundColor: palette.lime },
                   ]}
                 />
-                <Text style={[styles.headerSubtitle, { color: palette.lime }]}>
+                <Text style={[lumoStyles.headerSubtitle, { color: palette.lime }]}>
                   Online
                 </Text>
               </View>
             </View>
           </Pressable>
 
-          <View style={styles.headerActionsGroup}>
+          <View style={lumoStyles.headerActionsGroup}>
             <Pressable
-              onPress={() => setCallType("audio")}
+              onPress={() => otherId && void startCall(otherId, "audio")}
+              disabled={!otherId || callStarting || !!activeCall}
               accessibilityRole="button"
               accessibilityLabel="Start voice call"
               hitSlop={8}
               style={({ pressed }) => [
-                styles.headerAction,
-                pressed && styles.pressed,
+                lumoStyles.headerAction,
+                pressed && lumoStyles.pressed,
               ]}
             >
               <Ionicons name="call-outline" size={20} color={palette.ink} />
             </Pressable>
 
             <Pressable
-              onPress={() => setCallType("video")}
+              onPress={() => otherId && void startCall(otherId, "video")}
+              disabled={!otherId || callStarting || !!activeCall}
               accessibilityRole="button"
               accessibilityLabel="Start video call"
               hitSlop={8}
               style={({ pressed }) => [
-                styles.headerAction,
-                pressed && styles.pressed,
+                lumoStyles.headerAction,
+                pressed && lumoStyles.pressed,
               ]}
             >
               <Ionicons name="videocam-outline" size={22} color={palette.ink} />
@@ -1393,8 +1403,8 @@ export default function Chat() {
               }
               hitSlop={8}
               style={({ pressed }) => [
-                styles.headerAction,
-                pressed && styles.pressed,
+                lumoStyles.headerAction,
+                pressed && lumoStyles.pressed,
               ]}
             >
               <Ionicons
@@ -1407,10 +1417,10 @@ export default function Chat() {
         </View>
 
         {showSearch && (
-          <View style={styles.searchBar}>
+          <View style={lumoStyles.searchBar}>
             <Ionicons name="search" size={17} color={palette.muted} />
             <TextInput
-              style={styles.searchInput}
+              style={lumoStyles.searchInput}
               placeholder="Search messages"
               placeholderTextColor={palette.mutedDim}
               value={searchText}
@@ -1428,63 +1438,63 @@ export default function Chat() {
           </View>
         )}
         {!!searchError && showSearch && (
-          <Text style={styles.searchError}>{searchError}</Text>
+          <Text style={lumoStyles.searchError}>{searchError}</Text>
         )}
 
-        <View style={styles.conversationCanvas}>
+        <View style={lumoStyles.conversationCanvas}>
           <DecorativeOrb
             size={230}
-            color="rgba(216,255,114,0.035)"
-            style={styles.chatOrbOne}
+            color={resolveThemeColor("rgba(216,255,114,0.035)", "color")}
+            style={lumoStyles.chatOrbOne}
           />
           <DecorativeOrb
             size={170}
-            color="rgba(216,255,114,0.025)"
-            style={styles.chatOrbTwo}
+            color={resolveThemeColor("rgba(216,255,114,0.025)", "color")}
+            style={lumoStyles.chatOrbTwo}
           />
 
           {loading ? (
-            <View style={styles.centerState}>
-              <View style={styles.loadingOrb}>
+            <View style={lumoStyles.centerState}>
+              <View style={lumoStyles.loadingOrb}>
                 <ActivityIndicator color={palette.lime} size="large" />
               </View>
-              <Text style={styles.stateKicker}>LUMO CONNECTION</Text>
-              <Text style={styles.stateTitle}>Setting the scene</Text>
-              <Text style={styles.stateHint}>
+              <Text style={lumoStyles.stateKicker}>LUMO CONNECTION</Text>
+              <Text style={lumoStyles.stateTitle}>Setting the scene</Text>
+              <Text style={lumoStyles.stateHint}>
                 Your conversation is on its way.
               </Text>
             </View>
           ) : errorText && messages.length === 0 ? (
-            <View style={styles.centerState}>
-              <View style={styles.stateIcon}>
+            <View style={lumoStyles.centerState}>
+              <View style={lumoStyles.stateIcon}>
                 <Ionicons
                   name="cloud-offline-outline"
                   size={27}
                   color={palette.accent}
                 />
               </View>
-              <Text style={styles.stateKicker}>CONNECTION PAUSED</Text>
-              <Text style={styles.stateTitle}>Couldn’t load chat</Text>
-              <Text style={styles.stateHint}>{errorText}</Text>
+              <Text style={lumoStyles.stateKicker}>CONNECTION PAUSED</Text>
+              <Text style={lumoStyles.stateTitle}>Couldn’t load chat</Text>
+              <Text style={lumoStyles.stateHint}>{errorText}</Text>
               <Pressable
                 style={({ pressed }) => [
-                  styles.retryButton,
-                  pressed && styles.pressed,
+                  lumoStyles.retryButton,
+                  pressed && lumoStyles.pressed,
                 ]}
                 onPress={retryLoad}
               >
                 <Ionicons name="refresh" size={16} color={palette.canvas} />
-                <Text style={styles.retryText}>Try again</Text>
+                <Text style={lumoStyles.retryText}>Try again</Text>
               </Pressable>
             </View>
           ) : (
             <>
               {!!errorText && messages.length > 0 && (
-                <Pressable style={styles.inlineError} onPress={retryLoad}>
-                  <Text style={styles.inlineErrorText} numberOfLines={2}>
+                <Pressable style={lumoStyles.inlineError} onPress={retryLoad}>
+                  <Text style={lumoStyles.inlineErrorText} numberOfLines={2}>
                     {errorText}
                   </Text>
-                  <Text style={styles.inlineErrorAction}>Retry</Text>
+                  <Text style={lumoStyles.inlineErrorAction}>Retry</Text>
                 </Pressable>
               )}
               <FlatList
@@ -1507,18 +1517,18 @@ export default function Chat() {
                 }}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={[
-                  styles.messageList,
-                  visibleMessages.length === 0 && styles.messageListEmpty,
+                  lumoStyles.messageList,
+                  visibleMessages.length === 0 && lumoStyles.messageListEmpty,
                 ]}
                 onEndReached={() => void loadOlderMessages()}
                 onEndReachedThreshold={0.25}
                 ListFooterComponent={
                   loadingOlderMessages ? (
                     <ActivityIndicator
-                      style={styles.olderMessagesLoader}
+                      style={lumoStyles.olderMessagesLoader}
                       color={palette.accent}
                     />
-                  ) : null
+                  ) : undefined
                 }
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => {
@@ -1553,14 +1563,14 @@ export default function Chat() {
                   return (
                     <View
                       style={[
-                        styles.messageLine,
+                        lumoStyles.messageLine,
                         mine
-                          ? styles.messageLineMine
-                          : styles.messageLineTheirs,
+                          ? lumoStyles.messageLineMine
+                          : lumoStyles.messageLineTheirs,
                       ]}
                     >
                       {!mine && (
-                        <View style={styles.messageAvatarWrap}>
+                        <View style={lumoStyles.messageAvatarWrap}>
                           <Avatar
                             uri={profile?.avatar_url}
                             name={profile?.username}
@@ -1569,7 +1579,7 @@ export default function Chat() {
                         </View>
                       )}
 
-                      <View style={styles.messageContent}>
+                      <View style={lumoStyles.messageContent}>
                         <MessageActionSurface
                           align={mine ? "flex-end" : "flex-start"}
                           enabled={chatFeaturesAvailable}
@@ -1583,10 +1593,10 @@ export default function Chat() {
                         >
                         <Pressable
                           style={[
-                            styles.bubble,
-                            mine ? styles.bubbleMine : styles.bubbleTheirs,
-                            hasMedia && styles.bubbleWithMedia,
-                            highlightedMessageId === item.id && styles.bubbleHighlighted,
+                            lumoStyles.bubble,
+                            mine ? lumoStyles.bubbleMine : lumoStyles.bubbleTheirs,
+                            hasMedia && lumoStyles.bubbleWithMedia,
+                            highlightedMessageId === item.id && lumoStyles.bubbleHighlighted,
                           ]}
                           onLongPress={
                             chatFeaturesAvailable
@@ -1607,13 +1617,13 @@ export default function Chat() {
                         >
                           {!isSharedPost &&
                             !!(item.forwarded_from || item.forwarded_from_type) && (
-                              <Text style={styles.forwardedLabel}>FORWARDED</Text>
+                              <Text style={lumoStyles.forwardedLabel}>FORWARDED</Text>
                             )}
                           {!!item.reply_to && (
                             <Pressable
                               style={({ pressed }) => [
-                                styles.replyPreview,
-                                pressed && styles.replyPreviewPressed,
+                                lumoStyles.replyPreview,
+                                pressed && lumoStyles.replyPreviewPressed,
                               ]}
                               disabled={!replyMessage}
                               onPress={() => {
@@ -1624,13 +1634,13 @@ export default function Chat() {
                               accessibilityRole="button"
                               accessibilityLabel="Go to replied message"
                             >
-                              <Text style={styles.replyPreviewTitle} numberOfLines={1}>
+                              <Text style={lumoStyles.replyPreviewTitle} numberOfLines={1}>
                                 {replyMessage?.sender_id === me
                                   ? "You"
                                   : (profile?.username ?? "Reply")}
                               </Text>
                               <Text
-                                style={styles.replyPreviewBody}
+                                style={lumoStyles.replyPreviewBody}
                                 numberOfLines={1}
                               >
                                 {replyMessage?.body?.trim() ||
@@ -1679,8 +1689,8 @@ export default function Chat() {
                           )}                          {!isSharedPost && !!item.body?.trim() && (
                             <Text
                               style={[
-                                styles.messageText,
-                                mine ? styles.mineText : styles.theirText,
+                                lumoStyles.messageText,
+                                mine ? lumoStyles.mineText : lumoStyles.theirText,
                               ]}
                             >
                               {item.body}
@@ -1690,18 +1700,18 @@ export default function Chat() {
                           {!!item.edited_at && (
                             <Text
                               style={[
-                                styles.editedLabel,
-                                mine && styles.mineTime,
+                                lumoStyles.editedLabel,
+                                mine && lumoStyles.mineTime,
                               ]}
                             >
                               edited
                             </Text>
                           )}
-                          <View style={styles.messageMeta}>
+                          <View style={lumoStyles.messageMeta}>
                             <Text
                               style={[
-                                styles.messageTime,
-                                mine && styles.mineTime,
+                                lumoStyles.messageTime,
+                                mine && lumoStyles.mineTime,
                               ]}
                             >
                               {formatTime(item.created_at)}
@@ -1715,7 +1725,7 @@ export default function Chat() {
                                 color={
                                   item.read_at
                                     ? palette.lime
-                                    : "rgba(255,255,255,0.74)"
+                                    : resolveThemeColor("rgba(255,255,255,0.74)", "color")
                                 }
                               />
                             )}
@@ -1723,7 +1733,7 @@ export default function Chat() {
                         </Pressable>
                         </MessageActionSurface>
                         {chatFeaturesAvailable && (
-                          <View style={styles.reactionRow}>
+                          <View style={lumoStyles.reactionRow}>
                             {reactionSummary.map((reaction) => (
                               <Pressable
                                 key={reaction.reaction}
@@ -1736,11 +1746,11 @@ export default function Chat() {
                                 accessibilityRole="button"
                                 accessibilityLabel={`${reaction.reaction}, ${reaction.count} reactions`}
                                 style={[
-                                  styles.reactionChip,
-                                  reaction.mine && styles.reactionChipMine,
+                                  lumoStyles.reactionChip,
+                                  reaction.mine && lumoStyles.reactionChipMine,
                                 ]}
                               >
-                                <Text style={styles.reactionText}>
+                                <Text style={lumoStyles.reactionText}>
                                   {reaction.reaction} {reaction.count}
                                 </Text>
                               </Pressable>
@@ -1752,7 +1762,7 @@ export default function Chat() {
                               accessibilityRole="button"
                               accessibilityLabel="React with a heart"
                               hitSlop={6}
-                              style={styles.addReactionButton}
+                              style={lumoStyles.addReactionButton}
                             >
                               <Ionicons
                                 name="heart-outline"
@@ -1768,31 +1778,31 @@ export default function Chat() {
                 }}
                 ListEmptyComponent={
                   searchLoading ? (
-                    <View style={styles.searchEmpty}>
+                    <View style={lumoStyles.searchEmpty}>
                       <ActivityIndicator color={palette.accent} />
                     </View>
                   ) : searchText.trim() ? (
-                    <View style={styles.searchEmpty}>
-                      <Text style={styles.emptyCopy}>
+                    <View style={lumoStyles.searchEmpty}>
+                      <Text style={lumoStyles.emptyCopy}>
                         No matching messages.
                       </Text>
                     </View>
                   ) : (
-                    <View style={styles.emptyConversation}>
-                      <View style={styles.emptyIllustration}>
+                    <View style={lumoStyles.emptyConversation}>
+                      <View style={lumoStyles.emptyIllustration}>
                         <DecorativeOrb
                           size={90}
-                          color="rgba(216,255,114,0.30)"
-                          style={styles.emptyHalo}
+                          color={resolveThemeColor("rgba(216,255,114,0.30)", "color")}
+                          style={lumoStyles.emptyHalo}
                         />
-                        <View style={styles.emptyMainIcon}>
+                        <View style={lumoStyles.emptyMainIcon}>
                           <Ionicons
                             name="chatbubble-ellipses"
                             size={31}
                             color={palette.canvas}
                           />
                         </View>
-                        <View style={styles.emptySpark}>
+                        <View style={lumoStyles.emptySpark}>
                           <Ionicons
                             name="sparkles"
                             size={17}
@@ -1800,24 +1810,24 @@ export default function Chat() {
                           />
                         </View>
                       </View>
-                      <Text style={styles.emptyKicker}>
+                      <Text style={lumoStyles.emptyKicker}>
                         FIRST MESSAGE ENERGY
                       </Text>
-                      <Text style={styles.emptyTitle}>
+                      <Text style={lumoStyles.emptyTitle}>
                         Make this chat yours.
                       </Text>
-                      <Text style={styles.emptyCopy}>
+                      <Text style={lumoStyles.emptyCopy}>
                         A thought, a photo, a little chaos — start wherever
                         feels right.
                       </Text>
                       <Pressable
                         style={({ pressed }) => [
-                          styles.helloButton,
-                          pressed && styles.pressed,
+                          lumoStyles.helloButton,
+                          pressed && lumoStyles.pressed,
                         ]}
                         onPress={() => setText("Hey! 👋")}
                       >
-                        <Text style={styles.helloButtonText}>
+                        <Text style={lumoStyles.helloButtonText}>
                           Break the silence
                         </Text>
                         <Ionicons
@@ -1835,17 +1845,17 @@ export default function Chat() {
         </View>
 
         {!loading && !(errorText && messages.length === 0) && (
-          <View style={styles.composerShell}>
+          <View style={lumoStyles.composerShell}>
             {chatFeaturesAvailable && (replyTo || editingMessage) && (
-              <View style={styles.composerContext}>
-                <View style={styles.composerContextAccent} />
-                <View style={styles.composerContextCopy}>
-                  <Text style={styles.composerContextTitle}>
+              <View style={lumoStyles.composerContext}>
+                <View style={lumoStyles.composerContextAccent} />
+                <View style={lumoStyles.composerContextCopy}>
+                  <Text style={lumoStyles.composerContextTitle}>
                     {editingMessage
                       ? "Editing message"
                       : `Replying to ${replyTo?.sender_id === me ? "yourself" : (profile?.username ?? "user")}`}
                   </Text>
-                  <Text style={styles.composerContextBody} numberOfLines={1}>
+                  <Text style={lumoStyles.composerContextBody} numberOfLines={1}>
                     {editingMessage?.body ?? replyTo?.body ?? "Attachment"}
                   </Text>
                 </View>
@@ -1858,22 +1868,22 @@ export default function Chat() {
                   accessibilityRole="button"
                   accessibilityLabel="Cancel reply or edit"
                   hitSlop={8}
-                  style={styles.removeAttachment}
+                  style={lumoStyles.removeAttachment}
                 >
                   <Ionicons name="close" size={17} color={palette.ink} />
                 </Pressable>
               </View>
             )}
             {showStickerPanel && (
-              <View style={styles.stickerPanel}>
-                <View style={styles.stickerHeader}>
-                  <View style={styles.stickerHeaderText}>
-                    <View style={styles.panelEyebrowRow}>
-                      <View style={styles.panelAccent} />
-                      <Text style={styles.panelEyebrow}>EXPRESS YOURSELF</Text>
+              <View style={lumoStyles.stickerPanel}>
+                <View style={lumoStyles.stickerHeader}>
+                  <View style={lumoStyles.stickerHeaderText}>
+                    <View style={lumoStyles.panelEyebrowRow}>
+                      <View style={lumoStyles.panelAccent} />
+                      <Text style={lumoStyles.panelEyebrow}>EXPRESS YOURSELF</Text>
                     </View>
-                    <Text style={styles.stickerTitle}>Sticker studio</Text>
-                    <Text style={styles.stickerSubtitle}>
+                    <Text style={lumoStyles.stickerTitle}>Sticker studio</Text>
+                    <Text style={lumoStyles.stickerSubtitle}>
                       Pick a mood and send it.
                     </Text>
                   </View>
@@ -1882,13 +1892,13 @@ export default function Chat() {
                     accessibilityRole="button"
                     accessibilityLabel="Close stickers"
                     hitSlop={8}
-                    style={styles.stickerCloseButton}
+                    style={lumoStyles.stickerCloseButton}
                   >
                     <Ionicons name="close" size={19} color={palette.ink} />
                   </Pressable>
                 </View>
 
-                <View style={styles.stickerCategories}>
+                <View style={lumoStyles.stickerCategories}>
                   {STICKER_CATEGORIES.map((category) => {
                     const active = activeStickerCategory === category.id;
                     return (
@@ -1896,8 +1906,8 @@ export default function Chat() {
                         key={category.id}
                         onPress={() => setActiveStickerCategory(category.id)}
                         style={[
-                          styles.stickerCategory,
-                          active && styles.stickerCategoryActive,
+                          lumoStyles.stickerCategory,
+                          active && lumoStyles.stickerCategoryActive,
                         ]}
                       >
                         <Ionicons
@@ -1907,8 +1917,8 @@ export default function Chat() {
                         />
                         <Text
                           style={[
-                            styles.stickerCategoryText,
-                            active && styles.stickerCategoryTextActive,
+                            lumoStyles.stickerCategoryText,
+                            active && lumoStyles.stickerCategoryTextActive,
                           ]}
                         >
                           {category.title}
@@ -1918,7 +1928,7 @@ export default function Chat() {
                   })}
                 </View>
 
-                <View style={styles.stickerGrid}>
+                <View style={lumoStyles.stickerGrid}>
                   {activeCategory.stickers.map((sticker, index) => (
                     <Pressable
                       key={`${activeCategory.id}-${sticker.label}-${index}`}
@@ -1926,27 +1936,27 @@ export default function Chat() {
                       accessibilityRole="button"
                       accessibilityLabel={`Select ${sticker.label} sticker`}
                       style={({ pressed }) => [
-                        styles.stickerItem,
-                        pressed && styles.stickerItemPressed,
+                        lumoStyles.stickerItem,
+                        pressed && lumoStyles.stickerItemPressed,
                       ]}
                     >
-                      <View style={styles.stickerArtwork}>
-                        <Text style={styles.stickerEmoji}>{sticker.emoji}</Text>
+                      <View style={lumoStyles.stickerArtwork}>
+                        <Text style={lumoStyles.stickerEmoji}>{sticker.emoji}</Text>
                       </View>
-                      <Text style={styles.stickerLabel} numberOfLines={1}>
+                      <Text style={lumoStyles.stickerLabel} numberOfLines={1}>
                         {sticker.label}
                       </Text>
                     </Pressable>
                   ))}
                 </View>
 
-                <View style={styles.stickerFooter}>
+                <View style={lumoStyles.stickerFooter}>
                   <Ionicons
                     name="flash-outline"
                     size={14}
                     color={palette.lime}
                   />
-                  <Text style={styles.stickerFooterText}>
+                  <Text style={lumoStyles.stickerFooterText}>
                     A little personality goes a long way.
                   </Text>
                 </View>
@@ -1954,15 +1964,15 @@ export default function Chat() {
             )}
 
             {pendingMedia && (
-              <View style={styles.attachmentPreview}>
+              <View style={lumoStyles.attachmentPreview}>
                 {pendingMedia.type === "image" ? (
                   <Image
                     source={{ uri: pendingMedia.uri }}
-                    style={styles.attachmentThumbnail}
+                    style={lumoStyles.attachmentThumbnail}
                     contentFit="cover"
                   />
                 ) : (
-                  <View style={styles.attachmentVideoIcon}>
+                  <View style={lumoStyles.attachmentVideoIcon}>
                     <Ionicons
                       name={
                         pendingMedia.type === "video"
@@ -1977,9 +1987,9 @@ export default function Chat() {
                   </View>
                 )}
 
-                <View style={styles.attachmentDetails}>
-                  <Text style={styles.attachmentKicker}>READY TO SHARE</Text>
-                  <Text style={styles.attachmentTitle} numberOfLines={1}>
+                <View style={lumoStyles.attachmentDetails}>
+                  <Text style={lumoStyles.attachmentKicker}>READY TO SHARE</Text>
+                  <Text style={lumoStyles.attachmentTitle} numberOfLines={1}>
                     {pendingMedia.fileName ||
                       (pendingMedia.type === "video"
                         ? "Video selected"
@@ -1989,7 +1999,7 @@ export default function Chat() {
                             ? "File selected"
                             : "Photo selected")}
                   </Text>
-                  <Text style={styles.attachmentSubtitle}>
+                  <Text style={lumoStyles.attachmentSubtitle}>
                     {formatBytes(pendingMedia.fileSize)} · 50 MB max
                   </Text>
                 </View>
@@ -1998,7 +2008,7 @@ export default function Chat() {
                   onPress={() => setPendingMedia(null)}
                   accessibilityRole="button"
                   accessibilityLabel="Remove attachment"
-                  style={styles.removeAttachment}
+                  style={lumoStyles.removeAttachment}
                   hitSlop={8}
                 >
                   <Ionicons name="close" size={17} color={palette.ink} />
@@ -2006,20 +2016,20 @@ export default function Chat() {
               </View>
             )}
 
-            <View style={styles.composerRow}>
+            <View style={lumoStyles.composerRow}>
               <Pressable
                 onPress={() => void chooseMedia()}
                 disabled={sending || !!editingMessage}
                 accessibilityRole="button"
                 accessibilityLabel="Attach photo or video"
                 style={({ pressed }) => [
-                  styles.attachButton,
-                  pressed && styles.pressed,
-                  (sending || editingMessage) && styles.disabled,
+                  lumoStyles.attachButton,
+                  pressed && lumoStyles.pressed,
+                  (sending || editingMessage) && lumoStyles.disabled,
                 ]}
               >
                 <Ionicons name="add" size={26} color={palette.ink} />
-                <View style={styles.attachAccent} />
+                <View style={lumoStyles.attachAccent} />
               </Pressable>
 
               <Pressable
@@ -2028,9 +2038,9 @@ export default function Chat() {
                 accessibilityRole="button"
                 accessibilityLabel="Attach a file"
                 style={({ pressed }) => [
-                  styles.attachFileButton,
-                  pressed && styles.pressed,
-                  (sending || editingMessage) && styles.disabled,
+                  lumoStyles.attachFileButton,
+                  pressed && lumoStyles.pressed,
+                  (sending || editingMessage) && lumoStyles.disabled,
                 ]}
               >
                 <Ionicons
@@ -2040,9 +2050,9 @@ export default function Chat() {
                 />
               </Pressable>
 
-              <View style={styles.inputShell}>
+              <View style={lumoStyles.inputShell}>
                 <TextInput
-                  style={styles.input}
+                  style={lumoStyles.input}
                   placeholder={
                     editingMessage
                       ? "Edit your message…"
@@ -2067,9 +2077,9 @@ export default function Chat() {
                   accessibilityState={{ expanded: showStickerPanel }}
                   hitSlop={8}
                   style={({ pressed }) => [
-                    styles.stickerToggleButton,
-                    pressed && styles.pressed,
-                    showStickerPanel && styles.stickerToggleButtonActive,
+                    lumoStyles.stickerToggleButton,
+                    pressed && lumoStyles.pressed,
+                    showStickerPanel && lumoStyles.stickerToggleButtonActive,
                   ]}
                 >
                   <Ionicons
@@ -2088,9 +2098,9 @@ export default function Chat() {
                   editingMessage ? "Save edited message" : "Send message"
                 }
                 style={({ pressed }) => [
-                  styles.sendButton,
-                  !canSend && styles.sendButtonDisabled,
-                  pressed && canSend && styles.sendButtonPressed,
+                  lumoStyles.sendButton,
+                  !canSend && lumoStyles.sendButtonDisabled,
+                  pressed && canSend && lumoStyles.sendButtonPressed,
                 ]}
               >
                 {sending ? (
@@ -2105,18 +2115,18 @@ export default function Chat() {
               </Pressable>
             </View>
 
-            <View style={styles.composerFooter}>
+            <View style={lumoStyles.composerFooter}>
               <Ionicons name="sparkles" size={11} color={palette.accent} />
-              <Text style={styles.composerFootnote}>
+              <Text style={lumoStyles.composerFootnote}>
                 YOUR PEOPLE. YOUR MOMENTS.
               </Text>
-              <View style={styles.footerLine} />
+              <View style={lumoStyles.footerLine} />
             </View>
           </View>
         )}
       </KeyboardAvoidingView>
 
-      <SafeAreaView edges={["bottom"]} style={styles.bottomSafeArea} />
+      <SafeAreaView edges={["bottom"]} style={lumoStyles.bottomSafeArea} />
 
       <Modal
         visible={showAttachmentUpgradeNotice}
@@ -2124,24 +2134,24 @@ export default function Chat() {
         animationType="fade"
         onRequestClose={() => setShowAttachmentUpgradeNotice(false)}
       >
-        <View style={styles.noticeOverlay}>
+        <View style={lumoStyles.noticeOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
             accessibilityLabel="Close attachment notice"
             onPress={() => setShowAttachmentUpgradeNotice(false)}
           />
-          <View style={styles.noticeCard} accessibilityViewIsModal>
-            <View style={styles.noticeIcon}>
+          <View style={lumoStyles.noticeCard} accessibilityViewIsModal>
+            <View style={lumoStyles.noticeIcon}>
               <Ionicons
                 name="cloud-upload-outline"
                 size={23}
                 color={palette.lime}
               />
             </View>
-            <Text style={styles.noticeEyebrow}>LUMO CHAT</Text>
-            <Text style={styles.noticeTitle}>Attachments aren’t ready yet</Text>
-            <Text style={styles.noticeBody}>
+            <Text style={lumoStyles.noticeEyebrow}>LUMO CHAT</Text>
+            <Text style={lumoStyles.noticeTitle}>Attachments aren’t ready yet</Text>
+            <Text style={lumoStyles.noticeBody}>
               {pendingMedia?.type === "audio" || pendingMedia?.type === "file"
                 ? "Apply both Lumo messaging migrations in Supabase to enable audio and file sharing."
                 : "Apply the Lumo messaging upgrade in Supabase to enable photo and video sharing."}
@@ -2150,11 +2160,11 @@ export default function Chat() {
               onPress={() => setShowAttachmentUpgradeNotice(false)}
               accessibilityRole="button"
               style={({ pressed }) => [
-                styles.noticeButton,
-                pressed && styles.pressed,
+                lumoStyles.noticeButton,
+                pressed && lumoStyles.pressed,
               ]}
             >
-              <Text style={styles.noticeButtonText}>Got it</Text>
+              <Text style={lumoStyles.noticeButtonText}>Got it</Text>
             </Pressable>
           </View>
         </View>
@@ -2185,7 +2195,7 @@ export default function Chat() {
           }
         }}
       >
-        <View style={styles.actionOverlay}>
+        <View style={lumoStyles.actionOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
@@ -2198,43 +2208,43 @@ export default function Chat() {
               }
             }}
           />
-          <View style={styles.actionSheet} accessibilityViewIsModal>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.actionTitle}>
+          <View style={lumoStyles.actionSheet} accessibilityViewIsModal>
+            <View style={lumoStyles.sheetHandle} />
+            <Text style={lumoStyles.actionTitle}>
               {confirmingMessageDelete
                 ? "Delete this message?"
                 : showForwardPicker
                   ? "Forward to a conversation"
                   : "Message options"}
             </Text>
-            <Text style={styles.actionPreview} numberOfLines={2}>
+            <Text style={lumoStyles.actionPreview} numberOfLines={2}>
               {selectedMessage?.body?.trim() ||
                 (selectedMessage?.media_path ? "Attachment" : "Message")}
             </Text>
             {!!messageActionError && (
-              <Text style={styles.actionError}>{messageActionError}</Text>
+              <Text style={lumoStyles.actionError}>{messageActionError}</Text>
             )}
             {confirmingMessageDelete ? (
-              <View style={styles.actionButtons}>
+              <View style={lumoStyles.actionButtons}>
                 <Pressable
                   onPress={() => {
                     setConfirmingMessageDelete(false);
                     setMessageActionError("");
                   }}
                   disabled={messageActionLoading}
-                  style={styles.actionSecondary}
+                  style={lumoStyles.actionSecondary}
                 >
-                  <Text style={styles.actionSecondaryText}>Cancel</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>Cancel</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => void deleteSelectedMessage()}
                   disabled={messageActionLoading}
-                  style={styles.actionDanger}
+                  style={lumoStyles.actionDanger}
                 >
                   {messageActionLoading ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={colors.text} size="small" />
                   ) : (
-                    <Text style={styles.actionDangerText}>Delete</Text>
+                    <Text style={lumoStyles.actionDangerText}>Delete</Text>
                   )}
                 </Pressable>
               </View>
@@ -2243,11 +2253,11 @@ export default function Chat() {
                 {loadingForwardTargets ? (
                   <ActivityIndicator
                     color={palette.accent}
-                    style={styles.forwardLoader}
+                    style={lumoStyles.forwardLoader}
                   />
                 ) : forwardTargets.length > 0 ? (
                   <ScrollView
-                    style={styles.forwardTargetList}
+                    style={lumoStyles.forwardTargetList}
                     keyboardShouldPersistTaps="handled"
                   >
                     {forwardTargets.map((target) => (
@@ -2256,12 +2266,12 @@ export default function Chat() {
                         onPress={() => void forwardSelectedMessage(target.id)}
                         disabled={messageActionLoading}
                         style={({ pressed }) => [
-                          styles.forwardTarget,
-                          pressed && styles.pressed,
-                          messageActionLoading && styles.actionDisabled,
+                          lumoStyles.forwardTarget,
+                          pressed && lumoStyles.pressed,
+                          messageActionLoading && lumoStyles.actionDisabled,
                         ]}
                       >
-                        <View style={styles.forwardTargetIcon}>
+                        <View style={lumoStyles.forwardTargetIcon}>
                           <Ionicons
                             name="person"
                             size={16}
@@ -2269,7 +2279,7 @@ export default function Chat() {
                           />
                         </View>
                         <Text
-                          style={styles.forwardTargetName}
+                          style={lumoStyles.forwardTargetName}
                           numberOfLines={1}
                         >
                           {target.username}
@@ -2290,20 +2300,20 @@ export default function Chat() {
                     ))}
                   </ScrollView>
                 ) : (
-                  <Text style={styles.forwardEmpty}>
+                  <Text style={lumoStyles.forwardEmpty}>
                     Start another conversation before forwarding a message.
                   </Text>
                 )}
                 <Pressable
                   onPress={() => setShowForwardPicker(false)}
                   disabled={messageActionLoading}
-                  style={styles.forwardCancel}
+                  style={lumoStyles.forwardCancel}
                 >
-                  <Text style={styles.actionSecondaryText}>Cancel</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>Cancel</Text>
                 </Pressable>
               </>
             ) : (
-              <View style={styles.actionButtons}>
+              <View style={lumoStyles.actionButtons}>
                 <Pressable
                   onPress={() => {
                     if (!selectedMessage) return;
@@ -2313,14 +2323,14 @@ export default function Chat() {
                     setShowSearch(false);
                     setSearchText("");
                   }}
-                  style={styles.actionSecondary}
+                  style={lumoStyles.actionSecondary}
                 >
                   <Ionicons
                     name="arrow-undo-outline"
                     size={17}
                     color={palette.ink}
                   />
-                  <Text style={styles.actionSecondaryText}>Reply</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>Reply</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -2341,10 +2351,10 @@ export default function Chat() {
                     selectedMessage?.message_type !== "text"
                   }
                   style={[
-                    styles.actionSecondary,
+                    lumoStyles.actionSecondary,
                     (selectedMessage?.sender_id !== me ||
                       selectedMessage?.message_type !== "text") &&
-                      styles.actionDisabled,
+                      lumoStyles.actionDisabled,
                   ]}
                 >
                   <Ionicons
@@ -2352,7 +2362,7 @@ export default function Chat() {
                     size={17}
                     color={palette.ink}
                   />
-                  <Text style={styles.actionSecondaryText}>Edit</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>Edit</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -2378,7 +2388,7 @@ export default function Chat() {
                     setShowForwardPicker(false);
                   }}
                   disabled={messageActionLoading || loadingForwardTargets}
-                  style={styles.actionSecondary}
+                  style={lumoStyles.actionSecondary}
                 >
                   {loadingForwardTargets ? (
                     <ActivityIndicator color={palette.ink} size="small" />
@@ -2389,17 +2399,17 @@ export default function Chat() {
                       color={palette.ink}
                     />
                   )}
-                  <Text style={styles.actionSecondaryText}>Forward</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>Forward</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
                     if (selectedMessage)
                       void toggleMessageReaction(selectedMessage, "❤️");
                   }}
-                  style={styles.actionSecondary}
+                  style={lumoStyles.actionSecondary}
                 >
-                  <Text style={styles.actionReactionEmoji}>❤️</Text>
-                  <Text style={styles.actionSecondaryText}>React</Text>
+                  <Text style={lumoStyles.actionReactionEmoji}>❤️</Text>
+                  <Text style={lumoStyles.actionSecondaryText}>React</Text>
                 </Pressable>
                 {selectedMessage?.sender_id === me && (
                   <Pressable
@@ -2407,14 +2417,14 @@ export default function Chat() {
                       setConfirmingMessageDelete(true);
                       setMessageActionError("");
                     }}
-                    style={styles.actionDeleteRow}
+                    style={lumoStyles.actionDeleteRow}
                   >
                     <Ionicons
                       name="trash-outline"
                       size={17}
                       color={palette.danger}
                     />
-                    <Text style={styles.actionDeleteText}>Delete message</Text>
+                    <Text style={lumoStyles.actionDeleteText}>Delete message</Text>
                   </Pressable>
                 )}
               </View>
@@ -2430,20 +2440,20 @@ export default function Chat() {
         animationType="slide"
         onRequestClose={() => setCallType(null)}
       >
-        <SafeAreaView style={styles.callScreen}>
+        <SafeAreaView style={lumoStyles.callScreen}>
           <StatusBar barStyle="light-content" />
-          <View style={styles.callHeader}>
-            <View style={styles.callTypeBadge}>
+          <View style={lumoStyles.callHeader}>
+            <View style={lumoStyles.callTypeBadge}>
               <Ionicons
                 name={callType === "video" ? "videocam" : "call"}
                 size={14}
                 color={palette.lime}
               />
-              <Text style={styles.callTypeBadgeText}>
+              <Text style={lumoStyles.callTypeBadgeText}>
                 {callType === "video" ? "LUMO VIDEO CALL" : "LUMO VOICE CALL"}
               </Text>
             </View>
-            <Text style={styles.callStatus}>
+            <Text style={lumoStyles.callStatus}>
               {callDuration > 0
                 ? `${Math.floor(callDuration / 60)
                     .toString()
@@ -2454,9 +2464,9 @@ export default function Chat() {
             </Text>
           </View>
 
-          <View style={styles.callCenter}>
-            <View style={styles.callAvatarGlow}>
-              <View style={styles.callAvatarRing}>
+          <View style={lumoStyles.callCenter}>
+            <View style={lumoStyles.callAvatarGlow}>
+              <View style={lumoStyles.callAvatarRing}>
                 <Avatar
                   uri={profile?.avatar_url}
                   name={profile?.username}
@@ -2465,19 +2475,19 @@ export default function Chat() {
                 />
               </View>
             </View>
-            <Text style={styles.callName}>
+            <Text style={lumoStyles.callName}>
               {profile?.username ?? "Lumo user"}
             </Text>
-            <Text style={styles.callSubtitle}>
+            <Text style={lumoStyles.callSubtitle}>
               {callType === "video"
                 ? "Video call · HD Audio"
                 : "Voice call · Encrypted"}
             </Text>
           </View>
 
-          <View style={styles.callControlsDock}>
+          <View style={lumoStyles.callControlsDock}>
             <Pressable
-              style={[styles.callBtn, isMuted && styles.callBtnActive]}
+              style={[lumoStyles.callBtn, isMuted && lumoStyles.callBtnActive]}
               onPress={() => setIsMuted(!isMuted)}
             >
               <Ionicons
@@ -2487,8 +2497,8 @@ export default function Chat() {
               />
               <Text
                 style={[
-                  styles.callBtnLabel,
-                  isMuted && styles.callBtnLabelActive,
+                  lumoStyles.callBtnLabel,
+                  isMuted && lumoStyles.callBtnLabelActive,
                 ]}
               >
                 {isMuted ? "Unmute" : "Mute"}
@@ -2497,7 +2507,7 @@ export default function Chat() {
 
             {callType === "video" && (
               <Pressable
-                style={[styles.callBtn, isVideoOff && styles.callBtnActive]}
+                style={[lumoStyles.callBtn, isVideoOff && lumoStyles.callBtnActive]}
                 onPress={() => setIsVideoOff(!isVideoOff)}
               >
                 <Ionicons
@@ -2507,8 +2517,8 @@ export default function Chat() {
                 />
                 <Text
                   style={[
-                    styles.callBtnLabel,
-                    isVideoOff && styles.callBtnLabelActive,
+                    lumoStyles.callBtnLabel,
+                    isVideoOff && lumoStyles.callBtnLabelActive,
                   ]}
                 >
                   {isVideoOff ? "Start" : "Camera"}
@@ -2517,7 +2527,7 @@ export default function Chat() {
             )}
 
             <Pressable
-              style={[styles.callBtn, isSpeaker && styles.callBtnActive]}
+              style={[lumoStyles.callBtn, isSpeaker && lumoStyles.callBtnActive]}
               onPress={() => setIsSpeaker(!isSpeaker)}
             >
               <Ionicons
@@ -2527,8 +2537,8 @@ export default function Chat() {
               />
               <Text
                 style={[
-                  styles.callBtnLabel,
-                  isSpeaker && styles.callBtnLabelActive,
+                  lumoStyles.callBtnLabel,
+                  isSpeaker && lumoStyles.callBtnLabelActive,
                 ]}
               >
                 Speaker
@@ -2536,13 +2546,13 @@ export default function Chat() {
             </Pressable>
 
             <Pressable
-              style={styles.callEndBtn}
+              style={lumoStyles.callEndBtn}
               onPress={() => setCallType(null)}
             >
               <Ionicons
                 name="call"
                 size={28}
-                color="#FFFFFF"
+                color={colors.text}
                 style={{ transform: [{ rotate: "135deg" }] }}
               />
             </Pressable>
@@ -2834,7 +2844,9 @@ const styles = StyleSheet.create({
   },
   videoCard: {
     width: 244,
-    height: 166,
+    maxWidth: "100%",
+    minWidth: 0,
+    aspectRatio: 1.47,
     borderRadius: 15,
     overflow: "hidden",
     backgroundColor: "#211733",
@@ -2842,7 +2854,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   videoBackdropFallback: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#211733",
   },
   videoOrb: {
@@ -3305,8 +3317,8 @@ const styles = StyleSheet.create({
     borderColor: "#2B3440",
   },
   fileCard: {
-    minWidth: 205,
-    maxWidth: 280,
+    minWidth: 0,
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 10,

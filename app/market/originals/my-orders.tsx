@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useAuth } from "../../../lib/auth";
 import { getOfficialOrders, type OfficialOrder } from "../../../lib/market-orders";
 import { colors } from "../../../lib/theme";
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 function price(value: number, currency: "USD" | "UZS") {
   const amount = new Intl.NumberFormat("en-US", {
@@ -31,6 +32,7 @@ function statusLabel(status: OfficialOrder["status"]) {
 }
 
 export default function MyOfficialOrdersScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -64,67 +66,67 @@ export default function MyOfficialOrdersScreen() {
   }, [load]));
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.iconButton} hitSlop={8}>
+    <View style={lumoStyles.root}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.iconButton} hitSlop={8}>
           <Ionicons name="arrow-back" size={19} color={colors.text} />
         </Pressable>
-        <View style={styles.headerCopy}>
-          <Text style={styles.eyebrow}>LUMO ORIGINALS</Text>
-          <Text style={styles.title}>My orders</Text>
+        <View style={lumoStyles.headerCopy}>
+          <Text style={lumoStyles.eyebrow}>LUMO ORIGINALS</Text>
+          <Text style={lumoStyles.title}>My orders</Text>
         </View>
-        <Pressable onPress={() => void load(true)} style={styles.iconButton} accessibilityLabel="Refresh my orders">
+        <Pressable onPress={() => void load(true)} style={lumoStyles.iconButton} accessibilityLabel="Refresh my orders">
           {refreshing ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="refresh" size={18} color={colors.accentStrong} />}
         </Pressable>
       </View>
 
-      <View style={styles.intro}>
-        <View style={styles.introIcon}><Ionicons name="receipt-outline" size={21} color={colors.accentStrong} /></View>
-        <View style={styles.introCopy}>
-          <Text style={styles.introTitle}>Your order history</Text>
-          <Text style={styles.introText}>Buy from Lumo Originals and follow every order here.</Text>
+      <View style={lumoStyles.intro}>
+        <View style={lumoStyles.introIcon}><Ionicons name="receipt-outline" size={21} color={colors.accentStrong} /></View>
+        <View style={lumoStyles.introCopy}>
+          <Text style={lumoStyles.introTitle}>Your order history</Text>
+          <Text style={lumoStyles.introText}>Buy from Lumo Originals and follow every order here.</Text>
         </View>
-        <Text style={styles.count}>{orders.length}</Text>
+        <Text style={lumoStyles.count}>{orders.length}</Text>
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={styles.muted}>Loading your orders...</Text></View>
+        <View style={lumoStyles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={lumoStyles.muted}>Loading your orders...</Text></View>
       ) : error ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <Ionicons name="alert-circle-outline" size={27} color={colors.like} />
-          <Text style={styles.emptyTitle}>Could not load orders</Text>
-          <Text style={styles.muted}>{error}</Text>
-          <Pressable onPress={() => void load(true)} style={styles.primaryButton}><Text style={styles.primaryButtonText}>Try again</Text></Pressable>
+          <Text style={lumoStyles.emptyTitle}>Could not load orders</Text>
+          <Text style={lumoStyles.muted}>{error}</Text>
+          <Pressable onPress={() => void load(true)} style={lumoStyles.primaryButton}><Text style={lumoStyles.primaryButtonText}>Try again</Text></Pressable>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={lumoStyles.list} showsVerticalScrollIndicator={false}>
           {orders.length ? orders.map((order) => (
-            <View key={order.id} style={styles.card}>
-              <View style={styles.cardTop}>
-                <Text style={styles.orderNumber}>ORDER #{order.id}</Text>
-                <View style={[styles.status, order.status === "completed" ? styles.completed : order.status === "processing" ? styles.processing : styles.received]}>
-                  <Text style={styles.statusText}>{statusLabel(order.status)}</Text>
+            <View key={order.id} style={lumoStyles.card}>
+              <View style={lumoStyles.cardTop}>
+                <Text style={lumoStyles.orderNumber}>ORDER #{order.id}</Text>
+                <View style={[lumoStyles.status, order.status === "completed" ? lumoStyles.completed : order.status === "processing" ? lumoStyles.processing : lumoStyles.received]}>
+                  <Text style={lumoStyles.statusText}>{statusLabel(order.status)}</Text>
                 </View>
               </View>
-              <Text style={styles.productName}>{order.product_name}</Text>
-              <Text style={styles.meta}>{order.product_sku || "Lumo Originals"} · {order.variant_name || "Standard option"}</Text>
-              <View style={styles.details}>
-                <Text style={styles.meta}>{order.quantity} × {price(order.unit_price, order.currency)}</Text>
-                <Text style={styles.total}>{price(order.subtotal, order.currency)}</Text>
+              <Text style={lumoStyles.productName}>{order.product_name}</Text>
+              <Text style={lumoStyles.meta}>{order.product_sku || "Lumo Originals"} · {order.variant_name || "Standard option"}</Text>
+              <View style={lumoStyles.details}>
+                <Text style={lumoStyles.meta}>{order.quantity} × {price(order.unit_price, order.currency)}</Text>
+                <Text style={lumoStyles.total}>{price(order.subtotal, order.currency)}</Text>
               </View>
-              <View style={styles.footer}>
+              <View style={lumoStyles.footer}>
                 <Ionicons name="time-outline" size={13} color={colors.dim} />
-                <Text style={styles.date}>{dateLabel(order.created_at)}</Text>
+                <Text style={lumoStyles.date}>{dateLabel(order.created_at)}</Text>
               </View>
-              {order.customer_note ? <Text style={styles.note}>Note: {order.customer_note}</Text> : null}
+              {order.customer_note ? <Text style={lumoStyles.note}>Note: {order.customer_note}</Text> : null}
             </View>
           )) : (
-            <View style={styles.empty}>
-              <View style={styles.emptyIcon}><Ionicons name="bag-handle-outline" size={27} color={colors.muted} /></View>
-              <Text style={styles.emptyTitle}>No orders yet</Text>
-              <Text style={styles.muted}>Your Lumo Originals purchases will appear here.</Text>
-              <Pressable onPress={() => router.replace("/(tabs)/market" as never)} style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>Explore Originals</Text>
+            <View style={lumoStyles.empty}>
+              <View style={lumoStyles.emptyIcon}><Ionicons name="bag-handle-outline" size={27} color={colors.muted} /></View>
+              <Text style={lumoStyles.emptyTitle}>No orders yet</Text>
+              <Text style={lumoStyles.muted}>Your Lumo Originals purchases will appear here.</Text>
+              <Pressable onPress={() => router.replace("/(tabs)/market" as never)} style={lumoStyles.primaryButton}>
+                <Text style={lumoStyles.primaryButtonText}>Explore Originals</Text>
                 <Ionicons name="arrow-forward" size={14} color={colors.bg} />
               </Pressable>
             </View>

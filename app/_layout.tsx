@@ -3,27 +3,32 @@ import '../lib/location-sharing';
 import '../lib/livekit-register';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../lib/auth';
-import { colors } from '../lib/theme';
+import { PreferencesProvider, usePreferences } from '../lib/preferences';
 import LumoAlertHost from '../components/LumoAlertHost';
 import UserActivityTracker from '../components/UserActivityTracker';
+import { resolveThemeColor } from "../lib/theme-styles";
+import { DirectCallsProvider } from '../lib/direct-calls';
 
 function Gate() {
   const { session, loading } = useAuth();
+  const { palette } = usePreferences();
 
   if (loading) {
     return (
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.bg,
+          backgroundColor: palette.bg,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={palette.accent} />
       </View>
     );
   }
@@ -33,9 +38,9 @@ function Gate() {
   return (
     <Stack
       screenOptions={{
-        headerTintColor: colors.text,
-        headerStyle: { backgroundColor: colors.bg },
-        headerTitleStyle: { color: colors.text, fontWeight: '700' },
+        headerTintColor: palette.text,
+        headerStyle: { backgroundColor: palette.bg },
+        headerTitleStyle: { color: palette.text, fontWeight: '700' },
         headerShadowVisible: false,
       }}
     >
@@ -51,13 +56,13 @@ function Gate() {
         <Stack.Screen name="edit-profile" options={{ title: 'Change Profile' }} />
         <Stack.Screen name="switch-profile" options={{ title: 'Switch Profile' }} />
         <Stack.Screen name="market/create" options={{ headerShown: false }} />
-        <Stack.Screen name="market/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="market/originals/manage" options={{ headerShown: false }} />
         <Stack.Screen name="market/originals/[slug]" options={{ headerShown: false }} />
         <Stack.Screen name="market/store/create" options={{ headerShown: false }} />
         <Stack.Screen name="market/store/[slug]" options={{ headerShown: false }} />
-        <Stack.Screen name="market/store/manage" options={{ headerShown: false }} />
-        <Stack.Screen name="market/store/manage/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="gifts/index" options={{ headerShown: false }} />
+        <Stack.Screen name="gifts/manage" options={{ headerShown: false }} />
+        <Stack.Screen name="premium/index" options={{ headerShown: false }} />
         <Stack.Screen name="settings/index" options={{ title: 'Settings' }} />
         <Stack.Screen name="settings/[section]" options={{ title: 'Settings' }} />
         <Stack.Screen
@@ -73,7 +78,7 @@ function Gate() {
             headerShown: false,
             presentation: 'fullScreenModal',
             animation: 'fade',
-            contentStyle: { backgroundColor: '#050507' },
+            contentStyle: { backgroundColor: resolveThemeColor("#050507", "backgroundColor") },
             gestureEnabled: true,
           }}
         />
@@ -86,13 +91,31 @@ function Gate() {
   );
 }
 
-export default function RootLayout() {
+function AppRoot() {
+  const { theme } = usePreferences();
+
   return (
-    <AuthProvider>
-      <StatusBar style="light" animated />
+    <>
+      <StatusBar style={theme === 'light' ? 'dark' : 'light'} animated />
       <UserActivityTracker />
       <Gate />
       <LumoAlertHost />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  // Preload Ionicons at the root so Expo Router can emit a web font preload
+  // before individual icon components mount.
+  useFonts(Ionicons.font);
+
+  return (
+    <AuthProvider>
+      <PreferencesProvider>
+        <DirectCallsProvider>
+          <AppRoot />
+        </DirectCallsProvider>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }

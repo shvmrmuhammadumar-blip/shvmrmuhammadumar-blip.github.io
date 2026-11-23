@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import Avatar from "./Avatar";
 import { supabase } from "../lib/supabase";
 import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 type SharedPost = {
   id: string;
@@ -22,6 +24,7 @@ type SharedPost = {
 type Props = { postId: string; variant?: "default" | "forward" };
 
 function VideoPreview({ uri }: { uri: string }) {
+  const lumoStyles = useThemedStyles(styles);
   const player = useVideoPlayer(uri, (instance) => {
     instance.loop = false;
     instance.muted = true;
@@ -69,7 +72,7 @@ function VideoPreview({ uri }: { uri: string }) {
     return (
       <Image
         source={thumbnail}
-        style={styles.media}
+        style={lumoStyles.media}
         contentFit="cover"
       />
     );
@@ -78,7 +81,7 @@ function VideoPreview({ uri }: { uri: string }) {
   return (
     <VideoView
       player={player}
-      style={styles.media}
+      style={lumoStyles.media}
       contentFit="cover"
       nativeControls={false}
       onFirstFrameRender={() => {
@@ -91,6 +94,7 @@ function VideoPreview({ uri }: { uri: string }) {
 }
 
 export default function SharedPostCard({ postId, variant = "default" }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const [post, setPost] = useState<SharedPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +127,7 @@ export default function SharedPostCard({ postId, variant = "default" }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.stateCard, variant === "forward" && styles.forwardStateCard]}>
+      <View style={[lumoStyles.stateCard, variant === "forward" && lumoStyles.forwardStateCard]}>
         <ActivityIndicator size="small" color={colors.lime} />
       </View>
     );
@@ -131,9 +135,9 @@ export default function SharedPostCard({ postId, variant = "default" }: Props) {
 
   if (!post) {
     return (
-      <View style={[styles.unavailableCard, variant === "forward" && styles.forwardUnavailableCard]}>
+      <View style={[lumoStyles.unavailableCard, variant === "forward" && lumoStyles.forwardUnavailableCard]}>
         <Ionicons name="eye-off-outline" size={18} color={colors.muted} />
-        <Text style={styles.unavailableText}>Post unavailable</Text>
+        <Text style={lumoStyles.unavailableText}>Post unavailable</Text>
       </View>
     );
   }
@@ -142,25 +146,25 @@ export default function SharedPostCard({ postId, variant = "default" }: Props) {
   const username = post.profiles?.username ?? "user";
 
   const mediaPreview = (
-    <View style={variant === "forward" ? styles.forwardMediaFrame : styles.mediaFrame}>
+    <View style={variant === "forward" ? lumoStyles.forwardMediaFrame : lumoStyles.mediaFrame}>
       {isVideo ? (
         post.video_url ? (
           <VideoPreview uri={post.video_url} />
         ) : (
-          <View style={styles.mediaFallback}>
+          <View style={lumoStyles.mediaFallback}>
             <Ionicons name="videocam-outline" size={25} color={colors.muted} />
           </View>
         )
       ) : post.image_url ? (
-        <Image source={{ uri: post.image_url }} style={styles.media} contentFit="cover" />
+        <Image source={{ uri: post.image_url }} style={lumoStyles.media} contentFit="cover" />
       ) : (
-        <View style={styles.mediaFallback}>
+        <View style={lumoStyles.mediaFallback}>
           <Ionicons name="image-outline" size={25} color={colors.muted} />
         </View>
       )}
       {isVideo && (
-        <View style={styles.playMark} pointerEvents="none">
-          <Ionicons name="play" size={16} color="#FFFFFF" />
+        <View style={lumoStyles.playMark} pointerEvents="none">
+          <Ionicons name="play" size={16} color={resolveThemeColor(colors.mediaText, "color")} />
         </View>
       )}
     </View>
@@ -169,24 +173,24 @@ export default function SharedPostCard({ postId, variant = "default" }: Props) {
   return (
     <Pressable
       style={({ pressed }) => [
-        styles.card,
-        variant === "forward" && styles.forwardCard,
-        pressed && styles.cardPressed,
+        lumoStyles.card,
+        variant === "forward" && lumoStyles.forwardCard,
+        pressed && lumoStyles.cardPressed,
       ]}
       onPress={() => router.push(`/post-viewer/${post.id}` as any)}
       accessibilityRole="button"
       accessibilityLabel={`Open post by ${username}`}
     >
       {variant === "forward" ? (
-        <View style={styles.forwardLayout}>
+        <View style={lumoStyles.forwardLayout}>
           {mediaPreview}
-          <View style={styles.forwardDetails}>
-            <View style={styles.forwardTypeBadge}>
-              <Text style={styles.forwardTypeText}>{isVideo ? "VIDEO" : "FOTO"}</Text>
+          <View style={lumoStyles.forwardDetails}>
+            <View style={lumoStyles.forwardTypeBadge}>
+              <Text style={lumoStyles.forwardTypeText}>{isVideo ? "VIDEO" : "FOTO"}</Text>
             </View>
-            <Text style={styles.forwardUsername} numberOfLines={1}>@{username}</Text>
+            <Text style={lumoStyles.forwardUsername} numberOfLines={1}>@{username}</Text>
             {!!post.caption?.trim() && (
-              <Text style={styles.forwardCaption} numberOfLines={2}>
+              <Text style={lumoStyles.forwardCaption} numberOfLines={2}>
                 {post.caption.trim()}
               </Text>
             )}
@@ -194,16 +198,16 @@ export default function SharedPostCard({ postId, variant = "default" }: Props) {
         </View>
       ) : (
         <>
-          <View style={styles.header}>
+          <View style={lumoStyles.header}>
             <Avatar uri={post.profiles?.avatar_url} name={username} size={30} />
-            <Text style={styles.username} numberOfLines={1}>@{username}</Text>
-            <View style={styles.postMark}>
-              <Text style={styles.postMarkText}>{isVideo ? "VIDEO" : "FOTO"}</Text>
+            <Text style={lumoStyles.username} numberOfLines={1}>@{username}</Text>
+            <View style={lumoStyles.postMark}>
+              <Text style={lumoStyles.postMarkText}>{isVideo ? "VIDEO" : "FOTO"}</Text>
             </View>
           </View>
           {mediaPreview}
           {!!post.caption?.trim() && (
-            <Text style={styles.caption} numberOfLines={2}>{post.caption.trim()}</Text>
+            <Text style={lumoStyles.caption} numberOfLines={2}>{post.caption.trim()}</Text>
           )}
         </>
       )}
@@ -311,6 +315,8 @@ const styles = StyleSheet.create({
   caption: { color: colors.text, fontSize: 11, lineHeight: 16 },
   stateCard: {
     width: 252,
+    maxWidth: "100%",
+    minWidth: 0,
     minHeight: 76,
     alignItems: "center",
     justifyContent: "center",
@@ -321,6 +327,8 @@ const styles = StyleSheet.create({
   },
   unavailableCard: {
     width: 252,
+    maxWidth: "100%",
+    minWidth: 0,
     minHeight: 66,
     flexDirection: "row",
     alignItems: "center",

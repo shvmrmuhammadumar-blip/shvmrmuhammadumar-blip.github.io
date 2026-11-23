@@ -8,10 +8,12 @@ import { loadStudioOverview, formatStudioNumber, type StudioOverview } from '../
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Profile = { username: string | null; full_name: string | null; bio: string | null; avatar_url: string | null };
 
 export default function StudioGrowthScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -63,26 +65,26 @@ export default function StudioGrowthScreen() {
 
   return (
     <StudioFrame title="Growth Lab" subtitle="Practical actions from your account data" icon="trending-up-outline">
-      <View style={styles.headingBlock}>
-        <Text style={styles.heading}>Growth Lab</Text>
-        <Text style={styles.subheading}>A focused set of next steps for your account.</Text>
+      <View style={lumoStyles.headingBlock}>
+        <Text style={lumoStyles.heading}>Growth Lab</Text>
+        <Text style={lumoStyles.subheading}>A focused set of next steps for your account.</Text>
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
       {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 18 }} /> : null}
 
-      <StudioPanel style={styles.readinessPanel}>
-        <View style={styles.readinessTop}>
-          <View style={styles.readinessCopy}>
-            <Text style={styles.readinessTitle}>Profile readiness</Text>
-            <Text style={styles.readinessSub}>{profileParts} of 3 essentials completed</Text>
+      <StudioPanel style={lumoStyles.readinessPanel}>
+        <View style={lumoStyles.readinessTop}>
+          <View style={lumoStyles.readinessCopy}>
+            <Text style={lumoStyles.readinessTitle}>Profile readiness</Text>
+            <Text style={lumoStyles.readinessSub}>{profileParts} of 3 essentials completed</Text>
           </View>
-          <Text style={styles.readinessValue}>{readiness}%</Text>
+          <Text style={lumoStyles.readinessValue}>{readiness}%</Text>
         </View>
-        <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${readiness}%` }]} /></View>
+        <View style={lumoStyles.progressTrack}><View style={[lumoStyles.progressFill, { width: `${readiness}%` }]} /></View>
       </StudioPanel>
 
       {data ? (
-        <View style={styles.metrics}>
+        <View style={lumoStyles.metrics}>
           <StudioMetric label="Followers" value={formatStudioNumber(data.followers)} icon="people-outline" />
           <StudioMetric label="Published" value={formatStudioNumber(data.posts)} icon="images-outline" />
           <StudioMetric label="Likes" value={formatStudioNumber(data.likes)} icon="heart-outline" />
@@ -91,22 +93,22 @@ export default function StudioGrowthScreen() {
       ) : null}
 
       <StudioSection title="Recommended next steps" />
-      <View style={styles.actions}>
+      <View style={lumoStyles.actions}>
         {actions.map((item) => (
-          <StudioPanel key={item.title} style={styles.actionCard}>
-            <View style={styles.actionIcon}><Ionicons name={item.icon} size={19} color={colors.accentStrong} /></View>
-            <View style={styles.actionCopy}>
-              <Text style={styles.actionTitle}>{item.title}</Text>
-              <Text style={styles.actionDetail}>{item.detail}</Text>
+          <StudioPanel key={item.title} style={lumoStyles.actionCard}>
+            <View style={lumoStyles.actionIcon}><Ionicons name={item.icon} size={19} color={colors.accentStrong} /></View>
+            <View style={lumoStyles.actionCopy}>
+              <Text style={lumoStyles.actionTitle}>{item.title}</Text>
+              <Text style={lumoStyles.actionDetail}>{item.detail}</Text>
             </View>
-            <Pressable onPress={() => router.push(item.path as never)} style={styles.actionButton} accessibilityRole="button">
-              <Text style={styles.actionButtonText}>{item.button}</Text>
+            <Pressable onPress={() => router.push(item.path as never)} style={lumoStyles.actionButton} accessibilityRole="button">
+              <Text style={lumoStyles.actionButtonText}>{item.button}</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.accentStrong} />
             </Pressable>
           </StudioPanel>
         ))}
       </View>
-      <Text style={styles.note}>Recommendations use your saved profile and recorded Lumo activity. They are not predictions or guaranteed growth results.</Text>
+      <Text style={lumoStyles.note}>Recommendations use your saved profile and recorded Lumo activity. They are not predictions or guaranteed growth results.</Text>
     </StudioFrame>
   );
 }

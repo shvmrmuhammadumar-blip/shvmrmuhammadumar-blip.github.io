@@ -7,6 +7,7 @@ import { getPeriodStart, formatStudioNumber } from '../../lib/studio-data';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Period = '7d' | '30d' | '90d' | 'all';
 type AnalyticsData = {
@@ -27,6 +28,7 @@ const periods: { key: Period; label: string }[] = [
 ];
 
 export default function StudioAnalyticsScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [period, setPeriod] = useState<Period>('30d');
@@ -105,71 +107,71 @@ export default function StudioAnalyticsScreen() {
 
   return (
     <StudioFrame title="Analytics" subtitle="Measured account performance" icon="analytics-outline">
-      <View style={styles.introRow}>
-        <View style={styles.introCopy}>
-          <Text style={styles.heading}>Performance</Text>
-          <Text style={styles.subheading}>Your account, based on recorded activity.</Text>
+      <View style={lumoStyles.introRow}>
+        <View style={lumoStyles.introCopy}>
+          <Text style={lumoStyles.heading}>Performance</Text>
+          <Text style={lumoStyles.subheading}>Your account, based on recorded activity.</Text>
         </View>
-        <View style={styles.filters}>
+        <View style={lumoStyles.filters}>
           {periods.map((item) => <StudioChip key={item.key} label={item.label} active={period === item.key} onPress={() => setPeriod(item.key)} />)}
         </View>
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading ? <View style={styles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
+      {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
+      {loading ? <View style={lumoStyles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
 
-      <View style={styles.metrics}>
+      <View style={lumoStyles.metrics}>
         <StudioMetric label="Content opens" value={formatStudioNumber(totalOpens)} icon="eye-outline" note="Post + story opens" />
         <StudioMetric label="Unique viewers" value={formatStudioNumber(data.uniqueViewers)} icon="people-outline" note="Distinct accounts" />
         <StudioMetric label="New followers" value={formatStudioNumber(data.followers)} icon="person-add-outline" />
         <StudioMetric label="Likes received" value={formatStudioNumber(data.likes)} icon="heart-outline" />
       </View>
 
-      <StudioPanel style={styles.chartPanel}>
+      <StudioPanel style={lumoStyles.chartPanel}>
         <StudioSection title="Content opens" />
         {data.dailyOpens.length ? (
-          <View style={styles.chartWrap}>
-            <View style={styles.barRow}>
+          <View style={lumoStyles.chartWrap}>
+            <View style={lumoStyles.barRow}>
               {data.dailyOpens.map((value, index) => (
-                <View key={index} style={styles.barColumn}>
-                  <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { height: `${Math.max(4, (value / maxBar) * 100)}%` }]} />
+                <View key={index} style={lumoStyles.barColumn}>
+                  <View style={lumoStyles.barTrack}>
+                    <View style={[lumoStyles.barFill, { height: `${Math.max(4, (value / maxBar) * 100)}%` }]} />
                   </View>
                 </View>
               ))}
             </View>
-            <View style={styles.axisRow}>
-              <Text style={styles.axisLabel}>{period === '7d' ? '7 days ago' : period === '30d' ? '30 days ago' : '90 days ago'}</Text>
-              <Text style={styles.axisLabel}>Today</Text>
+            <View style={lumoStyles.axisRow}>
+              <Text style={lumoStyles.axisLabel}>{period === '7d' ? '7 days ago' : period === '30d' ? '30 days ago' : '90 days ago'}</Text>
+              <Text style={lumoStyles.axisLabel}>Today</Text>
             </View>
           </View>
         ) : null}
-        <View style={styles.legendRow}>
-          <View style={styles.legendDot} />
-          <Text style={styles.legendText}>Opened posts and stories</Text>
-          <Text style={styles.legendValue}>{formatStudioNumber(totalOpens)}</Text>
+        <View style={lumoStyles.legendRow}>
+          <View style={lumoStyles.legendDot} />
+          <Text style={lumoStyles.legendText}>Opened posts and stories</Text>
+          <Text style={lumoStyles.legendValue}>{formatStudioNumber(totalOpens)}</Text>
         </View>
       </StudioPanel>
 
-      <StudioPanel style={styles.breakdownPanel}>
+      <StudioPanel style={lumoStyles.breakdownPanel}>
         <StudioSection title="Content breakdown" />
-        <View style={styles.breakdownRow}>
-          <View style={styles.breakdownLabel}><View style={styles.postDot} /><Text style={styles.breakdownText}>Post opens</Text></View>
-          <Text style={styles.breakdownValue}>{formatStudioNumber(data.postOpens)}</Text>
+        <View style={lumoStyles.breakdownRow}>
+          <View style={lumoStyles.breakdownLabel}><View style={lumoStyles.postDot} /><Text style={lumoStyles.breakdownText}>Post opens</Text></View>
+          <Text style={lumoStyles.breakdownValue}>{formatStudioNumber(data.postOpens)}</Text>
         </View>
-        <View style={styles.breakdownRow}>
-          <View style={styles.breakdownLabel}><View style={styles.storyDot} /><Text style={styles.breakdownText}>Story opens</Text></View>
-          <Text style={styles.breakdownValue}>{formatStudioNumber(data.storyOpens)}</Text>
+        <View style={lumoStyles.breakdownRow}>
+          <View style={lumoStyles.breakdownLabel}><View style={lumoStyles.storyDot} /><Text style={lumoStyles.breakdownText}>Story opens</Text></View>
+          <Text style={lumoStyles.breakdownValue}>{formatStudioNumber(data.storyOpens)}</Text>
         </View>
-        <View style={styles.divider} />
-        <View style={styles.breakdownRow}>
-          <Text style={styles.breakdownText}>Published in period</Text>
-          <Text style={styles.breakdownValue}>{formatStudioNumber(data.posts)}</Text>
+        <View style={lumoStyles.divider} />
+        <View style={lumoStyles.breakdownRow}>
+          <Text style={lumoStyles.breakdownText}>Published in period</Text>
+          <Text style={lumoStyles.breakdownValue}>{formatStudioNumber(data.posts)}</Text>
         </View>
       </StudioPanel>
 
-      <View style={styles.note}>
-        <Text style={styles.noteTitle}>Measurement scope</Text>
-        <Text style={styles.noteText}>Opens are recorded when someone enters a post or story viewer. Feed impressions, reach, video watch time and retention are not included yet.</Text>
+      <View style={lumoStyles.note}>
+        <Text style={lumoStyles.noteTitle}>Measurement scope</Text>
+        <Text style={lumoStyles.noteText}>Opens are recorded when someone enters a post or story viewer. Feed impressions, reach, video watch time and retention are not included yet.</Text>
       </View>
     </StudioFrame>
   );

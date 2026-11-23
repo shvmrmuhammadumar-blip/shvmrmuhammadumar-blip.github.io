@@ -21,6 +21,7 @@ import { colors } from '../../lib/theme';
 import { pickImage, uploadImage } from '../../lib/api';
 import { createGroup } from '../../lib/groups';
 import type { Database } from '../../lib/database.types';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Person = Pick<
   Database['public']['Tables']['profiles']['Row'],
@@ -28,6 +29,7 @@ type Person = Pick<
 >;
 
 export default function CreateGroup() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const me = session?.user.id;
@@ -162,20 +164,20 @@ export default function CreateGroup() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.screen}
+      style={lumoStyles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={lumoStyles.container}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View style={lumoStyles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={styles.backButton}
+            style={lumoStyles.backButton}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -183,35 +185,35 @@ export default function CreateGroup() {
             <Ionicons name="arrow-back" size={21} color={colors.text} />
           </Pressable>
 
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>YOUR COMMUNITY</Text>
-            <Text style={styles.title}>Create group</Text>
+          <View style={lumoStyles.headerCopy}>
+            <Text style={lumoStyles.eyebrow}>YOUR COMMUNITY</Text>
+            <Text style={lumoStyles.title}>Create group</Text>
           </View>
 
-          <View style={styles.headerSpacer} />
+          <View style={lumoStyles.headerSpacer} />
         </View>
 
-        <View style={styles.identityCard}>
-          <Pressable onPress={() => void changeAvatar()} style={styles.avatarAction}>
+        <View style={lumoStyles.identityCard}>
+          <Pressable onPress={() => void changeAvatar()} style={lumoStyles.avatarAction}>
             <Avatar uri={avatarUri} name={name || 'Group'} size={76} />
-            <View style={styles.cameraBadge}>
+            <View style={lumoStyles.cameraBadge}>
               <Ionicons name="camera" size={14} color={colors.bg} />
             </View>
           </Pressable>
 
-          <View style={styles.avatarCaption}>
-            <Text style={styles.avatarTitle}>Group photo</Text>
-            <Text style={styles.avatarHint}>Optional · Square image</Text>
+          <View style={lumoStyles.avatarCaption}>
+            <Text style={lumoStyles.avatarTitle}>Group photo</Text>
+            <Text style={lumoStyles.avatarHint}>Optional · Square image</Text>
             <Pressable onPress={() => void changeAvatar()}>
-              <Text style={styles.changePhoto}>Choose photo</Text>
+              <Text style={lumoStyles.changePhoto}>Choose photo</Text>
             </Pressable>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>GROUP NAME</Text>
+        <View style={lumoStyles.section}>
+          <Text style={lumoStyles.label}>GROUP NAME</Text>
           <TextInput
-            style={styles.input}
+            style={lumoStyles.input}
             placeholder="Give your group a name"
             placeholderTextColor={colors.dim}
             value={name}
@@ -220,13 +222,13 @@ export default function CreateGroup() {
             autoCapitalize="sentences"
             returnKeyType="next"
           />
-          <Text style={styles.counter}>{name.length}/80</Text>
+          <Text style={lumoStyles.counter}>{name.length}/80</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>DESCRIPTION</Text>
+        <View style={lumoStyles.section}>
+          <Text style={lumoStyles.label}>DESCRIPTION</Text>
           <TextInput
-            style={[styles.input, styles.descriptionInput]}
+            style={[lumoStyles.input, lumoStyles.descriptionInput]}
             placeholder="What is this group about?"
             placeholderTextColor={colors.dim}
             value={description}
@@ -235,22 +237,22 @@ export default function CreateGroup() {
             multiline
             textAlignVertical="top"
           />
-          <Text style={styles.counter}>{description.length}/500</Text>
+          <Text style={lumoStyles.counter}>{description.length}/500</Text>
         </View>
 
-        <View style={styles.visibilityCard}>
-          <View style={styles.visibilityIcon}>
+        <View style={lumoStyles.visibilityCard}>
+          <View style={lumoStyles.visibilityIcon}>
             <Ionicons
               name={isPublic ? 'globe-outline' : 'lock-closed-outline'}
               size={19}
               color={colors.lime}
             />
           </View>
-          <View style={styles.visibilityCopy}>
-            <Text style={styles.visibilityTitle}>
+          <View style={lumoStyles.visibilityCopy}>
+            <Text style={lumoStyles.visibilityTitle}>
               {isPublic ? 'Public group' : 'Private group'}
             </Text>
-            <Text style={styles.visibilityDescription}>
+            <Text style={lumoStyles.visibilityDescription}>
               {isPublic
                 ? 'Anyone can find and join this group.'
                 : 'Only invited members can access this group.'}
@@ -265,23 +267,23 @@ export default function CreateGroup() {
           />
         </View>
 
-        <View style={styles.memberSection}>
-          <View style={styles.memberHeading}>
+        <View style={lumoStyles.memberSection}>
+          <View style={lumoStyles.memberHeading}>
             <View>
-              <Text style={styles.sectionTitle}>Add people</Text>
-              <Text style={styles.sectionHint}>
+              <Text style={lumoStyles.sectionTitle}>Add people</Text>
+              <Text style={lumoStyles.sectionHint}>
                 Select members to invite
               </Text>
             </View>
-            <View style={styles.selectedBadge}>
-              <Text style={styles.selectedBadgeText}>{selected.length} selected</Text>
+            <View style={lumoStyles.selectedBadge}>
+              <Text style={lumoStyles.selectedBadgeText}>{selected.length} selected</Text>
             </View>
           </View>
 
-          <View style={styles.searchBar}>
+          <View style={lumoStyles.searchBar}>
             <Ionicons name="search-outline" size={18} color={colors.muted} />
             <TextInput
-              style={styles.searchInput}
+              style={lumoStyles.searchInput}
               placeholder="Search by username"
               placeholderTextColor={colors.dim}
               value={query}
@@ -301,19 +303,19 @@ export default function CreateGroup() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.selectedList}
+              contentContainerStyle={lumoStyles.selectedList}
             >
               {selected.map((person) => (
                 <Pressable
                   key={person.id}
-                  style={styles.selectedPerson}
+                  style={lumoStyles.selectedPerson}
                   onPress={() => toggleMember(person)}
                 >
                   <Avatar uri={person.avatar_url} name={person.username} size={34} />
-                  <View style={styles.removeBadge}>
+                  <View style={lumoStyles.removeBadge}>
                     <Ionicons name="close" size={10} color={colors.bg} />
                   </View>
-                  <Text style={styles.selectedName} numberOfLines={1}>
+                  <Text style={lumoStyles.selectedName} numberOfLines={1}>
                     {person.username}
                   </Text>
                 </Pressable>
@@ -321,15 +323,15 @@ export default function CreateGroup() {
             </ScrollView>
           )}
 
-          <View style={styles.peopleList}>
+          <View style={lumoStyles.peopleList}>
             {searching ? (
-              <View style={styles.searchState}>
+              <View style={lumoStyles.searchState}>
                 <ActivityIndicator color={colors.lime} size="small" />
               </View>
             ) : searchError ? (
-              <Text style={styles.emptyMessage}>{searchError}</Text>
+              <Text style={lumoStyles.emptyMessage}>{searchError}</Text>
             ) : people.length === 0 ? (
-              <Text style={styles.emptyMessage}>
+              <Text style={lumoStyles.emptyMessage}>
                 {query.trim() ? 'No people found.' : 'No people to show yet.'}
               </Text>
             ) : (
@@ -339,7 +341,7 @@ export default function CreateGroup() {
                 return (
                   <Pressable
                     key={person.id}
-                    style={styles.personRow}
+                    style={lumoStyles.personRow}
                     onPress={() => toggleMember(person)}
                   >
                     <Avatar
@@ -348,18 +350,18 @@ export default function CreateGroup() {
                       size={43}
                     />
 
-                    <View style={styles.personCopy}>
-                      <Text style={styles.personUsername} numberOfLines={1}>
+                    <View style={lumoStyles.personCopy}>
+                      <Text style={lumoStyles.personUsername} numberOfLines={1}>
                         @{person.username}
                       </Text>
                       {!!person.full_name && (
-                        <Text style={styles.personName} numberOfLines={1}>
+                        <Text style={lumoStyles.personName} numberOfLines={1}>
                           {person.full_name}
                         </Text>
                       )}
                     </View>
 
-                    <View style={[styles.selectCircle, isSelected && styles.selectCircleActive]}>
+                    <View style={[lumoStyles.selectCircle, isSelected && lumoStyles.selectCircleActive]}>
                       {isSelected && (
                         <Ionicons name="checkmark" size={14} color={colors.bg} />
                       )}
@@ -372,7 +374,7 @@ export default function CreateGroup() {
         </View>
 
         <Pressable
-          style={[styles.createButton, (busy || !name.trim()) && styles.createButtonDisabled]}
+          style={[lumoStyles.createButton, (busy || !name.trim()) && lumoStyles.createButtonDisabled]}
           onPress={() => void handleCreate()}
           disabled={busy || !name.trim()}
           accessibilityRole="button"
@@ -382,7 +384,7 @@ export default function CreateGroup() {
           ) : (
             <>
               <Ionicons name="people" size={18} color={colors.bg} />
-              <Text style={styles.createButtonText}>Create group</Text>
+              <Text style={lumoStyles.createButtonText}>Create group</Text>
             </>
           )}
         </Pressable>

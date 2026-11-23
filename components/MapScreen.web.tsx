@@ -6,7 +6,10 @@ import * as L from 'leaflet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { colors, radii } from '../lib/theme';
+import { colors, radii, type AppColors, type ThemeId } from '../lib/theme';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+import { usePreferences } from "../lib/preferences";
+
 
 type Coordinate = { latitude: number; longitude: number };
 type FriendLocation = Coordinate & {
@@ -19,6 +22,34 @@ type FriendLocation = Coordinate & {
 type PermissionState = 'granted' | 'prompt' | 'denied' | 'unknown' | 'unsupported';
 
 const WORLD_CENTER: [number, number] = [24, 8];
+
+function buildLeafletThemeCss(palette: AppColors, theme: ThemeId) {
+  const tileFilter = theme === 'light'
+    ? 'none'
+    : theme === 'forest'
+      ? 'invert(100%) hue-rotate(155deg) brightness(82%) contrast(88%) saturate(42%)'
+      : theme === 'sandstone'
+        ? 'invert(100%) hue-rotate(160deg) brightness(82%) contrast(88%) saturate(52%)'
+        : 'invert(100%) hue-rotate(180deg) brightness(82%) contrast(88%) saturate(45%)';
+  return `
+    .leaflet-container { background: ${palette.bg}; font-family: Arial, sans-serif; }
+    .leaflet-tile-pane { filter: ${tileFilter}; }
+    .leaflet-div-icon.lumo-friend-icon { background: transparent; border: 0; }
+    .lumo-friend-icon span {
+      display: flex; width: 40px; height: 40px; align-items: center; justify-content: center;
+      border-radius: 50%; color: ${palette.text}; background: ${palette.surfaceRaised};
+      border: 2px solid ${palette.success}; box-shadow: 0 4px 16px ${palette.overlay};
+      font-size: 13px; font-weight: 800;
+    }
+    .leaflet-tooltip {
+      color: ${palette.text}; background: ${palette.surface}; border: 1px solid ${palette.border};
+      border-radius: 9px; box-shadow: 0 5px 18px ${palette.overlay}; padding: 7px 10px;
+    }
+    .leaflet-tooltip:before { display: none; }
+    .leaflet-control-attribution { background: ${palette.glass} !important; color: ${palette.muted} !important; }
+    .leaflet-control-attribution a { color: ${palette.accentStrong} !important; }
+  `;
+}
 
 
 function relativeTime(iso: string) {
@@ -96,10 +127,13 @@ function distanceMeters(a: Coordinate, b: Coordinate) {
 }
 
 export default function MapScreenWeb() {
+  const lumoStyles = useThemedStyles(styles);
+  const { palette, theme } = usePreferences();
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const userId = session?.user.id;
   const mapElementRef = useRef<HTMLDivElement | null>(null);
+  const mapStylesRef = useRef<HTMLStyleElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const friendLayerRef = useRef<L.LayerGroup | null>(null);
   const ownMarkerRef = useRef<L.CircleMarker | null>(null);
@@ -243,24 +277,8 @@ export default function MapScreenWeb() {
       document.head.appendChild(leafletStylesheet);
     }
     const mapStyles = document.createElement('style');
-    mapStyles.textContent = `
-      .leaflet-container { background: #151A20; font-family: Arial, sans-serif; }
-      .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(88%) saturate(45%); }
-      .leaflet-div-icon.lumo-friend-icon { background: transparent; border: 0; }
-      .lumo-friend-icon span {
-        display: flex; width: 40px; height: 40px; align-items: center; justify-content: center;
-        border-radius: 50%; color: #F2F5F7; background: #1A2029;
-        border: 2px solid #9EBEAE; box-shadow: 0 4px 16px rgba(0,0,0,.45);
-        font-size: 13px; font-weight: 800;
-      }
-      .leaflet-tooltip {
-        color: #F2F5F7; background: #12161C; border: 1px solid #39434D;
-        border-radius: 9px; box-shadow: 0 5px 18px rgba(0,0,0,.35); padding: 7px 10px;
-      }
-      .leaflet-tooltip:before { display: none; }
-      .leaflet-control-attribution { background: rgba(12,16,22,.82) !important; color: #AEB8C3 !important; }
-      .leaflet-control-attribution a { color: #DCE4EC !important; }
-    `;
+    mapStylesRef.current = mapStyles;
+    mapStyles.textContent = buildLeafletThemeCss(palette, theme);
     document.head.appendChild(mapStyles);
     const map = L.map(mapElementRef.current, {
       zoomControl: false,
@@ -280,12 +298,19 @@ export default function MapScreenWeb() {
     return () => {
       map.remove();
       mapStyles.remove();
+      mapStylesRef.current = null;
       mapRef.current = null;
       friendLayerRef.current = null;
       ownMarkerRef.current = null;
       ownAccuracyCircleRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (mapStylesRef.current) {
+      mapStylesRef.current.textContent = buildLeafletThemeCss(palette, theme);
+    }
+  }, [palette, theme]);
 
   useEffect(() => {
     void loadScreen();
@@ -322,10 +347,10 @@ export default function MapScreenWeb() {
           [myCoordinate.latitude, myCoordinate.longitude],
           {
             radius: locationAccuracy,
-            color: '#9EBEAE',
+            color: resolveThemeColor("#9EBEAE", "color"),
             weight: 1,
             opacity: 0.75,
-            fillColor: '#9EBEAE',
+            fillColor: resolveThemeColor('#9EBEAE', 'color'),
             fillOpacity: 0.12,
             interactive: false,
           },
@@ -333,14 +358,14 @@ export default function MapScreenWeb() {
       }
       ownMarkerRef.current = L.circleMarker(
         [myCoordinate.latitude, myCoordinate.longitude],
-        { radius: 8, color: '#F1F4F7', weight: 3, fillColor: '#F1F4F7', fillOpacity: 1 },
+        { radius: 8, color: resolveThemeColor("#F1F4F7", "color"), weight: 3, fillColor: resolveThemeColor('#F1F4F7', 'color'), fillOpacity: 1 },
       ).addTo(map);
       const ownLabel = document.createElement('span');
       const accuracyLabel = locationAccuracy !== null ? ` · ±${Math.round(locationAccuracy)} m` : '';
       ownLabel.textContent = `${sharingEnabled ? 'Your live location' : 'Your location (private)'}${accuracyLabel}`;
       ownMarkerRef.current.bindTooltip(ownLabel);
     }
-  }, [myCoordinate, locationAccuracy, sharingEnabled]);
+  }, [myCoordinate, locationAccuracy, sharingEnabled, palette]);
 
   useEffect(() => {
     const layer = friendLayerRef.current;
@@ -352,10 +377,10 @@ export default function MapScreenWeb() {
           [friend.latitude, friend.longitude],
           {
             radius: friend.accuracy_meters,
-            color: '#9EBEAE',
+            color: resolveThemeColor("#9EBEAE", "color"),
             weight: 1,
             opacity: 0.65,
-            fillColor: '#9EBEAE',
+            fillColor: resolveThemeColor('#9EBEAE', 'color'),
             fillOpacity: 0.08,
             interactive: false,
           },
@@ -377,7 +402,7 @@ export default function MapScreenWeb() {
         mapRef.current?.flyTo([friend.latitude, friend.longitude], 13, { duration: 0.55 });
       });
     });
-  }, [friends]);
+  }, [friends, palette]);
 
   useEffect(() => {
     if (!sharingEnabled || !userId || !navigator.geolocation) return;
@@ -483,32 +508,32 @@ export default function MapScreenWeb() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <div
         ref={mapElementRef}
         aria-label="Lumo world map"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#151A20', zIndex: 0 }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: palette.bg, zIndex: 0 }}
       />
 
-      <View pointerEvents="box-none" style={[styles.topOverlay, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
-        <View style={styles.topRow}>
+      <View pointerEvents="box-none" style={[lumoStyles.topOverlay, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
+        <View style={lumoStyles.topRow}>
           <View>
-            <Text style={styles.eyebrow}>LUMO / PLACES</Text>
-            <Text style={styles.title}>Map</Text>
+            <Text style={lumoStyles.eyebrow}>LUMO / PLACES</Text>
+            <Text style={lumoStyles.title}>Map</Text>
           </View>
-          <View style={[styles.statusPill, sharingEnabled ? styles.statusLive : styles.statusPrivate]}>
-            <View style={[styles.statusDot, sharingEnabled && styles.statusDotLive]} />
-            <Text style={styles.statusText}>{sharingEnabled ? 'LIVE SHARING' : 'GHOST MODE'}</Text>
+          <View style={[lumoStyles.statusPill, sharingEnabled ? lumoStyles.statusLive : lumoStyles.statusPrivate]}>
+            <View style={[lumoStyles.statusDot, sharingEnabled && lumoStyles.statusDotLive]} />
+            <Text style={lumoStyles.statusText}>{sharingEnabled ? 'LIVE SHARING' : 'GHOST MODE'}</Text>
           </View>
         </View>
-        <View style={styles.searchBox}>
+        <View style={lumoStyles.searchBox}>
           <Ionicons name="search" size={18} color={colors.muted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Find people you follow"
             placeholderTextColor={colors.dim}
-            style={styles.searchInput}
+            style={lumoStyles.searchInput}
             autoCapitalize="none"
           />
           {search.length > 0 ? (
@@ -519,37 +544,37 @@ export default function MapScreenWeb() {
         </View>
       </View>
 
-      <View style={styles.mapControls}>
-        <Pressable style={styles.mapControlButton} onPress={() => void centerOnMe()} accessibilityRole="button" accessibilityLabel="Center on my location">
+      <View style={lumoStyles.mapControls}>
+        <Pressable style={lumoStyles.mapControlButton} onPress={() => void centerOnMe()} accessibilityRole="button" accessibilityLabel="Center on my location">
           {locating ? <ActivityIndicator color={colors.text} size="small" /> : <Ionicons name="locate-outline" size={20} color={colors.text} />}
         </Pressable>
-        <Pressable style={styles.mapControlButton} onPress={() => mapRef.current?.zoomIn()} accessibilityRole="button" accessibilityLabel="Zoom in">
+        <Pressable style={lumoStyles.mapControlButton} onPress={() => mapRef.current?.zoomIn()} accessibilityRole="button" accessibilityLabel="Zoom in">
           <Ionicons name="add" size={22} color={colors.text} />
         </Pressable>
-        <Pressable style={styles.mapControlButton} onPress={() => mapRef.current?.zoomOut()} accessibilityRole="button" accessibilityLabel="Zoom out">
+        <Pressable style={lumoStyles.mapControlButton} onPress={() => mapRef.current?.zoomOut()} accessibilityRole="button" accessibilityLabel="Zoom out">
           <Ionicons name="remove" size={22} color={colors.text} />
         </Pressable>
       </View>
 
-      <View style={[styles.bottomPanel, { paddingBottom: Math.max(insets.bottom, 12) + 72 }]}>
-        <View style={styles.panelHandle} />
-        <View style={styles.panelHeader}>
+      <View style={[lumoStyles.bottomPanel, { paddingBottom: Math.max(insets.bottom, 12) + 72 }]}>
+        <View style={lumoStyles.panelHandle} />
+        <View style={lumoStyles.panelHeader}>
           <View>
-            <Text style={styles.panelEyebrow}>YOUR CIRCLE</Text>
-            <Text style={styles.panelTitle}>Following on map <Text style={styles.countText}>{friends.length}</Text></Text>
+            <Text style={lumoStyles.panelEyebrow}>YOUR CIRCLE</Text>
+            <Text style={lumoStyles.panelTitle}>Following on map <Text style={lumoStyles.countText}>{friends.length}</Text></Text>
           </View>
-          <Pressable style={styles.refreshButton} onPress={() => void loadScreen()} accessibilityRole="button" accessibilityLabel="Refresh map">
+          <Pressable style={lumoStyles.refreshButton} onPress={() => void loadScreen()} accessibilityRole="button" accessibilityLabel="Refresh map">
             <Ionicons name="refresh" size={18} color={colors.text} />
           </Pressable>
         </View>
 
-        <View style={styles.privacyRow}>
-          <View style={styles.privacyIcon}>
+        <View style={lumoStyles.privacyRow}>
+          <View style={lumoStyles.privacyIcon}>
             <Ionicons name={sharingEnabled ? 'navigate' : 'eye-off-outline'} size={18} color={colors.text} />
           </View>
-          <View style={styles.privacyCopy}>
-            <Text style={styles.privacyTitle}>{sharingEnabled ? 'Location sharing is on' : 'Ghost Mode is on'}</Text>
-            <Text style={styles.privacySubtitle}>
+          <View style={lumoStyles.privacyCopy}>
+            <Text style={lumoStyles.privacyTitle}>{sharingEnabled ? 'Location sharing is on' : 'Ghost Mode is on'}</Text>
+            <Text style={lumoStyles.privacySubtitle}>
               {sharingEnabled ? 'People you follow can see your live location.' : 'Your location is hidden from everyone else.'}
             </Text>
           </View>
@@ -557,61 +582,61 @@ export default function MapScreenWeb() {
             <Switch
               value={sharingEnabled}
               onValueChange={toggleSharing}
-              trackColor={{ false: '#343C45', true: '#758B7E' }}
-              thumbColor={sharingEnabled ? '#E6EFE8' : '#D7DDE3'}
+              trackColor={{ false: palette.surfaceSoft, true: palette.successSoft }}
+              thumbColor={sharingEnabled ? palette.success : palette.text}
               accessibilityLabel="Location sharing"
             />
           )}
         </View>
 
-        <View style={styles.webNote}>
+        <View style={lumoStyles.webNote}>
           <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
-          <Text style={styles.webNoteText}>On the web, live updates work while this page remains open. Use the mobile app for background sharing.</Text>
+          <Text style={lumoStyles.webNoteText}>On the web, live updates work while this page remains open. Use the mobile app for background sharing.</Text>
         </View>
 
         {lastUpdated && sharingEnabled ? (
-          <Text style={styles.updatedText}>Your location updated {relativeTime(lastUpdated)}</Text>
+          <Text style={lumoStyles.updatedText}>Your location updated {relativeTime(lastUpdated)}</Text>
         ) : null}
 
-        {message ? <Text style={styles.messageText}>{message}</Text> : null}
+        {message ? <Text style={lumoStyles.messageText}>{message}</Text> : null}
 
         {loading ? (
-          <View style={styles.emptyRow}>
+          <View style={lumoStyles.emptyRow}>
             <ActivityIndicator color={colors.accent} />
-            <Text style={styles.emptyText}>Loading your circle…</Text>
+            <Text style={lumoStyles.emptyText}>Loading your circle…</Text>
           </View>
         ) : visibleFriends.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.friendList}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.friendList}>
             {visibleFriends.map((friend) => (
-              <Pressable key={friend.id} style={styles.friendItem} onPress={() => focusFriend(friend)}>
+              <Pressable key={friend.id} style={lumoStyles.friendItem} onPress={() => focusFriend(friend)}>
                 {friend.avatar_url ? (
-                  <Image source={{ uri: friend.avatar_url }} style={styles.friendAvatar} contentFit="cover" />
+                  <Image source={{ uri: friend.avatar_url }} style={lumoStyles.friendAvatar} contentFit="cover" />
                 ) : (
-                  <View style={[styles.friendAvatar, styles.friendAvatarFallback]}>
+                  <View style={[lumoStyles.friendAvatar, lumoStyles.friendAvatarFallback]}>
                     <Ionicons name="person" size={18} color={colors.text} />
                   </View>
                 )}
-                <Text style={styles.friendName} numberOfLines={1}>@{friend.username}</Text>
-                <Text style={styles.friendTime}>{relativeTime(friend.updated_at)}</Text>
+                <Text style={lumoStyles.friendName} numberOfLines={1}>@{friend.username}</Text>
+                <Text style={lumoStyles.friendTime}>{relativeTime(friend.updated_at)}</Text>
               </Pressable>
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.emptyRow}>
+          <View style={lumoStyles.emptyRow}>
             <Ionicons name="people-outline" size={19} color={colors.dim} />
-            <Text style={styles.emptyText}>
+            <Text style={lumoStyles.emptyText}>
               {search ? 'No matching people sharing their location.' : 'No one you follow is sharing their location yet.'}
             </Text>
           </View>
         )}
 
-        <View style={styles.permissionRow}>
+        <View style={lumoStyles.permissionRow}>
           <Ionicons
             name={permissionState === 'granted' ? 'location' : permissionState === 'denied' ? 'location-outline' : 'shield-checkmark-outline'}
             size={14}
             color={permissionState === 'denied' ? colors.danger : colors.muted}
           />
-          <Text style={styles.permissionText}>
+          <Text style={lumoStyles.permissionText}>
             {permissionState === 'granted' ? 'Browser location permission: allowed' :
               permissionState === 'denied' ? 'Browser location permission: blocked' :
                 permissionState === 'unsupported' ? 'This browser does not support geolocation' :
@@ -621,7 +646,7 @@ export default function MapScreenWeb() {
         </View>
       </View>
 
-      <Text style={styles.attribution}>© OpenStreetMap contributors</Text>
+      <Text style={lumoStyles.attribution}>© OpenStreetMap contributors</Text>
     </View>
   );
 }

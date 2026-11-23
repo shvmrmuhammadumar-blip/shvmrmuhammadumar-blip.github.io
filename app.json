@@ -1,57 +1,58 @@
-﻿{
-    "expo":  {
-                 "name":  "Lumo",
-                 "slug":  "lumo",
-                 "version":  "1.0.0",
-                 "scheme":  "lumo",
-                 "icon":  "./assets/lumo-app-icon.png",
-                 "orientation":  "portrait",
-                 "userInterfaceStyle":  "dark",
-                 "ios":  {
-                             "supportsTablet":  true,
-                             "bundleIdentifier":  "com.yourname.lumo",
-                             "infoPlist":  {
-                                               "NSPhotoLibraryUsageDescription":  "Lumo needs access to your photos so you can share them.",
-                                               "NSCameraUsageDescription":  "Lumo uses your camera when you start or join a live video.",
-                                               "NSMicrophoneUsageDescription":  "Lumo uses your microphone when you speak during a live video."
-                                           }
-                         },
-                 "android":  {
-                                 "package":  "com.yourname.lumo",
-                                 "adaptiveIcon":  {
-                                                      "foregroundImage":  "./assets/lumo-mark.png",
-                                                      "backgroundColor":  "#090C12"
-                                                  }
-                             },
-                 "plugins":  [
-                                 "expo-router",
-                                 [
-                                     "expo-image-picker",
-                                     {
-                                         "photosPermission":  "Lumo needs access to your photos so you can share them."
-                                     }
-                                 ],
-                                 [
-                                     "expo-location",
-                                     {
-                                         "locationWhenInUsePermission":  "Allow Lumo to show your position on the map when you choose.",
-                                         "locationAlwaysAndWhenInUsePermission":  "Allow Lumo to keep your shared location updated for people you follow.",
-                                         "isIosBackgroundLocationEnabled":  true,
-                                         "isAndroidBackgroundLocationEnabled":  true,
-                                         "isAndroidForegroundServiceEnabled":  true
-                                     }
-                                 ],
-                                 "expo-video",
-                                 "@livekit/react-native-expo-plugin",
-                                 "@config-plugins/react-native-webrtc"
-                             ],
-                 "web":  {
-                             "bundler":  "metro",
-                             "output":  "single",
-                             "favicon":  "./public/favicon.png"
-                         },
-                 "experiments":  {
-
-                                 }
-             }
+{
+  "expo": {
+    "name": "Lumo",
+    "slug": "lumo",
+    "version": "1.0.0",
+    "scheme": "lumo",
+    "icon": "./assets/lumo-app-icon.png",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.muhammadumar.lumo",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Lumo needs access to your photos so you can share them.",
+        "NSCameraUsageDescription": "Lumo uses your camera when you start or join a live video.",
+        "NSMicrophoneUsageDescription": "Lumo uses your microphone when you speak during a live video."
+      }
+    },
+    "android": {
+      "package": "com.muhammadumar.lumo",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/lumo-mark.png",
+        "backgroundColor": "#090C12"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Lumo needs access to your photos so you can share them."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Lumo to show your position on the map when you choose.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Lumo to keep your shared location updated for people you follow.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-video",
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar"
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./public/favicon.png"
+    },
+    "experiments": {}
+  }
 }

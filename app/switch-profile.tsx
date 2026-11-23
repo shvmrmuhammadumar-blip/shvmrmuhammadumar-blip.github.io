@@ -15,8 +15,10 @@ import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '../lib/auth';
 import { colors } from '../lib/theme';
 import { getSavedAccounts, rememberAccount, type SavedAccount } from '../lib/saved-accounts';
+import { useThemedStyles } from "../lib/theme-styles";
 
 export default function SwitchProfile() {
+  const lumoStyles = useThemedStyles(styles);
   const { session, signIn } = useAuth();
   const router = useRouter();
   const [accounts, setAccounts] = useState<SavedAccount[]>([]);
@@ -101,22 +103,22 @@ export default function SwitchProfile() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.screen}
+      style={lumoStyles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Stack.Screen options={{ title: 'Switch Profile', headerShown: true }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.heading}>
-          <Text style={styles.eyebrow}>LUMO / ACCOUNT SPACE</Text>
-          <Text style={styles.title}>Switch profile</Text>
-          <Text style={styles.subtitle}>Choose an account already used on this device, or add another one.</Text>
+      <ScrollView contentContainerStyle={lumoStyles.content} keyboardShouldPersistTaps="handled">
+        <View style={lumoStyles.heading}>
+          <Text style={lumoStyles.eyebrow}>LUMO / ACCOUNT SPACE</Text>
+          <Text style={lumoStyles.title}>Switch profile</Text>
+          <Text style={lumoStyles.subtitle}>Choose an account already used on this device, or add another one.</Text>
         </View>
 
-        <View style={styles.accountList}>
+        <View style={lumoStyles.accountList}>
           {loading ? (
-            <View style={styles.loadingRow}>
+            <View style={lumoStyles.loadingRow}>
               <ActivityIndicator color={colors.lime} />
-              <Text style={styles.secondaryText}>Loading accounts…</Text>
+              <Text style={lumoStyles.secondaryText}>Loading accounts…</Text>
             </View>
           ) : accounts.length ? (
             accounts.map((account) => {
@@ -126,16 +128,16 @@ export default function SwitchProfile() {
                 <Pressable
                   key={account.id}
                   onPress={() => chooseAccount(account)}
-                  style={[styles.accountRow, selected && styles.accountRowSelected]}
+                  style={[lumoStyles.accountRow, selected && lumoStyles.accountRowSelected]}
                   accessibilityRole="button"
                   accessibilityLabel={current ? `${account.email}, current account` : `Switch to ${account.email}`}
                 >
-                  <View style={styles.accountIcon}>
+                  <View style={lumoStyles.accountIcon}>
                     <Ionicons name="person-outline" size={20} color={colors.text} />
                   </View>
-                  <View style={styles.accountCopy}>
-                    <Text style={styles.accountEmail} numberOfLines={1}>{account.email}</Text>
-                    <Text style={styles.accountState}>{current ? 'CURRENT ACCOUNT' : 'TAP TO SWITCH'}</Text>
+                  <View style={lumoStyles.accountCopy}>
+                    <Text style={lumoStyles.accountEmail} numberOfLines={1}>{account.email}</Text>
+                    <Text style={lumoStyles.accountState}>{current ? 'CURRENT ACCOUNT' : 'TAP TO SWITCH'}</Text>
                   </View>
                   {current ? (
                     <Ionicons name="checkmark-circle" size={20} color={colors.lime} />
@@ -146,34 +148,34 @@ export default function SwitchProfile() {
               );
             })
           ) : (
-            <Text style={styles.secondaryText}>No saved accounts yet. Add another account below.</Text>
+            <Text style={lumoStyles.secondaryText}>No saved accounts yet. Add another account below.</Text>
           )}
         </View>
 
         {!selectedAccount ? (
-          <Pressable style={styles.addButton} onPress={addAccount} accessibilityRole="button">
+          <Pressable style={lumoStyles.addButton} onPress={addAccount} accessibilityRole="button">
             <Ionicons name="person-add-outline" size={19} color={colors.lime} />
-            <Text style={styles.addButtonText}>Add another account</Text>
+            <Text style={lumoStyles.addButtonText}>Add another account</Text>
           </Pressable>
         ) : (
-          <View style={styles.signInCard}>
-            <View style={styles.formHeading}>
+          <View style={lumoStyles.signInCard}>
+            <View style={lumoStyles.formHeading}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.formTitle}>{selectedAccount.id ? 'Sign in to account' : 'Add another account'}</Text>
-                <Text style={styles.secondaryText}>Confirm the password to switch securely.</Text>
+                <Text style={lumoStyles.formTitle}>{selectedAccount.id ? 'Sign in to account' : 'Add another account'}</Text>
+                <Text style={lumoStyles.secondaryText}>Confirm the password to switch securely.</Text>
               </View>
               <Pressable onPress={cancelSignIn} hitSlop={10} accessibilityLabel="Cancel account switch">
                 <Ionicons name="close-circle-outline" size={23} color={colors.muted} />
               </Pressable>
             </View>
 
-            <Text style={styles.fieldLabel}>EMAIL</Text>
+            <Text style={lumoStyles.fieldLabel}>EMAIL</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
               placeholder="Email address"
               placeholderTextColor={colors.muted}
-              style={styles.input}
+              style={lumoStyles.input}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
@@ -181,41 +183,41 @@ export default function SwitchProfile() {
               autoComplete="email"
             />
 
-            <Text style={styles.fieldLabel}>PASSWORD</Text>
+            <Text style={lumoStyles.fieldLabel}>PASSWORD</Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
               placeholder="Account password"
               placeholderTextColor={colors.muted}
-              style={styles.input}
+              style={lumoStyles.input}
               secureTextEntry
               autoComplete="current-password"
               onSubmitEditing={() => void continueWithAccount()}
               returnKeyType="go"
             />
 
-            {!!error && <Text style={styles.errorText} accessibilityRole="alert">{error}</Text>}
+            {!!error && <Text style={lumoStyles.errorText} accessibilityRole="alert">{error}</Text>}
 
             <Pressable
-              style={[styles.continueButton, busy && styles.buttonDisabled]}
+              style={[lumoStyles.continueButton, busy && lumoStyles.buttonDisabled]}
               onPress={() => void continueWithAccount()}
               disabled={busy}
               accessibilityRole="button"
             >
               {busy ? <ActivityIndicator color={colors.bg} /> : (
                 <>
-                  <Text style={styles.continueText}>Continue</Text>
+                  <Text style={lumoStyles.continueText}>Continue</Text>
                   <Ionicons name="arrow-forward" size={17} color={colors.bg} />
                 </>
               )}
             </Pressable>
-            <Text style={styles.securityNote}>Your password is never saved on this device.</Text>
+            <Text style={lumoStyles.securityNote}>Your password is never saved on this device.</Text>
           </View>
         )}
 
-        <View style={styles.footerNote}>
+        <View style={lumoStyles.footerNote}>
           <Ionicons name="shield-checkmark-outline" size={16} color={colors.muted} />
-          <Text style={styles.footerText}>Only account emails are remembered here. Each account requires its password when you switch.</Text>
+          <Text style={lumoStyles.footerText}>Only account emails are remembered here. Each account requires its password when you switch.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

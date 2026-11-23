@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../lib/theme";
 import type { MarketListing } from "../../lib/market";
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Props = {
   item: MarketListing;
@@ -27,6 +28,7 @@ export default function MarketListingCard({
   onPress,
   own = false,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const image = item.images[0];
   const sellerName =
     item.seller?.full_name?.trim() ||
@@ -39,74 +41,74 @@ export default function MarketListingCard({
       accessibilityRole="button"
       accessibilityLabel={`Open ${item.title}`}
       style={({ pressed }) => [
-        styles.card,
-        pressed && styles.pressed,
+        lumoStyles.card,
+        pressed && lumoStyles.pressed,
       ]}
     >
-      <View style={styles.imageWrap}>
+      <View style={lumoStyles.imageWrap}>
         {image ? (
           <Image
             source={{ uri: image }}
-            style={styles.image}
+            style={lumoStyles.image}
             contentFit="cover"
             transition={180}
           />
         ) : (
-          <View style={styles.imagePlaceholder}>
+          <View style={lumoStyles.imagePlaceholder}>
             <Ionicons
               name={item.kind === "service" ? "construct-outline" : "cube-outline"}
               size={34}
               color={colors.dim}
             />
-            <Text style={styles.noImage}>No image</Text>
+            <Text style={lumoStyles.noImage}>No image</Text>
           </View>
         )}
 
-        <View style={styles.kindBadge}>
-          <Text style={styles.kindText}>
+        <View style={lumoStyles.kindBadge}>
+          <Text style={lumoStyles.kindText}>
             {item.kind === "service" ? "SERVICE" : "PRODUCT"}
           </Text>
         </View>
 
         {own && item.status !== "active" ? (
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+          <View style={lumoStyles.statusBadge}>
+            <Text style={lumoStyles.statusText}>{item.status.toUpperCase()}</Text>
           </View>
         ) : null}
       </View>
 
-      <View style={styles.body}>
-        <Text numberOfLines={1} style={styles.category}>
+      <View style={lumoStyles.body}>
+        <Text numberOfLines={1} style={lumoStyles.category}>
           {item.category}
         </Text>
 
-        <Text numberOfLines={2} style={styles.title}>
+        <Text numberOfLines={2} style={lumoStyles.title}>
           {item.title}
         </Text>
 
-        <Text numberOfLines={1} style={styles.price}>
+        <Text numberOfLines={1} style={lumoStyles.price}>
           {formatPrice(item)}
         </Text>
 
         {item.is_negotiable ? (
-          <Text style={styles.negotiable}>Price is negotiable</Text>
+          <Text style={lumoStyles.negotiable}>Price is negotiable</Text>
         ) : (
-          <View style={styles.negotiableSpacer} />
+          <View style={lumoStyles.negotiableSpacer} />
         )}
 
-        <View style={styles.footer}>
-          <View style={styles.location}>
+        <View style={lumoStyles.footer}>
+          <View style={lumoStyles.location}>
             <Ionicons
               name="location-outline"
               size={12}
               color={colors.dim}
             />
-            <Text numberOfLines={1} style={styles.locationText}>
+            <Text numberOfLines={1} style={lumoStyles.locationText}>
               {[item.city, item.region].filter(Boolean).join(", ") || "Uzbekistan"}
             </Text>
           </View>
 
-          <Text numberOfLines={1} style={styles.seller}>
+          <Text numberOfLines={1} style={lumoStyles.seller}>
             {sellerName}
           </Text>
         </View>
@@ -117,9 +119,11 @@ export default function MarketListingCard({
 
 const styles = StyleSheet.create({
   card: {
-    flexBasis: "48%",
-    flexGrow: 1,
-    maxWidth: "49%",
+    width: "100%",
+    flexBasis: "auto",
+    flexGrow: 0,
+    flexShrink: 0,
+    maxWidth: "100%",
     minWidth: 0,
     overflow: "hidden",
     borderRadius: 17,

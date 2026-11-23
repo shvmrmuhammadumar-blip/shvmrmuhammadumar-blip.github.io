@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../lib/theme";
 import type { MarketStore } from "../../lib/market";
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Props = {
   store: MarketStore;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export default function MarketStoreCard({ store, onPress }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const ownerName =
     store.owner?.full_name?.trim() ||
     store.owner?.username ||
@@ -22,47 +24,47 @@ export default function MarketStoreCard({ store, onPress }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`Open ${store.name} store`}
       style={({ pressed }) => [
-        styles.card,
-        pressed && styles.pressed,
+        lumoStyles.card,
+        pressed && lumoStyles.pressed,
       ]}
     >
-      <View style={styles.coverWrap}>
+      <View style={lumoStyles.coverWrap}>
         {store.cover_url ? (
           <Image
             source={{ uri: store.cover_url }}
-            style={styles.cover}
+            style={lumoStyles.cover}
             contentFit="cover"
             transition={180}
           />
         ) : (
-          <View style={styles.coverFallback}>
+          <View style={lumoStyles.coverFallback}>
             <Ionicons name="storefront-outline" size={34} color={colors.dim} />
-            <Text style={styles.coverFallbackText}>YOUR BRAND, YOUR SPACE</Text>
+            <Text style={lumoStyles.coverFallbackText}>YOUR BRAND, YOUR SPACE</Text>
           </View>
         )}
-        <View style={styles.coverShade} />
+        <View style={lumoStyles.coverShade} />
       </View>
 
-      <View style={styles.identityRow}>
-        <View style={styles.avatarWrap}>
+      <View style={lumoStyles.identityRow}>
+        <View style={lumoStyles.avatarWrap}>
           {store.avatar_url ? (
             <Image
               source={{ uri: store.avatar_url }}
-              style={styles.avatar}
+              style={lumoStyles.avatar}
               contentFit="cover"
             />
           ) : (
-            <View style={styles.avatarFallback}>
+            <View style={lumoStyles.avatarFallback}>
               <Ionicons name="storefront" size={23} color={colors.accentStrong} />
             </View>
           )}
         </View>
 
-        <View style={styles.identityCopy}>
-          <Text numberOfLines={1} style={styles.name}>
+        <View style={lumoStyles.identityCopy}>
+          <Text numberOfLines={1} style={lumoStyles.name}>
             {store.name}
           </Text>
-          <Text numberOfLines={1} style={styles.owner}>
+          <Text numberOfLines={1} style={lumoStyles.owner}>
             by {ownerName}
           </Text>
         </View>
@@ -71,23 +73,23 @@ export default function MarketStoreCard({ store, onPress }: Props) {
       </View>
 
       {store.description ? (
-        <Text numberOfLines={2} style={styles.description}>
+        <Text numberOfLines={2} style={lumoStyles.description}>
           {store.description}
         </Text>
       ) : (
-        <Text style={styles.descriptionMuted}>
+        <Text style={lumoStyles.descriptionMuted}>
           Explore this store on Lumo Market
         </Text>
       )}
 
-      <View style={styles.footer}>
-        <View style={styles.location}>
+      <View style={lumoStyles.footer}>
+        <View style={lumoStyles.location}>
           <Ionicons name="location-outline" size={13} color={colors.dim} />
-          <Text numberOfLines={1} style={styles.locationText}>
+          <Text numberOfLines={1} style={lumoStyles.locationText}>
             {[store.city, store.region].filter(Boolean).join(", ") || "Uzbekistan"}
           </Text>
         </View>
-        <Text style={styles.visit}>VISIT STORE</Text>
+        <Text style={lumoStyles.visit}>VISIT STORE</Text>
       </View>
     </Pressable>
   );
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   coverShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,12,0.10)",
   },
   identityRow: {

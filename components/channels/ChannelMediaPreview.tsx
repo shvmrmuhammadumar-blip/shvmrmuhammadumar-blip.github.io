@@ -9,13 +9,15 @@ import {
 import ChatMediaAttachment from '../ChatMediaAttachment';
 import { CHANNEL_MEDIA_BUCKET } from '../../lib/channel-upload';
 import { supabase } from '../../lib/supabase';
+import { useThemedStyles } from "../../lib/theme-styles";
+import { colors } from '../../lib/theme';
 
 const COLORS = {
-  panel: '#12161C',
-  border: '#2B3440',
-  lime: '#B9C7D6',
-  text: '#F2F5F7',
-  muted: '#9AA5B2',
+  get panel() { return colors.surface; },
+  get border() { return colors.border; },
+  get lime() { return colors.accent; },
+  get text() { return colors.text; },
+  get muted() { return colors.muted; },
 };
 
 type Props = {
@@ -34,6 +36,7 @@ export function ChannelMediaPreview({
   onOpenMedia,
   onLongPress,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,17 +75,17 @@ export function ChannelMediaPreview({
 
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <View style={lumoStyles.loading}>
         <ActivityIndicator color={COLORS.lime} />
-        <Text style={styles.muted}>Media ochilmoqda</Text>
+        <Text style={lumoStyles.muted}>Media ochilmoqda</Text>
       </View>
     );
   }
 
   if (error || !signedUrl) {
     return (
-      <View style={styles.unavailable}>
-        <Text style={styles.unavailableText}>{error || 'Media topilmadi.'}</Text>
+      <View style={lumoStyles.unavailable}>
+        <Text style={lumoStyles.unavailableText}>{error || 'Media topilmadi.'}</Text>
       </View>
     );
   }

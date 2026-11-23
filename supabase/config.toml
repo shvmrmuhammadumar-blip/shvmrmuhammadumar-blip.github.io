@@ -441,3 +441,10 @@ verify_jwt = true
 
 [functions.livekit-end-session]
 verify_jwt = true
+
+
+[functions.developer-payment-create]
+verify_jwt = false
+
+[functions.developer-payment-webhook]
+verify_jwt = false

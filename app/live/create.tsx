@@ -5,8 +5,11 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/theme';
 import { createLiveSession, LIVE_CATEGORIES, type LiveAudience, type LiveCategory } from '../../lib/live';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 export default function CreateLiveScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -43,90 +46,90 @@ export default function CreateLiveScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={19} color="#F2F5F7" />
-        <Text style={styles.backText}>Back to Live</Text>
+    <ScrollView style={lumoStyles.screen} contentContainerStyle={lumoStyles.content} keyboardShouldPersistTaps="handled">
+      <Pressable style={lumoStyles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={19} color={resolveThemeColor("#F2F5F7", "color")} />
+        <Text style={lumoStyles.backText}>Back to Live</Text>
       </Pressable>
 
-      <View style={styles.heading}>
-        <View style={styles.headingIcon}><Ionicons name="radio" size={24} color="#11161C" /></View>
-        <Text style={styles.eyebrow}>LUMO / BROADCAST</Text>
-        <Text style={styles.title}>Set your stage.</Text>
-        <Text style={styles.subtitle}>A good live starts with a clear idea. Your guests join only when you approve them.</Text>
+      <View style={lumoStyles.heading}>
+        <View style={lumoStyles.headingIcon}><Ionicons name="radio" size={24} color={resolveThemeColor("#11161C", "color")} /></View>
+        <Text style={lumoStyles.eyebrow}>LUMO / BROADCAST</Text>
+        <Text style={lumoStyles.title}>Set your stage.</Text>
+        <Text style={lumoStyles.subtitle}>A good live starts with a clear idea. Your guests join only when you approve them.</Text>
       </View>
 
-      <View style={styles.formCard}>
-        <Text style={styles.fieldLabel}>LIVE TITLE</Text>
+      <View style={lumoStyles.formCard}>
+        <Text style={lumoStyles.fieldLabel}>LIVE TITLE</Text>
         <TextInput
           value={title}
           onChangeText={value => { setTitle(value.slice(0, 80)); setError(null); }}
           placeholder="What are we talking about?"
-          placeholderTextColor="#6E7A89"
+          placeholderTextColor={resolveThemeColor("#6E7A89", "placeholderTextColor")}
           maxLength={80}
-          style={styles.titleInput}
+          style={lumoStyles.titleInput}
         />
-        <View style={styles.counterRow}><Text style={styles.helper}>3–80 characters</Text><Text style={styles.counter}>{title.length}/80</Text></View>
+        <View style={lumoStyles.counterRow}><Text style={lumoStyles.helper}>3–80 characters</Text><Text style={lumoStyles.counter}>{title.length}/80</Text></View>
 
-        <Text style={[styles.fieldLabel, styles.spacedLabel]}>DESCRIPTION <Text style={styles.optional}>OPTIONAL</Text></Text>
+        <Text style={[lumoStyles.fieldLabel, lumoStyles.spacedLabel]}>DESCRIPTION <Text style={lumoStyles.optional}>OPTIONAL</Text></Text>
         <TextInput
           value={description}
           onChangeText={value => setDescription(value.slice(0, 500))}
           placeholder="Add a little context for your audience…"
-          placeholderTextColor="#6E7A89"
+          placeholderTextColor={resolveThemeColor("#6E7A89", "placeholderTextColor")}
           multiline
           maxLength={500}
-          style={styles.descriptionInput}
+          style={lumoStyles.descriptionInput}
         />
-        <Text style={[styles.counter, styles.descriptionCounter]}>{description.length}/500</Text>
+        <Text style={[lumoStyles.counter, lumoStyles.descriptionCounter]}>{description.length}/500</Text>
 
-        <Text style={[styles.fieldLabel, styles.spacedLabel]}>CHOOSE A CATEGORY</Text>
-        <View style={styles.categoryGrid}>
+        <Text style={[lumoStyles.fieldLabel, lumoStyles.spacedLabel]}>CHOOSE A CATEGORY</Text>
+        <View style={lumoStyles.categoryGrid}>
           {LIVE_CATEGORIES.map(item => (
-            <Pressable key={item.key} onPress={() => setCategory(item.key)} style={[styles.category, category === item.key && styles.categoryActive]}>
-              <Text style={[styles.categoryText, category === item.key && styles.categoryTextActive]}>{item.label}</Text>
-              {category === item.key ? <Ionicons name="checkmark" size={14} color="#11161C" /> : null}
+            <Pressable key={item.key} onPress={() => setCategory(item.key)} style={[lumoStyles.category, category === item.key && lumoStyles.categoryActive]}>
+              <Text style={[lumoStyles.categoryText, category === item.key && lumoStyles.categoryTextActive]}>{item.label}</Text>
+              {category === item.key ? <Ionicons name="checkmark" size={14} color={resolveThemeColor("#11161C", "color")} /> : null}
             </Pressable>
           ))}
         </View>
 
-        <Text style={[styles.fieldLabel, styles.spacedLabel]}>WHO CAN WATCH?</Text>
-        <View style={styles.audienceStack}>
-          <Pressable onPress={() => setAudience('public')} style={[styles.audienceCard, audience === 'public' && styles.audienceCardActive]}>
-            <View style={styles.audienceIcon}><Ionicons name="globe-outline" size={18} color={audience === 'public' ? '#D6E3B4' : '#9AA5B2'} /></View>
-            <View style={styles.audienceCopy}>
-              <Text style={styles.audienceTitle}>Public</Text>
-              <Text style={styles.audienceDescription}>Anyone on LUMO can discover this live.</Text>
+        <Text style={[lumoStyles.fieldLabel, lumoStyles.spacedLabel]}>WHO CAN WATCH?</Text>
+        <View style={lumoStyles.audienceStack}>
+          <Pressable onPress={() => setAudience('public')} style={[lumoStyles.audienceCard, audience === 'public' && lumoStyles.audienceCardActive]}>
+            <View style={lumoStyles.audienceIcon}><Ionicons name="globe-outline" size={18} color={audience === 'public' ? resolveThemeColor("#D6E3B4", "color") : resolveThemeColor("#9AA5B2", "color")} /></View>
+            <View style={lumoStyles.audienceCopy}>
+              <Text style={lumoStyles.audienceTitle}>Public</Text>
+              <Text style={lumoStyles.audienceDescription}>Anyone on LUMO can discover this live.</Text>
             </View>
-            <Ionicons name={audience === 'public' ? 'radio-button-on' : 'radio-button-off'} size={18} color={audience === 'public' ? '#C9D9A4' : '#65717E'} />
+            <Ionicons name={audience === 'public' ? 'radio-button-on' : 'radio-button-off'} size={18} color={audience === 'public' ? resolveThemeColor("#C9D9A4", "color") : resolveThemeColor("#65717E", "color")} />
           </Pressable>
-          <Pressable onPress={() => setAudience('followers')} style={[styles.audienceCard, audience === 'followers' && styles.audienceCardActive]}>
-            <View style={styles.audienceIcon}><Ionicons name="people-outline" size={18} color={audience === 'followers' ? '#D6E3B4' : '#9AA5B2'} /></View>
-            <View style={styles.audienceCopy}>
-              <Text style={styles.audienceTitle}>Followers only</Text>
-              <Text style={styles.audienceDescription}>Only people who follow you can watch.</Text>
+          <Pressable onPress={() => setAudience('followers')} style={[lumoStyles.audienceCard, audience === 'followers' && lumoStyles.audienceCardActive]}>
+            <View style={lumoStyles.audienceIcon}><Ionicons name="people-outline" size={18} color={audience === 'followers' ? resolveThemeColor("#D6E3B4", "color") : resolveThemeColor("#9AA5B2", "color")} /></View>
+            <View style={lumoStyles.audienceCopy}>
+              <Text style={lumoStyles.audienceTitle}>Followers only</Text>
+              <Text style={lumoStyles.audienceDescription}>Only people who follow you can watch.</Text>
             </View>
-            <Ionicons name={audience === 'followers' ? 'radio-button-on' : 'radio-button-off'} size={18} color={audience === 'followers' ? '#C9D9A4' : '#65717E'} />
+            <Ionicons name={audience === 'followers' ? 'radio-button-on' : 'radio-button-off'} size={18} color={audience === 'followers' ? resolveThemeColor("#C9D9A4", "color") : resolveThemeColor("#65717E", "color")} />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.stageNote}>
-        <Ionicons name="people-circle-outline" size={21} color="#C9D9A4" />
-        <View style={styles.stageNoteCopy}>
-          <Text style={styles.stageNoteTitle}>You control the stage</Text>
-          <Text style={styles.stageNoteText}>Viewers can request to join. You approve up to three guests at a time.</Text>
+      <View style={lumoStyles.stageNote}>
+        <Ionicons name="people-circle-outline" size={21} color={resolveThemeColor("#C9D9A4", "color")} />
+        <View style={lumoStyles.stageNoteCopy}>
+          <Text style={lumoStyles.stageNoteTitle}>You control the stage</Text>
+          <Text style={lumoStyles.stageNoteText}>Viewers can request to join. You approve up to three guests at a time.</Text>
         </View>
       </View>
 
-      {error ? <View style={styles.errorCard}><Ionicons name="alert-circle-outline" size={17} color="#D8B879" /><Text style={styles.errorText}>{error}</Text></View> : null}
+      {error ? <View style={lumoStyles.errorCard}><Ionicons name="alert-circle-outline" size={17} color={resolveThemeColor("#D8B879", "color")} /><Text style={lumoStyles.errorText}>{error}</Text></View> : null}
 
-      <Pressable onPress={() => void startLive()} disabled={starting || title.trim().length < 3} style={[styles.startButton, (starting || title.trim().length < 3) && styles.startButtonDisabled]}>
-        {starting ? <ActivityIndicator color="#11161C" /> : <Ionicons name="radio" size={18} color="#11161C" />}
-        <Text style={styles.startButtonText}>{starting ? 'Preparing your stage…' : 'Start LUMO LIVE'}</Text>
-        {!starting ? <Ionicons name="arrow-forward" size={17} color="#11161C" /> : null}
+      <Pressable onPress={() => void startLive()} disabled={starting || title.trim().length < 3} style={[lumoStyles.startButton, (starting || title.trim().length < 3) && lumoStyles.startButtonDisabled]}>
+        {starting ? <ActivityIndicator color={resolveThemeColor("#11161C", "color")} /> : <Ionicons name="radio" size={18} color={resolveThemeColor("#11161C", "color")} />}
+        <Text style={lumoStyles.startButtonText}>{starting ? 'Preparing your stage…' : 'Start LUMO LIVE'}</Text>
+        {!starting ? <Ionicons name="arrow-forward" size={17} color={resolveThemeColor("#11161C", "color")} /> : null}
       </Pressable>
-      <Text style={styles.footerHint}>Camera and microphone permission will be requested when you enter the stage.</Text>
+      <Text style={lumoStyles.footerHint}>Camera and microphone permission will be requested when you enter the stage.</Text>
     </ScrollView>
   );
 }

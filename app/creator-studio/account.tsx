@@ -6,6 +6,7 @@ import { StudioFrame, StudioPanel } from '../../components/studio/StudioFrame';
 import { getPlatformRoles, resolvePlatformAccessRole, type PlatformAccessRole, type PlatformRole } from '../../lib/market-official';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 const roleDetails: Record<PlatformAccessRole, { title: string; description: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
   personal: {
@@ -26,6 +27,7 @@ const roleDetails: Record<PlatformAccessRole, { title: string; description: stri
 };
 
 export default function StudioAccountScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [role, setRole] = useState<PlatformAccessRole>('personal');
@@ -54,60 +56,60 @@ export default function StudioAccountScreen() {
 
   return (
     <StudioFrame title="Platform access" subtitle="Your Lumo account role" icon="shield-checkmark-outline">
-      <View style={styles.headingBlock}>
-        <Text style={styles.heading}>Platform role</Text>
-        <Text style={styles.subheading}>Your access is assigned by Lumo platform permissions.</Text>
+      <View style={lumoStyles.headingBlock}>
+        <Text style={lumoStyles.heading}>Platform role</Text>
+        <Text style={lumoStyles.subheading}>Your access is assigned by Lumo platform permissions.</Text>
       </View>
 
       {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 20 }} /> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
 
       {!loading && !error ? (
         <>
-          <StudioPanel style={styles.rolePanel}>
-            <View style={styles.roleTop}>
-              <View style={styles.roleIcon}>
+          <StudioPanel style={lumoStyles.rolePanel}>
+            <View style={lumoStyles.roleTop}>
+              <View style={lumoStyles.roleIcon}>
                 <Ionicons name={detail.icon} size={23} color={colors.accentStrong} />
               </View>
-              <View style={styles.roleCopy}>
-                <Text style={styles.roleTitle}>{detail.title}</Text>
-                <Text style={styles.roleDescription}>{detail.description}</Text>
+              <View style={lumoStyles.roleCopy}>
+                <Text style={lumoStyles.roleTitle}>{detail.title}</Text>
+                <Text style={lumoStyles.roleDescription}>{detail.description}</Text>
               </View>
-              <View style={styles.status}><Text style={styles.statusText}>ACTIVE</Text></View>
+              <View style={lumoStyles.status}><Text style={lumoStyles.statusText}>ACTIVE</Text></View>
             </View>
           </StudioPanel>
 
-          <StudioPanel style={styles.scopePanel}>
-            <Text style={styles.sectionTitle}>Role boundaries</Text>
-            <View style={styles.scopeRow}>
+          <StudioPanel style={lumoStyles.scopePanel}>
+            <Text style={lumoStyles.sectionTitle}>Role boundaries</Text>
+            <View style={lumoStyles.scopeRow}>
               <Ionicons name="globe-outline" size={17} color={colors.accentStrong} />
-              <View style={styles.scopeCopy}>
-                <Text style={styles.scopeTitle}>Lumo platform</Text>
-                <Text style={styles.scopeDescription}>Personal В· Admin В· Developer</Text>
+              <View style={lumoStyles.scopeCopy}>
+                <Text style={lumoStyles.scopeTitle}>Lumo platform</Text>
+                <Text style={lumoStyles.scopeDescription}>Personal · Admin · Developer</Text>
               </View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.scopeRow}>
+            <View style={lumoStyles.divider} />
+            <View style={lumoStyles.scopeRow}>
               <Ionicons name="people-outline" size={17} color={colors.accentStrong} />
-              <View style={styles.scopeCopy}>
-                <Text style={styles.scopeTitle}>Groups and channels</Text>
-                <Text style={styles.scopeDescription}>Member В· Admin В· Owner</Text>
+              <View style={lumoStyles.scopeCopy}>
+                <Text style={lumoStyles.scopeTitle}>Groups and channels</Text>
+                <Text style={lumoStyles.scopeDescription}>Member · Admin · Owner</Text>
               </View>
             </View>
           </StudioPanel>
 
           {role === 'developer' ? (
-            <StudioPanel style={styles.developerPanel}>
+            <StudioPanel style={lumoStyles.developerPanel}>
               <Ionicons name="code-slash-outline" size={19} color={colors.accentStrong} />
-              <View style={styles.developerCopy}>
-                <Text style={styles.developerTitle}>Developer access enabled</Text>
-                <Text style={styles.developerText}>Platform-level tools and management actions are available. Group and channel membership roles remain separate.</Text>
+              <View style={lumoStyles.developerCopy}>
+                <Text style={lumoStyles.developerTitle}>Developer access enabled</Text>
+                <Text style={lumoStyles.developerText}>Platform-level tools and management actions are available. Group and channel membership roles remain separate.</Text>
               </View>
             </StudioPanel>
           ) : null}
 
-          <Text style={styles.note}>Platform roles cannot be changed from this screen. They are assigned through LumoвЂ™s trusted role-management controls.</Text>
-          <Text style={styles.debugMeta}>ACTIVE PERMISSIONS: {rawRoles.length ? rawRoles.map((item) => item.toUpperCase()).join(' В· ') : 'PERSONAL'}</Text>
+          <Text style={lumoStyles.note}>Platform roles cannot be changed from this screen. They are assigned through Lumo’s trusted role-management controls.</Text>
+          <Text style={lumoStyles.debugMeta}>ACTIVE PERMISSIONS: {rawRoles.length ? rawRoles.map((item) => item.toUpperCase()).join(' · ') : 'PERSONAL'}</Text>
         </>
       ) : null}
     </StudioFrame>

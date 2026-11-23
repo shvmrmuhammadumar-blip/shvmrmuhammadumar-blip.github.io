@@ -12,7 +12,10 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '../lib/theme';
 import LumoVideoPlayer from './LumoVideoPlayer';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 export type ChatMediaViewerItem = {
   id: string;
@@ -53,6 +56,7 @@ export default function ChatMediaViewer({
   onClose,
   onDownload,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
 
@@ -171,7 +175,7 @@ export default function ChatMediaViewer({
     >
       <Animated.View
         style={[
-          styles.root,
+          lumoStyles.root,
           {
             opacity,
             paddingTop: insets.top,
@@ -179,13 +183,13 @@ export default function ChatMediaViewer({
           },
         ]}
       >
-        <View style={styles.header}>
-          <View style={styles.headerInfo}>
-            <View style={styles.indicator} />
+        <View style={lumoStyles.header}>
+          <View style={lumoStyles.headerInfo}>
+            <View style={lumoStyles.indicator} />
 
             <View>
-              <Text style={styles.eyebrow}>LUMO MEDIA</Text>
-              <Text style={styles.counter}>
+              <Text style={lumoStyles.eyebrow}>LUMO MEDIA</Text>
+              <Text style={lumoStyles.counter}>
                 {items.length > 0
                   ? `${activeIndex + 1} of ${items.length}`
                   : 'Media'}
@@ -199,16 +203,16 @@ export default function ChatMediaViewer({
             accessibilityRole="button"
             accessibilityLabel="Close media viewer"
             style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.pressed,
+              lumoStyles.iconButton,
+              pressed && lumoStyles.pressed,
             ]}
           >
-            <Ionicons name="close" size={23} color="#F2F5F7" />
+            <Ionicons name="close" size={23} color={resolveThemeColor("#F2F5F7", "color")} />
           </Pressable>
         </View>
 
         <View
-          style={styles.stage}
+          style={lumoStyles.stage}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -219,7 +223,7 @@ export default function ChatMediaViewer({
               contentFit="contain"
               transition={180}
               style={[
-                styles.image,
+                lumoStyles.image,
                 {
                   width: width - 24,
                   height: Math.min(height * 0.69, 620),
@@ -232,7 +236,7 @@ export default function ChatMediaViewer({
               key={activeItem.id}
               uri={activeItem.url}
               style={[
-                styles.video,
+                lumoStyles.video,
                 {
                   width: width - 24,
                   height: Math.min(height * 0.7, 620),
@@ -240,36 +244,36 @@ export default function ChatMediaViewer({
               ]}
             />
           ) : (
-            <View style={styles.empty}>
+            <View style={lumoStyles.empty}>
               <Ionicons
                 name="image-outline"
                 size={36}
-                color="#9AA5B2"
+                color={resolveThemeColor("#9AA5B2", "color")}
               />
-              <Text style={styles.emptyText}>
+              <Text style={lumoStyles.emptyText}>
                 Media is unavailable
               </Text>
             </View>
           )}
         </View>
 
-        <View style={styles.controls}>
+        <View style={lumoStyles.controls}>
           {activeItem?.type === 'image' && (
-            <View style={styles.zoomControls}>
+            <View style={lumoStyles.zoomControls}>
               <Pressable
                 onPress={zoomOut}
                 disabled={scale <= 1}
                 accessibilityRole="button"
                 accessibilityLabel="Zoom out"
                 style={[
-                  styles.controlButton,
-                  scale <= 1 && styles.disabled,
+                  lumoStyles.controlButton,
+                  scale <= 1 && lumoStyles.disabled,
                 ]}
               >
                 <Ionicons
                   name="remove"
                   size={19}
-                  color="#F2F5F7"
+                  color={resolveThemeColor("#F2F5F7", "color")}
                 />
               </Pressable>
 
@@ -277,9 +281,9 @@ export default function ChatMediaViewer({
                 onPress={resetZoom}
                 accessibilityRole="button"
                 accessibilityLabel="Reset zoom"
-                style={styles.zoomLabel}
+                style={lumoStyles.zoomLabel}
               >
-                <Text style={styles.zoomText}>
+                <Text style={lumoStyles.zoomText}>
                   {Math.round(scale * 100)}%
                 </Text>
               </Pressable>
@@ -290,43 +294,43 @@ export default function ChatMediaViewer({
                 accessibilityRole="button"
                 accessibilityLabel="Zoom in"
                 style={[
-                  styles.controlButton,
-                  scale >= 3 && styles.disabled,
+                  lumoStyles.controlButton,
+                  scale >= 3 && lumoStyles.disabled,
                 ]}
               >
                 <Ionicons
                   name="add"
                   size={19}
-                  color="#F2F5F7"
+                  color={resolveThemeColor("#F2F5F7", "color")}
                 />
               </Pressable>
             </View>
           )}
 
-          <View style={styles.navigation}>
+          <View style={lumoStyles.navigation}>
             <Pressable
               onPress={() => changeMedia(-1)}
               disabled={activeIndex <= 0}
               accessibilityRole="button"
               accessibilityLabel="Previous media"
               style={[
-                styles.controlButton,
-                activeIndex <= 0 && styles.disabled,
+                lumoStyles.controlButton,
+                activeIndex <= 0 && lumoStyles.disabled,
               ]}
             >
               <Ionicons
                 name="chevron-back"
                 size={20}
-                color="#F2F5F7"
+                color={resolveThemeColor("#F2F5F7", "color")}
               />
             </Pressable>
 
-            <View style={styles.mediaInfo}>
-              <Text style={styles.sender} numberOfLines={1}>
+            <View style={lumoStyles.mediaInfo}>
+              <Text style={lumoStyles.sender} numberOfLines={1}>
                 {activeItem?.senderLabel ?? ''}
               </Text>
 
-              <Text style={styles.date}>
+              <Text style={lumoStyles.date}>
                 {activeItem
                   ? formatDate(activeItem.createdAt)
                   : ''}
@@ -339,14 +343,14 @@ export default function ChatMediaViewer({
               accessibilityRole="button"
               accessibilityLabel="Next media"
               style={[
-                styles.controlButton,
-                activeIndex >= items.length - 1 && styles.disabled,
+                lumoStyles.controlButton,
+                activeIndex >= items.length - 1 && lumoStyles.disabled,
               ]}
             >
               <Ionicons
                 name="chevron-forward"
                 size={20}
-                color="#F2F5F7"
+                color={resolveThemeColor("#F2F5F7", "color")}
               />
             </Pressable>
           </View>
@@ -357,16 +361,16 @@ export default function ChatMediaViewer({
             accessibilityRole="button"
             accessibilityLabel="Download media"
             style={[
-              styles.downloadButton,
-              (!activeItem || !onDownload) && styles.disabled,
+              lumoStyles.downloadButton,
+              (!activeItem || !onDownload) && lumoStyles.disabled,
             ]}
           >
             <Ionicons
               name="download-outline"
               size={17}
-              color="#090C12"
+              color={resolveThemeColor("#090C12", "color")}
             />
-            <Text style={styles.downloadText}>Download</Text>
+            <Text style={lumoStyles.downloadText}>Download</Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -428,7 +432,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   video: {
-    backgroundColor: '#000000',
+    backgroundColor: colors.mediaBg,
     overflow: 'hidden',
   },
   empty: {

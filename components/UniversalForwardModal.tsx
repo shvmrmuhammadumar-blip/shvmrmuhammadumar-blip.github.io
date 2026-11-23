@@ -15,6 +15,8 @@ import { supabase } from '../lib/supabase';
 import { getMyGroups } from '../lib/groups';
 import { getMyChannels } from '../lib/channels';
 import SharedPostCard from './SharedPostCard';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 export type ForwardSource = {
   type: 'personal' | 'group' | 'channel' | 'post';
@@ -83,6 +85,7 @@ export default function UniversalForwardModal({
   onClose,
   onSuccess,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [activeTab, setActiveTab] = useState<TargetKind>('personal');
   const [targets, setTargets] = useState<ForwardTarget[]>([]);
   const [selectedTargetKeys, setSelectedTargetKeys] = useState<string[]>([]);
@@ -429,7 +432,7 @@ export default function UniversalForwardModal({
         if (!sending) onClose();
       }}
     >
-      <View style={styles.overlay}>
+      <View style={lumoStyles.overlay}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={() => {
@@ -437,34 +440,34 @@ export default function UniversalForwardModal({
           }}
         />
 
-        <View style={styles.sheet}>
-          <View style={styles.topBar}>
+        <View style={lumoStyles.sheet}>
+          <View style={lumoStyles.topBar}>
             <Pressable
               onPress={onClose}
               disabled={sending}
-              style={styles.closeButton}
+              style={lumoStyles.closeButton}
               accessibilityRole="button"
               accessibilityLabel="Close forward window"
             >
-              <Ionicons name="close" size={20} color="#F2F5F7" />
+              <Ionicons name="close" size={20} color={resolveThemeColor("#F2F5F7", "color")} />
             </Pressable>
           </View>
 
           {source?.type === 'post' ? (
             <SharedPostCard postId={source.id} variant="forward" />
           ) : (
-            <View style={styles.preview}>
+            <View style={lumoStyles.preview}>
               <Ionicons
                 name={source?.mediaPath ? 'attach-outline' : 'chatbubble-outline'}
                 size={17}
-                color="#B9C7D6"
+                color={resolveThemeColor("#B9C7D6", "color")}
               />
-              <Text style={styles.previewText} numberOfLines={2}>
+              <Text style={lumoStyles.previewText} numberOfLines={2}>
                 {sourcePreview}
               </Text>
             </View>
           )}
-          <View style={styles.tabs}>
+          <View style={lumoStyles.tabs}>
             {visibleTabs.map((tab) => (
               <Pressable
                 key={tab.id}
@@ -473,14 +476,14 @@ export default function UniversalForwardModal({
                   setSelectedTargetKeys([]);
                 }}
                 style={[
-                  styles.tab,
-                  activeTab === tab.id && styles.tabActive,
+                  lumoStyles.tab,
+                  activeTab === tab.id && lumoStyles.tabActive,
                 ]}
               >
                 <Text
                   style={[
-                    styles.tabText,
-                    activeTab === tab.id && styles.tabTextActive,
+                    lumoStyles.tabText,
+                    activeTab === tab.id && lumoStyles.tabTextActive,
                   ]}
                 >
                   {tab.label}
@@ -489,26 +492,26 @@ export default function UniversalForwardModal({
             ))}
           </View>
 
-          <View style={styles.searchWrap}>
-            <Ionicons name="search" size={17} color="#9AA5B2" />
+          <View style={lumoStyles.searchWrap}>
+            <Ionicons name="search" size={17} color={resolveThemeColor("#9AA5B2", "color")} />
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder="Search conversations"
-              placeholderTextColor="#747D6E"
-              style={styles.searchInput}
+              placeholderTextColor={resolveThemeColor("#747D6E", "placeholderTextColor")}
+              style={lumoStyles.searchInput}
               editable={!sending}
             />
           </View>
 
           {loading ? (
-            <View style={styles.state}>
-              <ActivityIndicator color="#B9C7D6" />
-              <Text style={styles.stateText}>Loading conversations...</Text>
+            <View style={lumoStyles.state}>
+              <ActivityIndicator color={resolveThemeColor("#B9C7D6", "color")} />
+              <Text style={lumoStyles.stateText}>Loading conversations...</Text>
             </View>
           ) : (
             <ScrollView
-              style={styles.targetList}
+              style={lumoStyles.targetList}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -524,15 +527,15 @@ export default function UniversalForwardModal({
                   }}
                   disabled={sending || target.canSend === false}
                   style={({ pressed }) => [
-                    styles.targetRow,
+                    lumoStyles.targetRow,
                     selectedTargetKeys.includes(`${target.kind}:${target.id}`) &&
-                      styles.targetSelected,
-                    pressed && styles.targetPressed,
+                      lumoStyles.targetSelected,
+                    pressed && lumoStyles.targetPressed,
                     (sending || target.canSend === false) &&
-                      styles.targetDisabled,
+                      lumoStyles.targetDisabled,
                   ]}
                 >
-                  <View style={styles.targetIcon}>
+                  <View style={lumoStyles.targetIcon}>
                     <Ionicons
                       name={
                         target.kind === 'personal'
@@ -542,15 +545,15 @@ export default function UniversalForwardModal({
                             : 'megaphone-outline'
                       }
                       size={19}
-                      color="#B9C7D6"
+                      color={resolveThemeColor("#B9C7D6", "color")}
                     />
                   </View>
 
-                  <View style={styles.targetCopy}>
-                    <Text style={styles.targetName} numberOfLines={1}>
+                  <View style={lumoStyles.targetCopy}>
+                    <Text style={lumoStyles.targetName} numberOfLines={1}>
                       {target.name}
                     </Text>
-                    <Text style={styles.targetSubtitle} numberOfLines={1}>
+                    <Text style={lumoStyles.targetSubtitle} numberOfLines={1}>
                       {target.subtitle}
                     </Text>
                   </View>
@@ -559,26 +562,26 @@ export default function UniversalForwardModal({
                     <Ionicons
                       name="checkmark-circle"
                       size={21}
-                      color="#B9C7D6"
+                      color={resolveThemeColor("#B9C7D6", "color")}
                     />
                   ) : (
                     <Ionicons
                       name={target.canSend === false ? 'lock-closed-outline' : 'ellipse-outline'}
                       size={19}
-                      color="#697263"
+                      color={resolveThemeColor("#697263", "color")}
                     />
                   )}
                 </Pressable>
               ))}
 
               {!filteredTargets.length && (
-                <View style={styles.state}>
+                <View style={lumoStyles.state}>
                   <Ionicons
                     name="chatbubbles-outline"
                     size={27}
-                    color="#697263"
+                    color={resolveThemeColor("#697263", "color")}
                   />
-                  <Text style={styles.stateText}>
+                  <Text style={lumoStyles.stateText}>
                     {activeTab === 'channel'
                       ? 'No channels where you can publish.'
                       : 'No conversations found.'}
@@ -589,7 +592,7 @@ export default function UniversalForwardModal({
           )}
 
           {!!error && (
-            <Text accessibilityRole="alert" style={styles.error}>
+            <Text accessibilityRole="alert" style={lumoStyles.error}>
               {error}
             </Text>
           )}
@@ -598,21 +601,21 @@ export default function UniversalForwardModal({
             onPress={() => void sendSelectedTargets()}
             disabled={sending || selectedTargetKeys.length === 0}
             style={[
-              styles.sendButton,
+              lumoStyles.sendButton,
               (sending || selectedTargetKeys.length === 0) &&
-                styles.sendButtonDisabled,
+                lumoStyles.sendButtonDisabled,
             ]}
           >
             {sending ? (
-              <ActivityIndicator color="#10150B" size="small" />
+              <ActivityIndicator color={resolveThemeColor("#10150B", "color")} size="small" />
             ) : (
               <Ionicons
                 name="arrow-redo-outline"
                 size={17}
-                color="#10150B"
+                color={resolveThemeColor("#10150B", "color")}
               />
             )}
-            <Text style={styles.sendButtonText}>
+            <Text style={lumoStyles.sendButtonText}>
               {sending
                 ? 'Sending...'
                 : `Forward to ${selectedTargetKeys.length} ${selectedTargetKeys.length === 1 ? 'chat' : 'chats'}`}

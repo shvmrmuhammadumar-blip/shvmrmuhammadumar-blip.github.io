@@ -7,6 +7,7 @@ import MessageActionSurface from '../MessageActionSurface';
 import { colors } from '../../lib/theme';
 import type { ChannelPostWithSender } from '../../lib/channels';
 import { ChannelMediaPreview } from './ChannelMediaPreview';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Props = {
   post: ChannelPostWithSender;
@@ -36,6 +37,7 @@ export default function ChannelPostItem({
   onLongPress,
   onOpenMedia,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const mine = post.sender_id === currentUserId;
 
   const senderName =
@@ -57,7 +59,7 @@ export default function ChannelPostItem({
     null;
 
   return (
-    <View style={[styles.line, mine ? styles.mineLine : styles.otherLine]}>
+    <View style={[lumoStyles.line, mine ? lumoStyles.mineLine : lumoStyles.otherLine]}>
       {!mine && (
         <Avatar
           uri={post.sender?.avatar_url}
@@ -66,9 +68,9 @@ export default function ChannelPostItem({
         />
       )}
 
-      <View style={styles.content}>
+      <View style={lumoStyles.content}>
         {!mine && (
-          <Text style={styles.sender} numberOfLines={1}>
+          <Text style={lumoStyles.sender} numberOfLines={1}>
             {senderName}
           </Text>
         )}
@@ -82,22 +84,22 @@ export default function ChannelPostItem({
           onLongPress={onLongPress ? () => onLongPress(post) : undefined}
           delayLongPress={300}
           style={[
-            styles.bubble,
-            mine ? styles.mineBubble : styles.otherBubble,
-            hasMedia && styles.bubbleWithMedia,
+            lumoStyles.bubble,
+            mine ? lumoStyles.mineBubble : lumoStyles.otherBubble,
+            hasMedia && lumoStyles.bubbleWithMedia,
           ]}
           accessibilityRole="button"
           accessibilityHint="Long press to open post actions"
         >
           {isPinned && (
-            <View style={styles.pinnedNotice}>
+            <View style={lumoStyles.pinnedNotice}>
               <Ionicons name="pin" size={12} color={colors.lime} />
-              <Text style={styles.pinnedText}>PINNED MESSAGE</Text>
+              <Text style={lumoStyles.pinnedText}>PINNED MESSAGE</Text>
             </View>
           )}
 
           {!!(post as any).forwarded_from_type && (
-            <Text style={styles.forwardedLabel} numberOfLines={1}>
+            <Text style={lumoStyles.forwardedLabel} numberOfLines={1}>
               FORWARDED
               {(post as any).forwarded_from_sender
                 ? ` · ${(post as any).forwarded_from_sender}`
@@ -110,7 +112,7 @@ export default function ChannelPostItem({
               <SharedPostCard postId={(post as any).forwarded_from_id} />
             )}
           {hasMedia && post.media_path ? (
-            <View style={styles.media}>
+            <View style={lumoStyles.media}>
               <ChannelMediaPreview
                 mediaPath={post.media_path}
                 mimeType={post.media_mime_type || fallbackMimeType}
@@ -126,32 +128,32 @@ export default function ChannelPostItem({
               />
             </View>
           ) : hasMedia ? (
-            <View style={styles.unavailable}>
+            <View style={lumoStyles.unavailable}>
               <Ionicons
                 name="document-outline"
                 size={20}
                 color={colors.muted}
               />
-              <Text style={styles.unavailableText}>
+              <Text style={lumoStyles.unavailableText}>
                 Attachment unavailable
               </Text>
             </View>
           ) : null}
 
           {!!post.body?.trim() && (
-            <Text style={[styles.body, mine ? styles.ownText : styles.otherText]}>
+            <Text style={[lumoStyles.body, mine ? lumoStyles.ownText : lumoStyles.otherText]}>
               {post.body}
             </Text>
           )}
 
           {!!post.edited_at && (
-            <Text style={[styles.edited, mine && styles.ownText]}>
+            <Text style={[lumoStyles.edited, mine && lumoStyles.ownText]}>
               edited
             </Text>
           )}
 
-          <View style={styles.meta}>
-            <Text style={[styles.time, mine && styles.ownText]}>
+          <View style={lumoStyles.meta}>
+            <Text style={[lumoStyles.time, mine && lumoStyles.ownText]}>
               {formatTime(post.created_at)}
             </Text>
             {mine && (
@@ -242,7 +244,8 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   unavailable: {
-    minWidth: 180,
+    minWidth: 0,
+    maxWidth: '100%',
     minHeight: 72,
     alignItems: 'center',
     justifyContent: 'center',

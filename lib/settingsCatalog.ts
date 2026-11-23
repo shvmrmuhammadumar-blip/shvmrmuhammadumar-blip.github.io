@@ -120,25 +120,23 @@ export const settingsSections: SettingsSection[] = [
   {
     id: 'appearance',
     title: 'Appearance',
-    description: 'Lumo currently uses its OLED-dark visual design.',
+    description: 'Choose one of five compact LUMO color themes.',
     items: [
-      {
-        title: 'OLED dark theme',
-        description: 'The current app appearance uses a dark theme.',
-        available: true,
-      },
-      {
-        title: 'Theme, accent, and text size',
-        description: 'Other themes and text scaling are not applied consistently across the app.',
-      },
-      {
-        title: 'Reduced motion and layout density',
-        description: 'These accessibility preferences are not yet wired into app components.',
-      },
-      {
-        title: 'Language and date formatting',
-        description: 'Localization settings are unavailable until translations are implemented.',
-      },
+      { title: 'Obsidian', description: 'Graphite and soft silver.', available: true },
+      { title: 'Light', description: 'Clean light surfaces.', available: true },
+      { title: 'AMOLED', description: 'Pure black backgrounds.', available: true },
+      { title: 'Forest', description: 'Deep green and sage.', available: true },
+      { title: 'Sandstone', description: 'Warm stone and beige.', available: true },
+    ],
+  },
+  {
+    id: 'language',
+    title: 'Language',
+    description: 'Choose the language used by supported LUMO interface areas.',
+    items: [
+      { title: 'O‘zbekcha', description: 'Uzbek language.', available: true },
+      { title: 'English', description: 'English language.', available: true },
+      { title: 'Русский', description: 'Russian language.', available: true },
     ],
   },
   {

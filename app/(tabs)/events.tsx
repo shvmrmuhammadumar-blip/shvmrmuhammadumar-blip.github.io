@@ -15,11 +15,15 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '../../components/Avatar';
+import { useSegments } from 'expo-router';
+import { getAppContentWidth, getEventsLayoutMode } from '../../lib/responsive';
 import { pickImage, uploadImage } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
 import type { Database } from '../../lib/database.types';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type RsvpRow = Database['public']['Tables']['event_rsvps']['Row'];
@@ -50,9 +54,11 @@ type CategoryOption = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
 };
 
-const EVENT_ACCENT = '#E9A24D';
-const EVENT_ACCENT_SOFT = 'rgba(233, 162, 77, 0.13)';
-const EVENT_LINE = 'rgba(233, 162, 77, 0.28)';
+const eventColors = {
+  get accent() { return colors.accent; },
+  get accentSoft() { return colors.limeGlow; },
+  get line() { return colors.glassBorder; },
+};
 
 const categoryOptions: CategoryOption[] = [
   { key: 'meetup', label: 'Meetup', icon: 'people-outline' },
@@ -138,11 +144,13 @@ function getOwnedImagePath(publicUrl: string | null | undefined, userId: string)
 }
 
 export default function EventsScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
   const { width } = useWindowDimensions();
-  const desktop = width >= 1180;
-  const tablet = width >= 760;
+  const segments = useSegments();
+  const contentWidth = getAppContentWidth(width, segments[0] === '(tabs)');
+  const { desktop, tablet, compact } = getEventsLayoutMode(width, contentWidth);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -160,6 +168,7 @@ export default function EventsScreen() {
   const [rsvpBusy, setRsvpBusy] = useState<string | null>(null);
 
   const [createVisible, setCreateVisible] = useState(false);
+  const [actionsMenuVisible, setActionsMenuVisible] = useState(false);
   const [personalVisible, setPersonalVisible] = useState(false);
   const [blocksVisible, setBlocksVisible] = useState(false);
   const [searchPeopleVisible, setSearchPeopleVisible] = useState(false);
@@ -628,81 +637,75 @@ export default function EventsScreen() {
   };
 
   return (
-    <View style={styles.page}>
+    <View style={lumoStyles.page}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        style={lumoStyles.pageScroll}
+        contentContainerStyle={lumoStyles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.pageInner, !desktop && styles.pageInnerNarrow]}>
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <View style={styles.eyebrowRow}>
-                <View style={styles.eyebrowDot} />
-                <Text style={styles.eyebrow}>LUMO / COMMUNITY</Text>
-              </View>
-              <Text style={styles.pageTitle}>Events</Text>
-              <Text style={styles.subtitle}>Meet your people. Discover what’s happening. Together is better.</Text>
+        <View style={[lumoStyles.pageInner, !desktop && lumoStyles.pageInnerNarrow, contentWidth < 400 && lumoStyles.pageInnerPhone]}>
+          <View style={[lumoStyles.header, !tablet && lumoStyles.headerStacked]}>
+            <View style={lumoStyles.headerCopy}>
+              <Text style={[lumoStyles.pageTitle, contentWidth < 400 && lumoStyles.pageTitlePhone]}>Events</Text>
             </View>
-            <Pressable onPress={() => openCreate()} style={styles.createButton}>
-              <Ionicons name="add" color="#17130E" size={20} />
-              <Text style={styles.createButtonText}>Create event</Text>
-            </Pressable>
+            <View style={lumoStyles.headerActions}>
+              <Pressable onPress={() => openCreate()} style={lumoStyles.createButton} accessibilityRole="button" accessibilityLabel="Create event">
+                <Ionicons name="add" color={resolveThemeColor("#0B1016", "color")} size={19} />
+                <Text style={lumoStyles.createButtonText}>{compact ? 'Create' : 'Create event'}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setActionsMenuVisible(true)}
+                style={lumoStyles.headerMenuButton}
+                accessibilityRole="button"
+                accessibilityLabel="More Events options"
+                accessibilityHint="Opens following, block and feed settings"
+              >
+                <Ionicons name="menu-outline" color={colors.text} size={23} />
+              </Pressable>
+            </View>
           </View>
 
           {errorMessage ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle-outline" size={17} color="#F1A0A0" />
-              <Text style={styles.errorText}>{errorMessage}</Text>
+            <View style={lumoStyles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={17} color={resolveThemeColor("#F1A0A0", "color")} />
+              <Text style={lumoStyles.errorText}>{errorMessage}</Text>
               <Pressable onPress={() => setErrorMessage(null)} hitSlop={8}>
                 <Ionicons name="close" size={18} color={colors.muted} />
               </Pressable>
             </View>
           ) : null}
 
-          <View style={[styles.columns, !desktop && styles.columnsStacked]}>
-            <View style={styles.mainColumn}>
-              <View style={[styles.toolbar, !tablet && styles.toolbarStacked]}>
-                <View style={styles.segmented}>
+          <View style={[lumoStyles.columns, !desktop && lumoStyles.columnsStacked]}>
+            <View style={lumoStyles.mainColumn}>
+              <View style={lumoStyles.toolbar}>
+                <View style={lumoStyles.segmented}>
                   <Pressable
                     onPress={() => setActiveTab('all')}
-                    style={[styles.segment, activeTab === 'all' && styles.segmentActive]}
+                    style={[lumoStyles.segment, activeTab === 'all' && lumoStyles.segmentActive]}
                   >
-                    <Text style={[styles.segmentText, activeTab === 'all' && styles.segmentTextActive]}>All</Text>
+                    <Text style={[lumoStyles.segmentText, activeTab === 'all' && lumoStyles.segmentTextActive]}>All</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => setActiveTab('personal')}
-                    style={[styles.segment, activeTab === 'personal' && styles.segmentActive]}
+                    style={[lumoStyles.segment, activeTab === 'personal' && lumoStyles.segmentActive]}
                   >
-                    <Text style={[styles.segmentText, activeTab === 'personal' && styles.segmentTextActive]}>Personal</Text>
+                    <Text style={[lumoStyles.segmentText, activeTab === 'personal' && lumoStyles.segmentTextActive]}>Personal</Text>
                     {personalIds.length > 0 ? (
-                      <View style={styles.segmentCount}><Text style={styles.segmentCountText}>{personalIds.length}</Text></View>
+                      <View style={lumoStyles.segmentCount}><Text style={lumoStyles.segmentCountText}>{personalIds.length}</Text></View>
                     ) : null}
-                  </Pressable>
-                </View>
-
-                <View style={styles.toolbarActions}>
-                  <Pressable onPress={() => setPersonalVisible(true)} style={styles.followingButton}>
-                    <Ionicons name="people-outline" size={17} color={colors.text} />
-                    <Text style={styles.followingButtonText}>Following</Text>
-                    <Ionicons name="chevron-down" size={15} color={colors.muted} />
-                  </Pressable>
-                  <Pressable onPress={() => setBlocksVisible(true)} style={styles.manageBlocksButton}>
-                    <Ionicons name="shield-checkmark-outline" size={16} color={EVENT_ACCENT} />
-                    <Text style={styles.manageBlocksText}>Manage blocks</Text>
-                    {blockedIds.length ? <Text style={styles.blockCount}>{blockedIds.length}</Text> : null}
                   </Pressable>
                 </View>
               </View>
 
-              <View style={styles.searchRow}>
+              <View style={lumoStyles.searchRow}>
                 <Ionicons name="search-outline" size={18} color={colors.dim} />
                 <TextInput
                   value={searchText}
                   onChangeText={setSearchText}
                   placeholder="Search events, places or people"
                   placeholderTextColor={colors.dim}
-                  style={styles.searchInput}
+                  style={lumoStyles.searchInput}
                   returnKeyType="search"
                 />
                 {searchText ? (
@@ -712,29 +715,34 @@ export default function EventsScreen() {
                 ) : null}
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRail}>
+              <ScrollView
+                horizontal
+                style={lumoStyles.categoryScroller}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={lumoStyles.categoryRail}
+              >
                 <Pressable
                   onPress={() => setActiveCategory('all')}
-                  style={[styles.categoryChip, activeCategory === 'all' && styles.categoryChipActive]}
+                  style={[lumoStyles.categoryChip, activeCategory === 'all' && lumoStyles.categoryChipActive]}
                 >
-                  <Text style={[styles.categoryChipText, activeCategory === 'all' && styles.categoryChipTextActive]}>All events</Text>
+                  <Text style={[lumoStyles.categoryChipText, activeCategory === 'all' && lumoStyles.categoryChipTextActive]}>All events</Text>
                 </Pressable>
                 {categoryOptions.map((item) => (
                   <Pressable
                     key={item.key}
                     onPress={() => setActiveCategory((current) => current === item.key ? 'all' : item.key)}
-                    style={[styles.categoryChip, activeCategory === item.key && styles.categoryChipActive]}
+                    style={[lumoStyles.categoryChip, activeCategory === item.key && lumoStyles.categoryChipActive]}
                   >
-                    <Ionicons name={item.icon} size={14} color={activeCategory === item.key ? EVENT_ACCENT : colors.muted} />
-                    <Text style={[styles.categoryChipText, activeCategory === item.key && styles.categoryChipTextActive]}>{item.label}</Text>
+                    <Ionicons name={item.icon} size={14} color={activeCategory === item.key ? eventColors.accent : colors.muted} />
+                    <Text style={[lumoStyles.categoryChipText, activeCategory === item.key && lumoStyles.categoryChipTextActive]}>{item.label}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
 
               {loading ? (
-                <View style={styles.loadingState}>
-                  <ActivityIndicator color={EVENT_ACCENT} size="large" />
-                  <Text style={styles.loadingText}>Finding your next event…</Text>
+                <View style={lumoStyles.loadingState}>
+                  <ActivityIndicator color={eventColors.accent} size="large" />
+                  <Text style={lumoStyles.loadingText}>Finding your next event…</Text>
                 </View>
               ) : !userId ? (
                 <EmptyState icon="calendar-outline" title="Sign in to explore events" body="Follow people and find out what they are planning." />
@@ -744,31 +752,31 @@ export default function EventsScreen() {
                   title={activeTab === 'personal' ? 'Your Personal list is quiet' : 'No upcoming events'}
                   body={
                     activeTab === 'personal'
-                      ? 'Choose people you follow to build a focused event feed.'
-                      : 'When people you follow create events, they will appear here.'
+                      ? 'Select people for your feed.'
+                      : 'No events from your circle yet.'
                   }
-                  actionLabel={activeTab === 'personal' ? 'Choose people' : 'Create an event'}
-                  onAction={activeTab === 'personal' ? () => setPersonalVisible(true) : () => openCreate()}
+                  actionLabel={activeTab === 'personal' ? 'Choose people' : undefined}
+                  onAction={activeTab === 'personal' ? () => setPersonalVisible(true) : undefined}
                 />
               ) : (
                 <>
                   {featuredEvent ? (
-                    <View style={[styles.featuredCard, !tablet && styles.featuredCardStacked]}>
-                      <View style={[styles.featuredImageWrap, !tablet && styles.featuredImageWrapStacked]}>
+                    <View style={[lumoStyles.featuredCard, !tablet && lumoStyles.featuredCardStacked]}>
+                      <View style={[lumoStyles.featuredImageWrap, !tablet && lumoStyles.featuredImageWrapStacked]}>
                         {featuredEvent.cover_url ? (
-                          <Image source={{ uri: featuredEvent.cover_url }} style={[styles.featuredImage, !tablet && styles.featuredImageStacked]} contentFit="cover" />
+                          <Image source={{ uri: featuredEvent.cover_url }} style={[lumoStyles.featuredImage, !tablet && lumoStyles.featuredImageStacked]} contentFit="cover" />
                         ) : (
-                          <View style={[styles.featuredImage, styles.featuredImageFallback, !tablet && styles.featuredImageStacked]}>
-                            <Ionicons name={categoryOptions.find((item) => item.key === featuredEvent.category)?.icon ?? 'calendar-outline'} size={54} color="rgba(255,255,255,0.8)" />
-                            <Text style={styles.fallbackWord}>{categoryNames[featuredEvent.category] ?? 'EVENT'}</Text>
+                          <View style={[lumoStyles.featuredImage, lumoStyles.featuredImageFallback, !tablet && lumoStyles.featuredImageStacked]}>
+                            <Ionicons name={categoryOptions.find((item) => item.key === featuredEvent.category)?.icon ?? 'calendar-outline'} size={54} color={resolveThemeColor("rgba(255,255,255,0.8)", "color")} />
+                            <Text style={lumoStyles.fallbackWord}>{categoryNames[featuredEvent.category] ?? 'EVENT'}</Text>
                           </View>
                         )}
-                        <View style={styles.imageShade} />
-                        <View style={styles.featuredLabel}><Text style={styles.featuredLabelText}>UP NEXT</Text></View>
+                        <View style={lumoStyles.imageShade} />
+                        <View style={lumoStyles.featuredLabel}><Text style={lumoStyles.featuredLabelText}>UP NEXT</Text></View>
                       </View>
-                      <View style={styles.featuredContent}>
-                        <View style={styles.featuredTopline}>
-                          <Text style={styles.categoryKicker}>{categoryNames[featuredEvent.category] ?? 'EVENT'}</Text>
+                      <View style={[lumoStyles.featuredContent, !tablet && lumoStyles.featuredContentStacked]}>
+                        <View style={lumoStyles.featuredTopline}>
+                          <Text style={lumoStyles.categoryKicker}>{categoryNames[featuredEvent.category] ?? 'EVENT'}</Text>
                           <EventMenu
                             event={featuredEvent}
                             userId={userId}
@@ -779,12 +787,12 @@ export default function EventsScreen() {
                             onBlock={() => featuredEvent.host && void blockProfile(featuredEvent.host)}
                           />
                         </View>
-                        <Text style={styles.featuredTitle}>{featuredEvent.title}</Text>
+                        <Text style={lumoStyles.featuredTitle}>{featuredEvent.title}</Text>
                         {featuredEvent.description ? (
-                          <Text style={styles.featuredDescription} numberOfLines={3}>{featuredEvent.description}</Text>
+                          <Text style={lumoStyles.featuredDescription} numberOfLines={3}>{featuredEvent.description}</Text>
                         ) : null}
                         <HostLine profile={featuredEvent.host} />
-                        <View style={styles.eventMetaGrid}>
+                        <View style={lumoStyles.eventMetaGrid}>
                           <MetaLine icon="calendar-outline" primary={eventDate(featuredEvent.starts_at)} secondary={eventTime(featuredEvent.starts_at)} />
                           <MetaLine
                             icon={featuredEvent.meeting_url ? 'videocam-outline' : 'location-outline'}
@@ -793,7 +801,7 @@ export default function EventsScreen() {
                           />
                           <MetaLine icon="people-outline" primary={String(featuredEvent.goingCount)} secondary="going" />
                         </View>
-                        <View style={styles.featuredActions}>
+                        <View style={lumoStyles.featuredActions}>
                           <RsvpButton
                             label="Going"
                             icon="checkmark"
@@ -810,7 +818,7 @@ export default function EventsScreen() {
                             onPress={() => void updateRsvp(featuredEvent, 'interested')}
                           />
                           {featuredEvent.meeting_url ? (
-                            <Pressable onPress={() => openMeeting(featuredEvent.meeting_url!)} style={styles.meetingButton}>
+                            <Pressable onPress={() => openMeeting(featuredEvent.meeting_url!)} style={lumoStyles.meetingButton}>
                               <Ionicons name="open-outline" size={16} color={colors.text} />
                             </Pressable>
                           ) : null}
@@ -819,21 +827,20 @@ export default function EventsScreen() {
                     </View>
                   ) : null}
 
-                  <View style={styles.listHeading}>
-                    <View>
-                      <Text style={styles.sectionTitle}>Upcoming events</Text>
-                      <Text style={styles.sectionSubline}>{activeEvents.length} event{activeEvents.length === 1 ? '' : 's'} from your circle</Text>
+                  <View style={lumoStyles.listHeading}>
+                    <Text style={lumoStyles.sectionTitle}>Upcoming</Text>
+                    <View style={lumoStyles.sectionCount}>
+                      <Text style={lumoStyles.sectionCountText}>{activeEvents.length}</Text>
                     </View>
-                    <Text style={styles.headingHint}>SORTED BY DATE</Text>
                   </View>
 
-                  <View style={styles.eventList}>
+                  <View style={lumoStyles.eventList}>
                     {(featuredEvent ? upcomingEvents : activeEvents).map((event) => (
                       <EventListItem
                         key={event.id}
                         event={event}
                         userId={userId}
-                        compact={width < 520}
+                        compact={compact}
                         menuOpen={menuEventId === event.id}
                         rsvpBusy={rsvpBusy === event.id}
                         onMenu={() => setMenuEventId(menuEventId === event.id ? null : event.id)}
@@ -848,42 +855,39 @@ export default function EventsScreen() {
               )}
             </View>
 
-            <View style={[styles.sideColumn, !desktop && styles.sideColumnNarrow]}>
-              <View style={styles.sideHeading}>
-                <View>
-                  <Text style={styles.sideTitle}>My events</Text>
-                  <Text style={styles.sideSubtitle}>Events you’re hosting</Text>
+            <View style={[lumoStyles.sideColumn, !desktop && lumoStyles.sideColumnNarrow]}>
+              <View style={lumoStyles.sideHeading}>
+                <Text style={lumoStyles.sideTitle}>My events</Text>
+                <View style={lumoStyles.sideCount}>
+                  <Text style={lumoStyles.sideCountText}>{visibleMyEvents.length}</Text>
                 </View>
-                <Pressable onPress={() => openCreate()} style={styles.iconButton} accessibilityLabel="Create event">
-                  <Ionicons name="add" size={20} color={EVENT_ACCENT} />
-                </Pressable>
               </View>
 
               {visibleMyEvents.length ? (
-                <View style={styles.myEventList}>
+                <View style={lumoStyles.myEventList}>
                   {visibleMyEvents.map((event) => (
-                    <View key={event.id} style={styles.myEventRow}>
-                      <View style={styles.smallDateBlock}>
-                        <Text style={styles.smallDateMonth}>{monthShort(event.starts_at)}</Text>
-                        <Text style={styles.smallDateDay}>{dayNumber(event.starts_at)}</Text>
+                    <View key={event.id} style={lumoStyles.myEventRow}>
+                      <View style={lumoStyles.smallDateBlock}>
+                        <Text style={lumoStyles.smallDateMonth}>{monthShort(event.starts_at)}</Text>
+                        <Text style={lumoStyles.smallDateDay}>{dayNumber(event.starts_at)}</Text>
                       </View>
-                      <View style={styles.myEventCopy}>
-                        <Text numberOfLines={1} style={styles.myEventTitle}>{event.title}</Text>
-                        <Text style={styles.myEventDate}>{eventDate(event.starts_at)} · {eventTime(event.starts_at)}</Text>
-                        <Text style={styles.myEventCount}>{event.goingCount} going · {event.interestedCount} interested</Text>
+                      <View style={lumoStyles.myEventCopy}>
+                        <Text numberOfLines={1} style={lumoStyles.myEventTitle}>{event.title}</Text>
+                        <Text style={lumoStyles.myEventDate}>{eventDate(event.starts_at)} · {eventTime(event.starts_at)}</Text>
+                        <Text style={lumoStyles.myEventCount}>{event.goingCount} going · {event.interestedCount} interested</Text>
                       </View>
-                      <Pressable onPress={() => setMenuEventId(menuEventId === event.id ? null : event.id)} style={styles.moreButton}>
+                      <Pressable onPress={() => setMenuEventId(menuEventId === event.id ? null : event.id)} style={lumoStyles.moreButton}>
                         <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
                       </Pressable>
                       {menuEventId === event.id ? (
-                        <View style={styles.myEventMenu}>
-                          <Pressable onPress={() => openCreate(event)} style={styles.menuItem}>
+                        <View style={lumoStyles.myEventMenu}>
+                          <Pressable onPress={() => openCreate(event)} style={lumoStyles.menuItem}>
                             <Ionicons name="create-outline" size={16} color={colors.text} />
-                            <Text style={styles.menuItemText}>Edit</Text>
+                            <Text style={lumoStyles.menuItemText}>Edit</Text>
                           </Pressable>
-                          <Pressable onPress={() => setDeleteTarget(event)} style={styles.menuItem}>
-                            <Ionicons name="trash-outline" size={16} color="#E08C8C" />
-                            <Text style={[styles.menuItemText, { color: '#E08C8C' }]}>Delete</Text>
+                          <Pressable onPress={() => setDeleteTarget(event)} style={lumoStyles.menuItem}>
+                            <Ionicons name="trash-outline" size={16} color={resolveThemeColor("#E08C8C", "color")} />
+                            <Text style={[lumoStyles.menuItemText, { color: resolveThemeColor("#E08C8C", "color") }]}>Delete</Text>
                           </Pressable>
                         </View>
                       ) : null}
@@ -891,68 +895,93 @@ export default function EventsScreen() {
                   ))}
                 </View>
               ) : (
-                <View style={styles.myEventsEmpty}>
-                  <View style={styles.emptyCalendarIcon}>
-                    <Ionicons name="calendar-outline" size={29} color={EVENT_ACCENT} />
-                    <View style={styles.emptyPlus}><Ionicons name="add" size={14} color="#17130E" /></View>
-                  </View>
-                  <Text style={styles.emptyTitle}>No events yet</Text>
-                  <Text style={styles.emptyBody}>When you create an event, it will show up here so you can manage it and see who’s coming.</Text>
-                  <Pressable onPress={() => openCreate()} style={styles.emptyCreateButton}>
-                    <Ionicons name="add" size={16} color="#17130E" />
-                    <Text style={styles.emptyCreateText}>Create event</Text>
-                  </Pressable>
+                <View style={lumoStyles.myEventsEmpty}>
+                  <Ionicons name="calendar-outline" size={18} color={colors.dim} />
+                  <Text style={lumoStyles.myEventsEmptyText}>No hosted events</Text>
                 </View>
               )}
-
-              <View style={styles.sideNote}>
-                <View style={styles.sideNoteIcon}><Ionicons name="hourglass-outline" size={17} color={EVENT_ACCENT} /></View>
-                <View style={styles.sideNoteCopy}>
-                  <Text style={styles.sideNoteTitle}>One hour after it starts</Text>
-                  <Text style={styles.sideNoteText}>Events disappear automatically. You can remove your own event any time.</Text>
-                </View>
-              </View>
-
-              <Pressable onPress={() => setBlocksVisible(true)} style={styles.sideBlockLink}>
-                <Ionicons name="shield-checkmark-outline" size={17} color={colors.muted} />
-                <Text style={styles.sideBlockText}>Event visibility & blocks</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.dim} />
-              </Pressable>
             </View>
           </View>
         </View>
       </ScrollView>
 
+      <Modal visible={actionsMenuVisible} transparent animationType="fade" onRequestClose={() => setActionsMenuVisible(false)}>
+        <View style={lumoStyles.actionsMenuBackdrop}>
+          <Pressable style={lumoStyles.actionsMenuScrim} onPress={() => setActionsMenuVisible(false)} />
+          <View style={lumoStyles.actionsMenuSheet}>
+            <View style={lumoStyles.actionsMenuHandle} />
+            <View style={lumoStyles.actionsMenuHeader}>
+              <Text style={lumoStyles.actionsMenuTitle}>Event settings</Text>
+              <Pressable onPress={() => setActionsMenuVisible(false)} style={lumoStyles.modalClose} accessibilityLabel="Close menu">
+                <Ionicons name="close" size={19} color={colors.muted} />
+              </Pressable>
+            </View>
+            <Pressable style={lumoStyles.actionsMenuItem} onPress={() => { setActionsMenuVisible(false); setPersonalVisible(true); }}>
+              <View style={lumoStyles.actionsMenuIcon}><Ionicons name="people-outline" size={19} color={eventColors.accent} /></View>
+              <View style={lumoStyles.actionsMenuCopy}>
+                <Text style={lumoStyles.actionsMenuItemTitle}>Personal list</Text>
+                <Text style={lumoStyles.actionsMenuItemMeta}>{personalIds.length} people selected</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.dim} />
+            </Pressable>
+            <Pressable style={lumoStyles.actionsMenuItem} onPress={() => { setActionsMenuVisible(false); setBlocksVisible(true); }}>
+              <View style={lumoStyles.actionsMenuIcon}><Ionicons name="shield-checkmark-outline" size={19} color={eventColors.accent} /></View>
+              <View style={lumoStyles.actionsMenuCopy}>
+                <Text style={lumoStyles.actionsMenuItemTitle}>Blocked people</Text>
+                <Text style={lumoStyles.actionsMenuItemMeta}>{blockedIds.length} blocked</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.dim} />
+            </Pressable>
+            <Pressable style={lumoStyles.actionsMenuItem} onPress={() => { setActionsMenuVisible(false); void loadEvents(); }}>
+              <View style={lumoStyles.actionsMenuIcon}><Ionicons name="refresh-outline" size={19} color={eventColors.accent} /></View>
+              <View style={lumoStyles.actionsMenuCopy}>
+                <Text style={lumoStyles.actionsMenuItemTitle}>Refresh events</Text>
+                <Text style={lumoStyles.actionsMenuItemMeta}>Get the latest from your circle</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.dim} />
+            </Pressable>
+            <Pressable style={[lumoStyles.actionsMenuItem, lumoStyles.actionsMenuItemLast]} onPress={() => { setActionsMenuVisible(false); setSearchText(''); setActiveCategory('all'); setActiveTab('all'); }}>
+              <View style={lumoStyles.actionsMenuIcon}><Ionicons name="options-outline" size={19} color={eventColors.accent} /></View>
+              <View style={lumoStyles.actionsMenuCopy}>
+                <Text style={lumoStyles.actionsMenuItemTitle}>Clear filters</Text>
+                <Text style={lumoStyles.actionsMenuItemMeta}>Reset search and category</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={colors.dim} />
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={createVisible} transparent animationType="fade" onRequestClose={() => setCreateVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, styles.createModal, tablet && styles.createModalWide]}>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={[lumoStyles.modalCard, lumoStyles.createModal, tablet && lumoStyles.createModalWide]}>
             <ModalHeader
               eyebrow={editingEvent ? 'YOUR EVENT' : 'BRING PEOPLE TOGETHER'}
-              title={editingEvent ? 'Edit event' : 'Create an event'}
-              subtitle="Set the details. Your event will be visible to people who follow you."
+              title={editingEvent ? 'Edit event' : 'Create event'}
+              subtitle="Add the details and publish."
               onClose={() => setCreateVisible(false)}
             />
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.formContent}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={lumoStyles.formContent}>
               <FieldLabel label="Event name" hint="Required" />
               <TextInput
                 value={formTitle}
                 onChangeText={setFormTitle}
                 placeholder="What are you planning?"
                 placeholderTextColor={colors.dim}
-                style={styles.input}
+                style={lumoStyles.input}
                 maxLength={120}
               />
 
               <FieldLabel label="Category" />
-              <View style={styles.categoryGrid}>
+              <View style={lumoStyles.categoryGrid}>
                 {categoryOptions.map((item) => (
                   <Pressable
                     key={item.key}
                     onPress={() => setFormCategory(item.key)}
-                    style={[styles.formCategory, formCategory === item.key && styles.formCategoryActive]}
+                    style={[lumoStyles.formCategory, formCategory === item.key && lumoStyles.formCategoryActive]}
                   >
-                    <Ionicons name={item.icon} size={16} color={formCategory === item.key ? EVENT_ACCENT : colors.muted} />
-                    <Text style={[styles.formCategoryText, formCategory === item.key && styles.formCategoryTextActive]}>{item.label}</Text>
+                    <Ionicons name={item.icon} size={16} color={formCategory === item.key ? eventColors.accent : colors.muted} />
+                    <Text style={[lumoStyles.formCategoryText, formCategory === item.key && lumoStyles.formCategoryTextActive]}>{item.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -963,67 +992,67 @@ export default function EventsScreen() {
                 onChangeText={setFormDescription}
                 placeholder="Give people a little context…"
                 placeholderTextColor={colors.dim}
-                style={[styles.input, styles.multilineInput]}
+                style={[lumoStyles.input, lumoStyles.multilineInput]}
                 multiline
                 maxLength={1200}
                 textAlignVertical="top"
               />
 
               <FieldLabel label="When does it start?" hint="Your local time" />
-              <View style={styles.dateTimeRow}>
-                <View style={styles.dateField}>
-                  <Text style={styles.inputMiniLabel}>DATE</Text>
-                  <View style={styles.inputIconWrap}>
-                    <Ionicons name="calendar-outline" size={16} color={EVENT_ACCENT} />
+              <View style={lumoStyles.dateTimeRow}>
+                <View style={lumoStyles.dateField}>
+                  <Text style={lumoStyles.inputMiniLabel}>DATE</Text>
+                  <View style={lumoStyles.inputIconWrap}>
+                    <Ionicons name="calendar-outline" size={16} color={eventColors.accent} />
                     <TextInput
                       value={formDate}
                       onChangeText={setFormDate}
                       placeholder="YYYY-MM-DD"
                       placeholderTextColor={colors.dim}
-                      style={styles.dateTimeInput}
+                      style={lumoStyles.dateTimeInput}
                       keyboardType="numbers-and-punctuation"
                       maxLength={10}
                     />
                   </View>
                 </View>
-                <View style={styles.timeField}>
-                  <Text style={styles.inputMiniLabel}>TIME</Text>
-                  <View style={styles.inputIconWrap}>
-                    <Ionicons name="time-outline" size={16} color={EVENT_ACCENT} />
+                <View style={lumoStyles.timeField}>
+                  <Text style={lumoStyles.inputMiniLabel}>TIME</Text>
+                  <View style={lumoStyles.inputIconWrap}>
+                    <Ionicons name="time-outline" size={16} color={eventColors.accent} />
                     <TextInput
                       value={formTime}
                       onChangeText={setFormTime}
                       placeholder="18:30"
                       placeholderTextColor={colors.dim}
-                      style={styles.dateTimeInput}
+                      style={lumoStyles.dateTimeInput}
                       keyboardType="numbers-and-punctuation"
                       maxLength={5}
                     />
                   </View>
                 </View>
               </View>
-              <View style={styles.timeHint}><Ionicons name="information-circle-outline" size={14} color={colors.dim} /><Text style={styles.timeHintText}>Example: 2026-11-19 · 18:30. Event automatically expires one hour after this time.</Text></View>
+              <View style={lumoStyles.timeHint}><Ionicons name="information-circle-outline" size={14} color={colors.dim} /><Text style={lumoStyles.timeHintText}>Example: 2026-11-19 · 18:30. Event automatically expires one hour after this time.</Text></View>
 
               <FieldLabel label="Location" hint="Optional" />
-              <TextInput value={formLocation} onChangeText={setFormLocation} placeholder="Venue, address or meeting point" placeholderTextColor={colors.dim} style={styles.input} maxLength={180} />
+              <TextInput value={formLocation} onChangeText={setFormLocation} placeholder="Venue, address or meeting point" placeholderTextColor={colors.dim} style={lumoStyles.input} maxLength={180} />
 
               <FieldLabel label="Online meeting link" hint="Optional" />
-              <TextInput value={formMeetingUrl} onChangeText={setFormMeetingUrl} placeholder="https://…" placeholderTextColor={colors.dim} style={styles.input} autoCapitalize="none" keyboardType="url" />
+              <TextInput value={formMeetingUrl} onChangeText={setFormMeetingUrl} placeholder="https://…" placeholderTextColor={colors.dim} style={lumoStyles.input} autoCapitalize="none" keyboardType="url" />
 
               <FieldLabel label="Event cover" hint="Optional · 16:9" />
-              <Pressable onPress={() => void chooseCover()} style={styles.coverPicker}>
+              <Pressable onPress={() => void chooseCover()} style={lumoStyles.coverPicker}>
                 {coverUri || formCoverUrl ? (
-                  <Image source={{ uri: coverUri || formCoverUrl }} style={styles.coverPreview} contentFit="cover" />
+                  <Image source={{ uri: coverUri || formCoverUrl }} style={lumoStyles.coverPreview} contentFit="cover" />
                 ) : (
-                  <View style={styles.coverPlaceholder}>
-                    <Ionicons name="image-outline" size={27} color={EVENT_ACCENT} />
-                    <Text style={styles.coverPlaceholderText}>Choose a cover image</Text>
-                    <Text style={styles.coverPlaceholderHint}>Select a photo from your gallery</Text>
+                  <View style={lumoStyles.coverPlaceholder}>
+                    <Ionicons name="image-outline" size={27} color={eventColors.accent} />
+                    <Text style={lumoStyles.coverPlaceholderText}>Choose a cover image</Text>
+                    <Text style={lumoStyles.coverPlaceholderHint}>Select a photo from your gallery</Text>
                   </View>
                 )}
-                <View style={styles.coverPickerBadge}>
-                  <Ionicons name="images-outline" size={15} color="#17130E" />
-                  <Text style={styles.coverPickerBadgeText}>{coverUri || formCoverUrl ? 'Change cover' : 'Choose image'}</Text>
+                <View style={lumoStyles.coverPickerBadge}>
+                  <Ionicons name="images-outline" size={15} color={resolveThemeColor("#0B1016", "color")} />
+                  <Text style={lumoStyles.coverPickerBadgeText}>{coverUri || formCoverUrl ? 'Change cover' : 'Choose image'}</Text>
                 </View>
               </Pressable>
               <TextInput
@@ -1031,26 +1060,26 @@ export default function EventsScreen() {
                 onChangeText={(value) => { setFormCoverUrl(value); setCoverUri(null); }}
                 placeholder="Or paste an image URL"
                 placeholderTextColor={colors.dim}
-                style={styles.input}
+                style={lumoStyles.input}
                 autoCapitalize="none"
                 keyboardType="url"
               />
               {coverUri || formCoverUrl ? (
-                <Pressable onPress={() => { setCoverUri(null); setFormCoverUrl(''); }} style={styles.removeCoverButton}>
+                <Pressable onPress={() => { setCoverUri(null); setFormCoverUrl(''); }} style={lumoStyles.removeCoverButton}>
                   <Ionicons name="close-circle-outline" size={14} color={colors.muted} />
-                  <Text style={styles.removeCoverText}>Remove cover</Text>
+                  <Text style={lumoStyles.removeCoverText}>Remove cover</Text>
                 </Pressable>
               ) : null}
 
-              <View style={styles.formInfo}>
-                <Ionicons name="eye-outline" size={17} color={EVENT_ACCENT} />
-                <Text style={styles.formInfoText}>Your event appears in followers’ All feed. People who select you in Personal will see it there too.</Text>
+              <View style={lumoStyles.formInfo}>
+                <Ionicons name="eye-outline" size={17} color={eventColors.accent} />
+                <Text style={lumoStyles.formInfoText}>Your event appears in followers’ All feed. People who select you in Personal will see it there too.</Text>
               </View>
-              <View style={styles.modalActions}>
-                <Pressable onPress={() => setCreateVisible(false)} style={styles.cancelButton}><Text style={styles.cancelButtonText}>Cancel</Text></Pressable>
-                <Pressable onPress={() => void saveEvent()} disabled={saving} style={[styles.submitButton, saving && styles.disabledButton]}>
-                  {saving ? <ActivityIndicator color="#17130E" size="small" /> : <Ionicons name="checkmark" size={18} color="#17130E" />}
-                  <Text style={styles.submitButtonText}>{editingEvent ? 'Save changes' : 'Publish event'}</Text>
+              <View style={lumoStyles.modalActions}>
+                <Pressable onPress={() => setCreateVisible(false)} style={lumoStyles.cancelButton}><Text style={lumoStyles.cancelButtonText}>Cancel</Text></Pressable>
+                <Pressable onPress={() => void saveEvent()} disabled={saving} style={[lumoStyles.submitButton, saving && lumoStyles.disabledButton]}>
+                  {saving ? <ActivityIndicator color={resolveThemeColor("#0B1016", "color")} size="small" /> : <Ionicons name="checkmark" size={18} color={resolveThemeColor("#0B1016", "color")} />}
+                  <Text style={lumoStyles.submitButtonText}>{editingEvent ? 'Save changes' : 'Publish event'}</Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -1059,22 +1088,22 @@ export default function EventsScreen() {
       </Modal>
 
       <Modal visible={personalVisible} transparent animationType="fade" onRequestClose={() => setPersonalVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, styles.peopleModal]}>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={[lumoStyles.modalCard, lumoStyles.peopleModal]}>
             <ModalHeader eyebrow="YOUR CIRCLE" title="Personal feed" subtitle="Choose people you follow. Only their events will appear in Personal." onClose={() => setPersonalVisible(false)} />
             {followings.length ? (
-              <ScrollView style={styles.peopleList} showsVerticalScrollIndicator={false}>
+              <ScrollView style={lumoStyles.peopleList} showsVerticalScrollIndicator={false}>
                 {followings.map((profile) => {
                   const selected = personalIds.includes(profile.id);
                   return (
-                    <Pressable key={profile.id} onPress={() => void togglePersonal(profile.id)} style={styles.peopleRow}>
+                    <Pressable key={profile.id} onPress={() => void togglePersonal(profile.id)} style={lumoStyles.peopleRow}>
                       <Avatar uri={profile.avatar_url} name={displayName(profile)} size={42} />
-                      <View style={styles.peopleCopy}>
-                        <Text style={styles.peopleName}>{displayName(profile)}</Text>
-                        <Text style={styles.peopleUsername}>@{profile.username}</Text>
+                      <View style={lumoStyles.peopleCopy}>
+                        <Text style={lumoStyles.peopleName}>{displayName(profile)}</Text>
+                        <Text style={lumoStyles.peopleUsername}>@{profile.username}</Text>
                       </View>
-                      <View style={[styles.selectionBox, selected && styles.selectionBoxSelected]}>
-                        {selected ? <Ionicons name="checkmark" size={15} color="#17130E" /> : null}
+                      <View style={[lumoStyles.selectionBox, selected && lumoStyles.selectionBoxSelected]}>
+                        {selected ? <Ionicons name="checkmark" size={15} color={resolveThemeColor("#0B1016", "color")} /> : null}
                       </View>
                     </Pressable>
                   );
@@ -1083,39 +1112,39 @@ export default function EventsScreen() {
             ) : (
               <EmptyState icon="people-outline" title="No followings yet" body="Follow people first. You can then add them to your Personal event feed." />
             )}
-            <View style={styles.modalFooter}>
-              <Text style={styles.modalFootnote}>{personalIds.length} people selected</Text>
-              <Pressable onPress={() => setPersonalVisible(false)} style={styles.submitButton}><Text style={styles.submitButtonText}>Done</Text></Pressable>
+            <View style={lumoStyles.modalFooter}>
+              <Text style={lumoStyles.modalFootnote}>{personalIds.length} people selected</Text>
+              <Pressable onPress={() => setPersonalVisible(false)} style={lumoStyles.submitButton}><Text style={lumoStyles.submitButtonText}>Done</Text></Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
       <Modal visible={blocksVisible} transparent animationType="fade" onRequestClose={() => setBlocksVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, styles.peopleModal]}>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={[lumoStyles.modalCard, lumoStyles.peopleModal]}>
             <ModalHeader eyebrow="EVENT PRIVACY" title="Manage event blocks" subtitle="Blocked accounts cannot see your events, and you cannot see theirs. This does not block their profile." onClose={() => setBlocksVisible(false)} />
-            <Pressable onPress={() => { setBlocksVisible(false); setSearchPeopleVisible(true); }} style={styles.addBlockButton}>
-              <Ionicons name="person-add-outline" size={17} color="#17130E" />
-              <Text style={styles.addBlockButtonText}>Block someone in Events</Text>
+            <Pressable onPress={() => { setBlocksVisible(false); setSearchPeopleVisible(true); }} style={lumoStyles.addBlockButton}>
+              <Ionicons name="person-add-outline" size={17} color={resolveThemeColor("#0B1016", "color")} />
+              <Text style={lumoStyles.addBlockButtonText}>Block someone in Events</Text>
             </Pressable>
-            <Text style={styles.modalSectionLabel}>EVENT VISIBILITY</Text>
+            <Text style={lumoStyles.modalSectionLabel}>EVENT VISIBILITY</Text>
             {blockedIds.length ? (
-              <ScrollView style={styles.peopleList} showsVerticalScrollIndicator={false}>
+              <ScrollView style={lumoStyles.peopleList} showsVerticalScrollIndicator={false}>
                 {blockedIds.map((id) => {
                   const profile = blockProfiles.find((item) => item.id === id);
                   const blockedByMe = blockRows.some((row) => row.blocker_id === userId && row.blocked_id === id);
                   return (
-                    <View key={id} style={styles.peopleRow}>
+                    <View key={id} style={lumoStyles.peopleRow}>
                       <Avatar uri={profile?.avatar_url} name={displayName(profile)} size={42} />
-                      <View style={styles.peopleCopy}>
-                        <Text style={styles.peopleName}>{displayName(profile)}</Text>
-                        <Text style={styles.peopleUsername}>{blockedByMe ? 'You blocked their events' : 'They blocked event visibility'}</Text>
+                      <View style={lumoStyles.peopleCopy}>
+                        <Text style={lumoStyles.peopleName}>{displayName(profile)}</Text>
+                        <Text style={lumoStyles.peopleUsername}>{blockedByMe ? 'You blocked their events' : 'They blocked event visibility'}</Text>
                       </View>
                       {blockedByMe ? (
-                        <Pressable onPress={() => void unblockProfile(id)} style={styles.unblockButton}><Text style={styles.unblockText}>Unblock</Text></Pressable>
+                        <Pressable onPress={() => void unblockProfile(id)} style={lumoStyles.unblockButton}><Text style={lumoStyles.unblockText}>Unblock</Text></Pressable>
                       ) : (
-                        <View style={styles.readOnlyTag}><Text style={styles.readOnlyTagText}>Restricted</Text></View>
+                        <View style={lumoStyles.readOnlyTag}><Text style={lumoStyles.readOnlyTagText}>Restricted</Text></View>
                       )}
                     </View>
                   );
@@ -1124,80 +1153,80 @@ export default function EventsScreen() {
             ) : (
               <EmptyState icon="shield-checkmark-outline" title="No event blocks" body="People you block here will only be hidden from your Events experience." />
             )}
-            <View style={styles.modalFooter}>
-              <Text style={styles.modalFootnote}>{blockedIds.length} account{blockedIds.length === 1 ? '' : 's'}</Text>
-              <Pressable onPress={() => setBlocksVisible(false)} style={styles.submitButton}><Text style={styles.submitButtonText}>Done</Text></Pressable>
+            <View style={lumoStyles.modalFooter}>
+              <Text style={lumoStyles.modalFootnote}>{blockedIds.length} account{blockedIds.length === 1 ? '' : 's'}</Text>
+              <Pressable onPress={() => setBlocksVisible(false)} style={lumoStyles.submitButton}><Text style={lumoStyles.submitButtonText}>Done</Text></Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
       <Modal visible={searchPeopleVisible} transparent animationType="fade" onRequestClose={() => setSearchPeopleVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, styles.peopleModal]}>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={[lumoStyles.modalCard, lumoStyles.peopleModal]}>
             <ModalHeader eyebrow="EVENT PRIVACY" title="Block an account" subtitle="Search any LUMO user. This only affects events." onClose={() => setSearchPeopleVisible(false)} />
-            <View style={styles.searchPeopleRow}>
+            <View style={lumoStyles.searchPeopleRow}>
               <Ionicons name="search-outline" size={18} color={colors.dim} />
               <TextInput
                 value={profileSearch}
                 onChangeText={setProfileSearch}
                 placeholder="Search username or name"
                 placeholderTextColor={colors.dim}
-                style={styles.searchInput}
+                style={lumoStyles.searchInput}
                 autoCapitalize="none"
                 returnKeyType="search"
                 onSubmitEditing={() => void searchProfiles()}
               />
-              <Pressable onPress={() => void searchProfiles()} style={styles.searchAction}>
-                {searchingProfiles ? <ActivityIndicator size="small" color="#17130E" /> : <Ionicons name="arrow-forward" size={17} color="#17130E" />}
+              <Pressable onPress={() => void searchProfiles()} style={lumoStyles.searchAction}>
+                {searchingProfiles ? <ActivityIndicator size="small" color={resolveThemeColor("#0B1016", "color")} /> : <Ionicons name="arrow-forward" size={17} color={resolveThemeColor("#0B1016", "color")} />}
               </Pressable>
             </View>
-            <ScrollView style={styles.peopleList} keyboardShouldPersistTaps="handled">
+            <ScrollView style={lumoStyles.peopleList} keyboardShouldPersistTaps="handled">
               {profileResults.map((profile) => {
                 const alreadyBlocked = blockRows.some((row) =>
                   (row.blocker_id === userId && row.blocked_id === profile.id) ||
                   (row.blocker_id === profile.id && row.blocked_id === userId),
                 );
                 return (
-                  <View key={profile.id} style={styles.peopleRow}>
+                  <View key={profile.id} style={lumoStyles.peopleRow}>
                     <Avatar uri={profile.avatar_url} name={displayName(profile)} size={42} />
-                    <View style={styles.peopleCopy}>
-                      <Text style={styles.peopleName}>{displayName(profile)}</Text>
-                      <Text style={styles.peopleUsername}>@{profile.username}</Text>
+                    <View style={lumoStyles.peopleCopy}>
+                      <Text style={lumoStyles.peopleName}>{displayName(profile)}</Text>
+                      <Text style={lumoStyles.peopleUsername}>@{profile.username}</Text>
                     </View>
                     <Pressable
                       disabled={alreadyBlocked || saving}
                       onPress={() => void blockProfile(profile)}
-                      style={[styles.blockAction, alreadyBlocked && styles.blockActionDisabled]}
+                      style={[lumoStyles.blockAction, alreadyBlocked && lumoStyles.blockActionDisabled]}
                     >
-                      <Text style={[styles.blockActionText, alreadyBlocked && styles.blockActionTextDisabled]}>{alreadyBlocked ? 'Blocked' : 'Block'}</Text>
+                      <Text style={[lumoStyles.blockActionText, alreadyBlocked && lumoStyles.blockActionTextDisabled]}>{alreadyBlocked ? 'Blocked' : 'Block'}</Text>
                     </Pressable>
                   </View>
                 );
               })}
               {!profileResults.length && profileSearch.trim() ? (
-                <Text style={styles.noSearchResults}>Search for a LUMO username or full name.</Text>
+                <Text style={lumoStyles.noSearchResults}>Search for a LUMO username or full name.</Text>
               ) : null}
             </ScrollView>
-            <View style={styles.modalFooter}>
-              <Text style={styles.modalFootnote}>Event-only. Profiles and chats stay unchanged.</Text>
-              <Pressable onPress={() => setSearchPeopleVisible(false)} style={styles.submitButton}><Text style={styles.submitButtonText}>Done</Text></Pressable>
+            <View style={lumoStyles.modalFooter}>
+              <Text style={lumoStyles.modalFootnote}>Event-only. Profiles and chats stay unchanged.</Text>
+              <Pressable onPress={() => setSearchPeopleVisible(false)} style={lumoStyles.submitButton}><Text style={lumoStyles.submitButtonText}>Done</Text></Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
       <Modal visible={Boolean(deleteTarget)} transparent animationType="fade" onRequestClose={() => setDeleteTarget(null)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, styles.confirmModal]}>
-            <View style={styles.confirmIcon}><Ionicons name="trash-outline" size={25} color="#E08C8C" /></View>
-            <Text style={styles.confirmTitle}>Delete this event?</Text>
-            <Text style={styles.confirmBody}>“{deleteTarget?.title}” will be removed for everyone. This cannot be undone.</Text>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setDeleteTarget(null)} style={styles.cancelButton}><Text style={styles.cancelButtonText}>Keep event</Text></Pressable>
-              <Pressable onPress={() => void deleteEvent()} disabled={saving} style={styles.deleteConfirmButton}>
-                {saving ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="trash-outline" size={17} color="#FFFFFF" />}
-                <Text style={styles.deleteConfirmText}>Delete event</Text>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={[lumoStyles.modalCard, lumoStyles.confirmModal]}>
+            <View style={lumoStyles.confirmIcon}><Ionicons name="trash-outline" size={25} color={resolveThemeColor("#E08C8C", "color")} /></View>
+            <Text style={lumoStyles.confirmTitle}>Delete this event?</Text>
+            <Text style={lumoStyles.confirmBody}>“{deleteTarget?.title}” will be removed for everyone. This cannot be undone.</Text>
+            <View style={lumoStyles.modalActions}>
+              <Pressable onPress={() => setDeleteTarget(null)} style={lumoStyles.cancelButton}><Text style={lumoStyles.cancelButtonText}>Keep event</Text></Pressable>
+              <Pressable onPress={() => void deleteEvent()} disabled={saving} style={lumoStyles.deleteConfirmButton}>
+                {saving ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="trash-outline" size={17} color={colors.text} />}
+                <Text style={lumoStyles.deleteConfirmText}>Delete event</Text>
               </Pressable>
             </View>
           </View>
@@ -1224,21 +1253,22 @@ function EventMenu({
   onDelete: () => void;
   onBlock: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   const mine = event.host_id === userId;
   return (
-    <View style={styles.eventMenuWrap}>
-      <Pressable onPress={onToggle} style={styles.eventMenuButton}>
+    <View style={lumoStyles.eventMenuWrap}>
+      <Pressable onPress={onToggle} style={lumoStyles.eventMenuButton}>
         <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
       </Pressable>
       {open ? (
-        <View style={styles.eventMenuPopover}>
+        <View style={lumoStyles.eventMenuPopover}>
           {mine ? (
             <>
-              <Pressable onPress={onEdit} style={styles.menuItem}><Ionicons name="create-outline" size={16} color={colors.text} /><Text style={styles.menuItemText}>Edit event</Text></Pressable>
-              <Pressable onPress={onDelete} style={styles.menuItem}><Ionicons name="trash-outline" size={16} color="#E08C8C" /><Text style={[styles.menuItemText, { color: '#E08C8C' }]}>Delete event</Text></Pressable>
+              <Pressable onPress={onEdit} style={lumoStyles.menuItem}><Ionicons name="create-outline" size={16} color={colors.text} /><Text style={lumoStyles.menuItemText}>Edit event</Text></Pressable>
+              <Pressable onPress={onDelete} style={lumoStyles.menuItem}><Ionicons name="trash-outline" size={16} color={resolveThemeColor("#E08C8C", "color")} /><Text style={[lumoStyles.menuItemText, { color: resolveThemeColor("#E08C8C", "color") }]}>Delete event</Text></Pressable>
             </>
           ) : (
-            <Pressable onPress={onBlock} style={styles.menuItem}><Ionicons name="shield-outline" size={16} color="#E08C8C" /><Text style={[styles.menuItemText, { color: '#E08C8C' }]}>Block events</Text></Pressable>
+            <Pressable onPress={onBlock} style={lumoStyles.menuItem}><Ionicons name="shield-outline" size={16} color={resolveThemeColor("#E08C8C", "color")} /><Text style={[lumoStyles.menuItemText, { color: resolveThemeColor("#E08C8C", "color") }]}>Block events</Text></Pressable>
           )}
         </View>
       ) : null}
@@ -1247,12 +1277,13 @@ function EventMenu({
 }
 
 function HostLine({ profile }: { profile: ProfileRecord | null }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.hostLine}>
+    <View style={lumoStyles.hostLine}>
       <Avatar uri={profile?.avatar_url} name={displayName(profile)} size={27} />
-      <View style={styles.hostCopy}>
-        <Text style={styles.hostName}>{displayName(profile)}</Text>
-        {profile?.username ? <Text style={styles.hostUsername}>@{profile.username}</Text> : null}
+      <View style={lumoStyles.hostCopy}>
+        <Text style={lumoStyles.hostName}>{displayName(profile)}</Text>
+        {profile?.username ? <Text style={lumoStyles.hostUsername}>@{profile.username}</Text> : null}
       </View>
     </View>
   );
@@ -1267,12 +1298,13 @@ function MetaLine({
   primary: string;
   secondary: string;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.metaLine}>
-      <Ionicons name={icon} size={17} color={EVENT_ACCENT} />
-      <View style={styles.metaCopy}>
-        <Text numberOfLines={1} style={styles.metaPrimary}>{primary}</Text>
-        {secondary ? <Text numberOfLines={1} style={styles.metaSecondary}>{secondary}</Text> : null}
+    <View style={lumoStyles.metaLine}>
+      <Ionicons name={icon} size={17} color={eventColors.accent} />
+      <View style={lumoStyles.metaCopy}>
+        <Text numberOfLines={1} style={lumoStyles.metaPrimary}>{primary}</Text>
+        {secondary ? <Text numberOfLines={1} style={lumoStyles.metaSecondary}>{secondary}</Text> : null}
       </View>
     </View>
   );
@@ -1293,19 +1325,20 @@ function RsvpButton({
   busy?: boolean;
   onPress: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
     <Pressable
       onPress={onPress}
       disabled={busy}
       style={[
-        styles.rsvpButton,
-        outline && styles.rsvpButtonOutline,
-        selected && styles.rsvpButtonSelected,
-        busy && styles.disabledButton,
+        lumoStyles.rsvpButton,
+        outline && lumoStyles.rsvpButtonOutline,
+        selected && lumoStyles.rsvpButtonSelected,
+        busy && lumoStyles.disabledButton,
       ]}
     >
-      {busy ? <ActivityIndicator size="small" color={selected || !outline ? '#17130E' : colors.text} /> : <Ionicons name={selected ? 'checkmark' : icon} size={16} color={selected || !outline ? '#17130E' : colors.text} />}
-      <Text style={[styles.rsvpText, outline && !selected && styles.rsvpTextOutline]}>{selected ? (label === 'Going' ? 'Going' : 'Interested') : label}</Text>
+      {busy ? <ActivityIndicator size="small" color={selected || !outline ? resolveThemeColor("#0B1016", "color") : colors.text} /> : <Ionicons name={selected ? 'checkmark' : icon} size={16} color={selected || !outline ? resolveThemeColor("#0B1016", "color") : colors.text} />}
+      <Text style={[lumoStyles.rsvpText, outline && !selected && lumoStyles.rsvpTextOutline]}>{selected ? (label === 'Going' ? 'Going' : 'Interested') : label}</Text>
     </Pressable>
   );
 }
@@ -1333,23 +1366,24 @@ function EventListItem({
   onBlock: () => void;
   onRsvp: (status: 'going' | 'interested') => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={[styles.eventListItem, compact && styles.eventListItemCompact]}>
-      <View style={[styles.dateBlock, compact && styles.dateBlockCompact]}>
-        <Text style={styles.dateMonth}>{monthShort(event.starts_at)}</Text>
-        <Text style={styles.dateDay}>{dayNumber(event.starts_at)}</Text>
-        <Text style={styles.dateWeekday}>{new Date(event.starts_at).toLocaleDateString(undefined, { weekday: 'short' })}</Text>
+    <View style={[lumoStyles.eventListItem, compact && lumoStyles.eventListItemCompact]}>
+      <View style={[lumoStyles.dateBlock, compact && lumoStyles.dateBlockCompact]}>
+        <Text style={lumoStyles.dateMonth}>{monthShort(event.starts_at)}</Text>
+        <Text style={lumoStyles.dateDay}>{dayNumber(event.starts_at)}</Text>
+        <Text style={lumoStyles.dateWeekday}>{new Date(event.starts_at).toLocaleDateString(undefined, { weekday: 'short' })}</Text>
       </View>
       {event.cover_url ? (
-        <Image source={{ uri: event.cover_url }} style={[styles.listThumb, compact && styles.listThumbCompact]} contentFit="cover" />
+        <Image source={{ uri: event.cover_url }} style={[lumoStyles.listThumb, compact && lumoStyles.listThumbCompact]} contentFit="cover" />
       ) : (
-        <View style={[styles.listThumb, styles.listThumbFallback, compact && styles.listThumbCompact]}>
-          <Ionicons name={categoryOptions.find((item) => item.key === event.category)?.icon ?? 'calendar-outline'} size={25} color={EVENT_ACCENT} />
+        <View style={[lumoStyles.listThumb, lumoStyles.listThumbFallback, compact && lumoStyles.listThumbCompact]}>
+          <Ionicons name={categoryOptions.find((item) => item.key === event.category)?.icon ?? 'calendar-outline'} size={25} color={eventColors.accent} />
         </View>
       )}
-      <View style={styles.listEventContent}>
-        <View style={styles.listTitleRow}>
-          <Text numberOfLines={1} style={styles.listEventTitle}>{event.title}</Text>
+      <View style={lumoStyles.listEventContent}>
+        <View style={lumoStyles.listTitleRow}>
+          <Text numberOfLines={1} style={lumoStyles.listEventTitle}>{event.title}</Text>
           <EventMenu
             event={event}
             userId={userId}
@@ -1360,24 +1394,24 @@ function EventListItem({
             onBlock={onBlock}
           />
         </View>
-        <Text numberOfLines={1} style={styles.listDescription}>{event.description || categoryNames[event.category] || 'Community event'}</Text>
-        <View style={styles.listMetaRow}>
+        <Text numberOfLines={1} style={lumoStyles.listDescription}>{event.description || categoryNames[event.category] || 'Community event'}</Text>
+        <View style={lumoStyles.listMetaRow}>
           <Avatar uri={event.host?.avatar_url} name={displayName(event.host)} size={18} />
-          <Text style={styles.listHostText}>{event.host?.username ? `@${event.host.username}` : displayName(event.host)}</Text>
+          <Text style={lumoStyles.listHostText}>{event.host?.username ? `@${event.host.username}` : displayName(event.host)}</Text>
           <Ionicons name="time-outline" size={13} color={colors.dim} />
-          <Text style={styles.listMetaText}>{eventTime(event.starts_at)}</Text>
+          <Text style={lumoStyles.listMetaText}>{eventTime(event.starts_at)}</Text>
           <Ionicons name={event.meeting_url ? 'videocam-outline' : 'location-outline'} size={13} color={colors.dim} />
-          <Text numberOfLines={1} style={styles.listMetaText}>{event.meeting_url ? 'Online' : event.location || 'Location TBA'}</Text>
+          <Text numberOfLines={1} style={lumoStyles.listMetaText}>{event.meeting_url ? 'Online' : event.location || 'Location TBA'}</Text>
         </View>
       </View>
-      <View style={styles.listEventActions}>
-        <Text style={styles.goingCount}><Ionicons name="people-outline" size={13} color={colors.muted} /> {event.goingCount}</Text>
+      <View style={[lumoStyles.listEventActions, compact && lumoStyles.listEventActionsCompact]}>
+        <Text style={lumoStyles.goingCount}><Ionicons name="people-outline" size={13} color={colors.muted} /> {event.goingCount}</Text>
         <Pressable
           onPress={() => onRsvp('going')}
           disabled={rsvpBusy}
-          style={[styles.smallGoingButton, event.myStatus === 'going' && styles.smallGoingButtonActive]}
+          style={[lumoStyles.smallGoingButton, event.myStatus === 'going' && lumoStyles.smallGoingButtonActive]}
         >
-          <Text style={[styles.smallGoingText, event.myStatus === 'going' && styles.smallGoingTextActive]}>{event.myStatus === 'going' ? 'Going' : 'Join'}</Text>
+          <Text style={[lumoStyles.smallGoingText, event.myStatus === 'going' && lumoStyles.smallGoingTextActive]}>{event.myStatus === 'going' ? 'Going' : 'Join'}</Text>
         </Pressable>
       </View>
     </View>
@@ -1397,15 +1431,16 @@ function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.emptyState}>
-      <View style={styles.emptyStateIcon}><Ionicons name={icon} size={29} color={EVENT_ACCENT} /></View>
-      <Text style={styles.emptyStateTitle}>{title}</Text>
-      <Text style={styles.emptyStateBody}>{body}</Text>
+    <View style={lumoStyles.emptyState}>
+      <View style={lumoStyles.emptyStateIcon}><Ionicons name={icon} size={29} color={eventColors.accent} /></View>
+      <Text style={lumoStyles.emptyStateTitle}>{title}</Text>
+      <Text style={lumoStyles.emptyStateBody}>{body}</Text>
       {actionLabel && onAction ? (
-        <Pressable onPress={onAction} style={styles.emptyStateAction}>
-          <Text style={styles.emptyStateActionText}>{actionLabel}</Text>
-          <Ionicons name="arrow-forward" size={15} color="#17130E" />
+        <Pressable onPress={onAction} style={lumoStyles.emptyStateAction}>
+          <Text style={lumoStyles.emptyStateActionText}>{actionLabel}</Text>
+          <Ionicons name="arrow-forward" size={15} color={resolveThemeColor("#0B1016", "color")} />
         </Pressable>
       ) : null}
     </View>
@@ -1423,14 +1458,15 @@ function ModalHeader({
   subtitle: string;
   onClose: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.modalHeader}>
-      <View style={styles.modalHeaderCopy}>
-        <Text style={styles.modalEyebrow}>{eyebrow}</Text>
-        <Text style={styles.modalTitle}>{title}</Text>
-        <Text style={styles.modalSubtitle}>{subtitle}</Text>
+    <View style={lumoStyles.modalHeader}>
+      <View style={lumoStyles.modalHeaderCopy}>
+        <Text style={lumoStyles.modalEyebrow}>{eyebrow}</Text>
+        <Text style={lumoStyles.modalTitle}>{title}</Text>
+        <Text style={lumoStyles.modalSubtitle}>{subtitle}</Text>
       </View>
-      <Pressable onPress={onClose} style={styles.modalClose} accessibilityLabel="Close">
+      <Pressable onPress={onClose} style={lumoStyles.modalClose} accessibilityLabel="Close">
         <Ionicons name="close" size={20} color={colors.muted} />
       </Pressable>
     </View>
@@ -1438,74 +1474,72 @@ function ModalHeader({
 }
 
 function FieldLabel({ label, hint }: { label: string; hint?: string }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.fieldLabelRow}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {hint ? <Text style={styles.fieldHint}>{hint}</Text> : null}
+    <View style={lumoStyles.fieldLabelRow}>
+      <Text style={lumoStyles.fieldLabel}>{label}</Text>
+      {hint ? <Text style={lumoStyles.fieldHint}>{hint}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg },
-  scrollContent: { flexGrow: 1, paddingBottom: 44 },
-  pageInner: { width: '100%', maxWidth: 1540, alignSelf: 'center', paddingHorizontal: 34, paddingTop: 34 },
-  pageInnerNarrow: { paddingHorizontal: 20, paddingTop: 24 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 22, marginBottom: 28 },
+  page: { flex: 1, width: '100%', minWidth: 0, maxWidth: '100%', alignSelf: 'stretch', backgroundColor: colors.bg, overflow: 'hidden' },
+  pageScroll: { flex: 1, width: '100%', minWidth: 0, maxWidth: '100%', alignSelf: 'stretch' },
+  scrollContent: { flexGrow: 1, width: '100%', minWidth: 0, alignSelf: 'stretch', paddingBottom: 28 },
+  pageInner: { width: '100%', minWidth: 0, maxWidth: 1340, flexShrink: 1, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 28 },
+  pageInnerNarrow: { paddingHorizontal: 20, paddingTop: 20 },
+  pageInnerPhone: { paddingHorizontal: 14, paddingTop: 14 },
+  header: { width: '100%', minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 22 },
+  headerStacked: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   headerCopy: { flex: 1, minWidth: 0 },
-  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 9 },
-  eyebrowDot: { width: 7, height: 7, borderRadius: 8, backgroundColor: EVENT_ACCENT },
-  eyebrow: { color: EVENT_ACCENT, fontSize: 10, fontWeight: '800', letterSpacing: 1.7 },
-  pageTitle: { color: '#F5F1E9', fontSize: 38, fontWeight: '800', letterSpacing: -1.2 },
-  subtitle: { color: colors.muted, fontSize: 13, marginTop: 5, lineHeight: 19 },
-  createButton: { minHeight: 44, paddingHorizontal: 19, borderRadius: 14, backgroundColor: EVENT_ACCENT, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  createButtonText: { color: '#17130E', fontWeight: '800', fontSize: 13 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
+  pageTitle: { color: colors.text, fontSize: 34, fontWeight: '800', letterSpacing: -1.1 },
+  pageTitlePhone: { fontSize: 28, letterSpacing: -0.9 },
+  createButton: { minHeight: 42, paddingHorizontal: 14, borderRadius: 12, backgroundColor: eventColors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, shadowColor: '#000000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  createButtonText: { color: '#0B1016', fontWeight: '800', fontSize: 12 },
+  headerMenuButton: { width: 42, height: 42, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 13, paddingVertical: 11, borderWidth: 1, borderColor: 'rgba(224,140,140,0.25)', backgroundColor: 'rgba(224,140,140,0.08)', borderRadius: 12, marginBottom: 16 },
   errorText: { color: '#E7B2B2', fontSize: 12, flex: 1, lineHeight: 17 },
-  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 28 },
-  columnsStacked: { flexDirection: 'column' },
-  mainColumn: { flex: 1, minWidth: 0 },
-  sideColumn: { width: 312, borderLeftWidth: 1, borderLeftColor: colors.border, paddingLeft: 25, paddingTop: 5 },
-  sideColumnNarrow: { width: '100%', borderLeftWidth: 0, borderTopWidth: 1, borderTopColor: colors.border, paddingLeft: 0, paddingTop: 22, marginTop: 18 },
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 15, marginBottom: 16 },
-  toolbarStacked: { flexDirection: 'column', alignItems: 'stretch' },
-  segmented: { height: 42, flexDirection: 'row', alignItems: 'center', padding: 3, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, alignSelf: 'flex-start' },
-  segment: { minWidth: 96, height: 34, paddingHorizontal: 16, borderRadius: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  segmentActive: { backgroundColor: EVENT_ACCENT_SOFT, borderWidth: 1, borderColor: EVENT_LINE },
+  columns: { width: '100%', minWidth: 0, flexShrink: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 28 },
+  columnsStacked: { width: '100%', minWidth: 0, flexDirection: 'column', alignItems: 'stretch' },
+  mainColumn: { flex: 1, width: '100%', minWidth: 0, maxWidth: '100%', flexShrink: 1 },
+  sideColumn: { width: 312, minWidth: 0, borderLeftWidth: 1, borderLeftColor: colors.border, paddingLeft: 25, paddingTop: 5 },
+  sideColumnNarrow: { width: '100%', maxWidth: '100%', minWidth: 0, borderLeftWidth: 0, borderTopWidth: 1, borderTopColor: colors.border, paddingLeft: 0, paddingTop: 17, marginTop: 14 },
+  toolbar: { width: '100%', minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 },
+  segmented: { height: 44, flexDirection: 'row', alignItems: 'center', padding: 3, backgroundColor: '#10151C', borderWidth: 1, borderColor: '#29323D', borderRadius: 14, alignSelf: 'flex-start' },
+  segment: { minWidth: 96, height: 36, paddingHorizontal: 16, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  segmentActive: { backgroundColor: eventColors.accentSoft, borderWidth: 1, borderColor: eventColors.line },
   segmentText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
-  segmentTextActive: { color: EVENT_ACCENT },
-  segmentCount: { backgroundColor: EVENT_ACCENT, minWidth: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  segmentCountText: { color: '#17130E', fontSize: 9, fontWeight: '900' },
-  toolbarActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  followingButton: { minHeight: 40, borderRadius: 12, paddingHorizontal: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  followingButtonText: { color: colors.text, fontSize: 12, fontWeight: '700' },
-  manageBlocksButton: { minHeight: 40, borderRadius: 12, paddingHorizontal: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  manageBlocksText: { color: colors.text, fontSize: 12, fontWeight: '700' },
-  blockCount: { color: EVENT_ACCENT, fontSize: 11, fontWeight: '900' },
-  searchRow: { height: 43, paddingHorizontal: 13, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 13 },
+  segmentTextActive: { color: eventColors.accent },
+  segmentCount: { backgroundColor: eventColors.accent, minWidth: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  segmentCountText: { color: '#0B1016', fontSize: 9, fontWeight: '900' },
+  searchRow: { width: '100%', maxWidth: '100%', minWidth: 0, height: 46, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#10151C', borderWidth: 1, borderColor: '#28323E', flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 13 },
   searchInput: { flex: 1, minWidth: 0, color: colors.text, fontSize: 13, paddingVertical: 8, outlineStyle: 'none' as never },
-  categoryRail: { gap: 7, paddingBottom: 17 },
-  categoryChip: { minHeight: 32, paddingHorizontal: 11, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  categoryChipActive: { borderColor: EVENT_LINE, backgroundColor: EVENT_ACCENT_SOFT },
+  categoryScroller: { width: '100%', maxWidth: '100%', minWidth: 0, flexGrow: 0, flexShrink: 0, alignSelf: 'stretch', overflow: 'hidden' },
+  categoryRail: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingBottom: 13, paddingRight: 14 },
+  categoryChip: { minHeight: 35, paddingHorizontal: 13, borderRadius: 11, borderWidth: 1, borderColor: '#2A3440', backgroundColor: '#11161D', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  categoryChipActive: { borderColor: eventColors.line, backgroundColor: eventColors.accentSoft },
   categoryChipText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
-  categoryChipTextActive: { color: EVENT_ACCENT },
-  loadingState: { minHeight: 280, alignItems: 'center', justifyContent: 'center', gap: 13, backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
+  categoryChipTextActive: { color: eventColors.accent },
+  loadingState: { width: '100%', minWidth: 0, minHeight: 180, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#11161D', borderRadius: 18, borderWidth: 1, borderColor: '#2A3440' },
   loadingText: { color: colors.muted, fontSize: 13 },
-  featuredCard: { backgroundColor: colors.surface, borderRadius: 19, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', flexDirection: 'row', minHeight: 300, marginBottom: 27 },
+  featuredCard: { width: '100%', maxWidth: '100%', minWidth: 0, flexShrink: 1, backgroundColor: '#121820', borderRadius: 20, borderWidth: 1, borderColor: '#303B48', overflow: 'hidden', flexDirection: 'row', minHeight: 300, marginBottom: 23 },
   featuredCardStacked: { flexDirection: 'column', minHeight: 0 },
   featuredImageWrap: { width: '35%', minWidth: 200, position: 'relative', backgroundColor: colors.surfaceRaised },
-  featuredImageWrapStacked: { width: '100%', minWidth: 0, height: 165 },
+  featuredImageWrapStacked: { width: '100%', minWidth: 0, height: 176 },
   featuredImage: { width: '100%', height: '100%', minHeight: 300 },
-  featuredImageStacked: { height: 165, minHeight: 165 },
-  featuredImageFallback: { alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: '#2B251C' },
+  featuredImageStacked: { height: 176, minHeight: 176 },
+  featuredImageFallback: { alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: '#1A222C' },
   fallbackWord: { color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
-  imageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(14,12,10,0.12)' },
-  featuredLabel: { position: 'absolute', top: 15, left: 15, backgroundColor: EVENT_ACCENT, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7 },
-  featuredLabelText: { color: '#17130E', fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  imageShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,12,10,0.12)' },
+  featuredLabel: { position: 'absolute', top: 15, left: 15, backgroundColor: eventColors.accent, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7 },
+  featuredLabelText: { color: '#0B1016', fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
   featuredContent: { flex: 1, minWidth: 0, padding: 20, justifyContent: 'center' },
+  featuredContentStacked: { padding: 16 },
   featuredTopline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  categoryKicker: { color: EVENT_ACCENT, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
-  featuredTitle: { color: '#F5F1E9', fontSize: 24, fontWeight: '800', letterSpacing: -0.7, lineHeight: 30, marginTop: 8 },
+  categoryKicker: { color: eventColors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  featuredTitle: { color: '#F2F5F7', fontSize: 24, fontWeight: '800', letterSpacing: -0.7, lineHeight: 30, marginTop: 8 },
   featuredDescription: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   hostLine: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 13 },
   hostCopy: { flexDirection: 'column', minWidth: 0 },
@@ -1517,27 +1551,27 @@ const styles = StyleSheet.create({
   metaPrimary: { color: colors.text, fontSize: 11, fontWeight: '700' },
   metaSecondary: { color: colors.dim, fontSize: 10, marginTop: 3 },
   featuredActions: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 17, flexWrap: 'wrap' },
-  rsvpButton: { minHeight: 38, borderRadius: 11, paddingHorizontal: 16, backgroundColor: EVENT_ACCENT, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  rsvpButton: { minHeight: 38, borderRadius: 11, paddingHorizontal: 16, backgroundColor: eventColors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   rsvpButtonOutline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
-  rsvpButtonSelected: { backgroundColor: '#F4C27E', borderColor: '#F4C27E' },
-  rsvpText: { color: '#17130E', fontSize: 11, fontWeight: '900' },
+  rsvpButtonSelected: { backgroundColor: '#D7DEE6', borderColor: '#D7DEE6' },
+  rsvpText: { color: '#0B1016', fontSize: 11, fontWeight: '900' },
   rsvpTextOutline: { color: colors.text },
   meetingButton: { height: 38, width: 38, borderRadius: 11, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  listHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 14 },
-  sectionTitle: { color: '#F5F1E9', fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
-  sectionSubline: { color: colors.dim, fontSize: 11, marginTop: 4 },
-  headingHint: { color: colors.dim, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 },
-  eventList: { borderTopWidth: 1, borderTopColor: colors.border },
-  eventListItem: { minHeight: 105, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 13, borderBottomWidth: 1, borderBottomColor: colors.border },
-  eventListItemCompact: { minHeight: 88, paddingVertical: 10, gap: 8 },
+  listHeading: { width: '100%', minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 11 },
+  sectionTitle: { color: '#F2F5F7', fontSize: 19, fontWeight: '800', letterSpacing: -0.45 },
+  sectionCount: { minWidth: 23, height: 23, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
+  sectionCountText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  eventList: { width: '100%', minWidth: 0, borderTopWidth: 1, borderTopColor: '#29323D' },
+  eventListItem: { width: '100%', minWidth: 0, minHeight: 105, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 13, borderBottomWidth: 1, borderBottomColor: colors.border },
+  eventListItemCompact: { minHeight: 0, paddingVertical: 12, gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   dateBlock: { width: 52, alignItems: 'center', justifyContent: 'center' },
   dateBlockCompact: { width: 38 },
-  dateMonth: { color: EVENT_ACCENT, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
-  dateDay: { color: '#F5F1E9', fontSize: 25, fontWeight: '800', lineHeight: 29, marginTop: 1 },
+  dateMonth: { color: eventColors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  dateDay: { color: '#F2F5F7', fontSize: 25, fontWeight: '800', lineHeight: 29, marginTop: 1 },
   dateWeekday: { color: colors.dim, fontSize: 9, marginTop: 1 },
   listThumb: { width: 78, height: 76, borderRadius: 12, backgroundColor: colors.surfaceRaised },
   listThumbCompact: { width: 56, height: 56 },
-  listThumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#2B251C' },
+  listThumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A222C' },
   listEventContent: { flex: 1, minWidth: 0 },
   listTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   listEventTitle: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '800' },
@@ -1546,24 +1580,25 @@ const styles = StyleSheet.create({
   listHostText: { color: colors.muted, fontSize: 9, marginRight: 6 },
   listMetaText: { color: colors.dim, fontSize: 9, maxWidth: 120 },
   listEventActions: { alignItems: 'flex-end', justifyContent: 'center', gap: 8 },
+  listEventActionsCompact: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 110 },
   goingCount: { color: colors.muted, fontSize: 10, fontWeight: '700' },
   smallGoingButton: { borderRadius: 9, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, minHeight: 30, alignItems: 'center', justifyContent: 'center' },
-  smallGoingButtonActive: { borderColor: EVENT_LINE, backgroundColor: EVENT_ACCENT_SOFT },
+  smallGoingButtonActive: { borderColor: eventColors.line, backgroundColor: eventColors.accentSoft },
   smallGoingText: { color: colors.text, fontSize: 10, fontWeight: '800' },
-  smallGoingTextActive: { color: EVENT_ACCENT },
+  smallGoingTextActive: { color: eventColors.accent },
   eventMenuWrap: { position: 'relative', zIndex: 4 },
   eventMenuButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 9 },
   eventMenuPopover: { position: 'absolute', zIndex: 15, right: 0, top: 32, minWidth: 145, padding: 5, backgroundColor: colors.surfaceRaised, borderRadius: 11, borderWidth: 1, borderColor: colors.border, shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 15, elevation: 8 },
   menuItem: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 9, borderRadius: 8 },
   menuItemText: { color: colors.text, fontSize: 11, fontWeight: '700' },
-  sideHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 17 },
-  sideTitle: { color: '#F5F1E9', fontSize: 19, fontWeight: '800', letterSpacing: -0.4 },
-  sideSubtitle: { color: colors.dim, fontSize: 11, marginTop: 4 },
-  iconButton: { width: 34, height: 34, borderRadius: 11, borderWidth: 1, borderColor: EVENT_LINE, backgroundColor: EVENT_ACCENT_SOFT, alignItems: 'center', justifyContent: 'center' },
+  sideHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  sideTitle: { color: '#F2F5F7', fontSize: 18, fontWeight: '800', letterSpacing: -0.4 },
+  sideCount: { minWidth: 25, height: 25, borderRadius: 9, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: eventColors.accentSoft, borderWidth: 1, borderColor: eventColors.line },
+  sideCountText: { color: eventColors.accent, fontSize: 10, fontWeight: '900' },
   myEventList: { gap: 2 },
   myEventRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, position: 'relative' },
   smallDateBlock: { width: 38, alignItems: 'center' },
-  smallDateMonth: { color: EVENT_ACCENT, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  smallDateMonth: { color: eventColors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
   smallDateDay: { color: colors.text, fontSize: 21, fontWeight: '800', marginTop: 1 },
   myEventCopy: { flex: 1, minWidth: 0 },
   myEventTitle: { color: colors.text, fontSize: 11, fontWeight: '800' },
@@ -1571,26 +1606,26 @@ const styles = StyleSheet.create({
   myEventCount: { color: colors.dim, fontSize: 9, marginTop: 4 },
   moreButton: { width: 26, height: 30, alignItems: 'center', justifyContent: 'center' },
   myEventMenu: { position: 'absolute', zIndex: 15, right: 4, top: 46, padding: 5, backgroundColor: colors.surfaceRaised, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
-  myEventsEmpty: { minHeight: 260, justifyContent: 'center', alignItems: 'center', borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: 18, paddingVertical: 22 },
-  emptyCalendarIcon: { width: 62, height: 62, borderRadius: 20, backgroundColor: EVENT_ACCENT_SOFT, borderWidth: 1, borderColor: EVENT_LINE, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  emptyPlus: { position: 'absolute', right: -4, bottom: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: EVENT_ACCENT, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surface },
-  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 18 },
-  emptyBody: { color: colors.muted, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 7 },
-  emptyCreateButton: { minHeight: 36, borderRadius: 10, paddingHorizontal: 13, backgroundColor: EVENT_ACCENT, flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16 },
-  emptyCreateText: { color: '#17130E', fontSize: 11, fontWeight: '900' },
-  sideNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 19, padding: 13, borderRadius: 13, borderWidth: 1, borderColor: EVENT_LINE, backgroundColor: EVENT_ACCENT_SOFT },
-  sideNoteIcon: { width: 29, height: 29, borderRadius: 9, backgroundColor: 'rgba(233,162,77,0.12)', alignItems: 'center', justifyContent: 'center' },
-  sideNoteCopy: { flex: 1 },
-  sideNoteTitle: { color: colors.text, fontSize: 11, fontWeight: '800' },
-  sideNoteText: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 4 },
-  sideBlockLink: { minHeight: 43, flexDirection: 'row', alignItems: 'center', gap: 9, borderBottomWidth: 1, borderBottomColor: colors.border, marginTop: 10 },
-  sideBlockText: { color: colors.muted, fontSize: 11, fontWeight: '700', flex: 1 },
-  emptyState: { minHeight: 285, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28, paddingVertical: 35, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  emptyStateIcon: { width: 60, height: 60, borderRadius: 19, backgroundColor: EVENT_ACCENT_SOFT, borderWidth: 1, borderColor: EVENT_LINE, alignItems: 'center', justifyContent: 'center' },
-  emptyStateTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 16 },
-  emptyStateBody: { color: colors.muted, fontSize: 12, textAlign: 'center', lineHeight: 18, marginTop: 7, maxWidth: 330 },
-  emptyStateAction: { minHeight: 37, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: EVENT_ACCENT, paddingHorizontal: 13, marginTop: 16 },
-  emptyStateActionText: { color: '#17130E', fontWeight: '900', fontSize: 11 },
+  myEventsEmpty: { minHeight: 58, justifyContent: 'flex-start', alignItems: 'center', flexDirection: 'row', gap: 10, borderRadius: 13, borderWidth: 1, borderColor: '#29323D', backgroundColor: '#10151C', paddingHorizontal: 14, paddingVertical: 12 },
+  myEventsEmptyText: { color: colors.muted, fontSize: 11, fontWeight: '600' },
+  emptyState: { width: '100%', maxWidth: '100%', minWidth: 0, alignSelf: 'stretch', minHeight: 176, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24, borderRadius: 18, borderWidth: 1, borderColor: '#2A3440', backgroundColor: '#11161D' },
+  emptyStateIcon: { width: 48, height: 48, borderRadius: 15, backgroundColor: eventColors.accentSoft, borderWidth: 1, borderColor: eventColors.line, alignItems: 'center', justifyContent: 'center' },
+  emptyStateTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 },
+  emptyStateBody: { color: colors.muted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 5, maxWidth: 300 },
+  emptyStateAction: { minHeight: 37, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: eventColors.accent, paddingHorizontal: 13, marginTop: 16 },
+  emptyStateActionText: { color: '#0B1016', fontWeight: '900', fontSize: 11 },
+  actionsMenuBackdrop: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.58)' },
+  actionsMenuScrim: { ...StyleSheet.absoluteFill },
+  actionsMenuSheet: { width: '100%', maxWidth: 520, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 28, backgroundColor: '#11161D', borderTopLeftRadius: 23, borderTopRightRadius: 23, borderWidth: 1, borderColor: '#303A46' },
+  actionsMenuHandle: { width: 38, height: 4, borderRadius: 4, backgroundColor: '#596574', alignSelf: 'center', marginBottom: 12 },
+  actionsMenuHeader: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 },
+  actionsMenuTitle: { color: colors.text, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
+  actionsMenuItem: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: 'rgba(215,222,230,0.08)' },
+  actionsMenuItemLast: { borderBottomWidth: 0 },
+  actionsMenuIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(215,222,230,0.08)', alignItems: 'center', justifyContent: 'center' },
+  actionsMenuCopy: { flex: 1, minWidth: 0 },
+  actionsMenuItemTitle: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  actionsMenuItemMeta: { color: colors.dim, fontSize: 10, marginTop: 3 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   modalCard: { width: '100%', maxWidth: 580, maxHeight: '91%', backgroundColor: colors.surface, borderRadius: 22, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   createModal: { maxWidth: 600 },
@@ -1599,7 +1634,7 @@ const styles = StyleSheet.create({
   confirmModal: { maxWidth: 420, padding: 23, alignItems: 'center' },
   modalHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 15, paddingHorizontal: 22, paddingTop: 22, paddingBottom: 17, borderBottomWidth: 1, borderBottomColor: colors.border },
   modalHeaderCopy: { flex: 1, minWidth: 0 },
-  modalEyebrow: { color: EVENT_ACCENT, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginBottom: 7 },
+  modalEyebrow: { color: eventColors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.5, marginBottom: 7 },
   modalTitle: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
   modalSubtitle: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 6 },
   modalClose: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
@@ -1608,21 +1643,21 @@ const styles = StyleSheet.create({
   fieldLabel: { color: colors.text, fontSize: 11, fontWeight: '800' },
   fieldHint: { color: colors.dim, fontSize: 9 },
   input: { minHeight: 43, borderRadius: 11, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, paddingHorizontal: 12, color: colors.text, fontSize: 12 },
-  coverPicker: { height: 156, borderRadius: 13, borderWidth: 1, borderStyle: 'dashed', borderColor: EVENT_LINE, backgroundColor: colors.surfaceRaised, overflow: 'hidden', position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  coverPreview: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  coverPicker: { height: 156, borderRadius: 13, borderWidth: 1, borderStyle: 'dashed', borderColor: eventColors.line, backgroundColor: colors.surfaceRaised, overflow: 'hidden', position: 'relative', alignItems: 'center', justifyContent: 'center' },
+  coverPreview: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
   coverPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: 5 },
   coverPlaceholderText: { color: colors.text, fontSize: 11, fontWeight: '800' },
   coverPlaceholderHint: { color: colors.dim, fontSize: 9 },
-  coverPickerBadge: { position: 'absolute', right: 10, bottom: 10, minHeight: 29, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 9, backgroundColor: EVENT_ACCENT, paddingHorizontal: 10 },
-  coverPickerBadgeText: { color: '#17130E', fontSize: 9, fontWeight: '900' },
+  coverPickerBadge: { position: 'absolute', right: 10, bottom: 10, minHeight: 29, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 9, backgroundColor: eventColors.accent, paddingHorizontal: 10 },
+  coverPickerBadgeText: { color: '#0B1016', fontSize: 9, fontWeight: '900' },
   removeCoverButton: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 8, paddingVertical: 3 },
   removeCoverText: { color: colors.muted, fontSize: 9, fontWeight: '700' },
   multilineInput: { minHeight: 84, paddingTop: 11, paddingBottom: 11 },
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   formCategory: { minHeight: 35, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised },
-  formCategoryActive: { borderColor: EVENT_LINE, backgroundColor: EVENT_ACCENT_SOFT },
+  formCategoryActive: { borderColor: eventColors.line, backgroundColor: eventColors.accentSoft },
   formCategoryText: { color: colors.muted, fontSize: 10, fontWeight: '700' },
-  formCategoryTextActive: { color: EVENT_ACCENT },
+  formCategoryTextActive: { color: eventColors.accent },
   dateTimeRow: { flexDirection: 'row', gap: 10 },
   dateField: { flex: 1.25, minWidth: 0 },
   timeField: { flex: 0.8, minWidth: 0 },
@@ -1631,13 +1666,13 @@ const styles = StyleSheet.create({
   dateTimeInput: { flex: 1, minWidth: 0, color: colors.text, fontSize: 12, paddingVertical: 9, outlineStyle: 'none' as never },
   timeHint: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 },
   timeHintText: { color: colors.dim, fontSize: 9, lineHeight: 14, flex: 1 },
-  formInfo: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, padding: 12, marginTop: 18, borderRadius: 11, backgroundColor: EVENT_ACCENT_SOFT, borderWidth: 1, borderColor: EVENT_LINE },
+  formInfo: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, padding: 12, marginTop: 18, borderRadius: 11, backgroundColor: eventColors.accentSoft, borderWidth: 1, borderColor: eventColors.line },
   formInfoText: { color: colors.muted, fontSize: 10, lineHeight: 15, flex: 1 },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 9, marginTop: 20 },
   cancelButton: { minHeight: 39, paddingHorizontal: 15, borderRadius: 10, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   cancelButtonText: { color: colors.muted, fontSize: 11, fontWeight: '800' },
-  submitButton: { minHeight: 39, paddingHorizontal: 16, borderRadius: 10, backgroundColor: EVENT_ACCENT, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  submitButtonText: { color: '#17130E', fontSize: 11, fontWeight: '900' },
+  submitButton: { minHeight: 39, paddingHorizontal: 16, borderRadius: 10, backgroundColor: eventColors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  submitButtonText: { color: '#0B1016', fontSize: 11, fontWeight: '900' },
   disabledButton: { opacity: 0.55 },
   peopleList: { flexGrow: 0, maxHeight: 390, paddingHorizontal: 17 },
   peopleRow: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 9 },
@@ -1645,21 +1680,21 @@ const styles = StyleSheet.create({
   peopleName: { color: colors.text, fontSize: 12, fontWeight: '800' },
   peopleUsername: { color: colors.dim, fontSize: 10, marginTop: 4 },
   selectionBox: { width: 23, height: 23, borderRadius: 7, borderWidth: 1, borderColor: colors.dim, alignItems: 'center', justifyContent: 'center' },
-  selectionBoxSelected: { backgroundColor: EVENT_ACCENT, borderColor: EVENT_ACCENT },
+  selectionBoxSelected: { backgroundColor: eventColors.accent, borderColor: eventColors.accent },
   modalFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 13, marginTop: 4, borderTopWidth: 1, borderTopColor: colors.border },
   modalFootnote: { color: colors.dim, fontSize: 10, flex: 1 },
   modalSectionLabel: { color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, paddingHorizontal: 20, paddingTop: 17, paddingBottom: 5 },
-  addBlockButton: { minHeight: 40, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: EVENT_ACCENT, paddingHorizontal: 13, marginHorizontal: 20, marginTop: 15 },
-  addBlockButtonText: { color: '#17130E', fontSize: 10, fontWeight: '900' },
+  addBlockButton: { minHeight: 40, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, backgroundColor: eventColors.accent, paddingHorizontal: 13, marginHorizontal: 20, marginTop: 15 },
+  addBlockButtonText: { color: '#0B1016', fontSize: 10, fontWeight: '900' },
   unblockButton: { minHeight: 31, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', borderRadius: 8, borderWidth: 1, borderColor: colors.border },
   unblockText: { color: colors.text, fontSize: 10, fontWeight: '800' },
   readOnlyTag: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 7, backgroundColor: colors.surfaceRaised },
   readOnlyTagText: { color: colors.dim, fontSize: 9, fontWeight: '800' },
   searchPeopleRow: { minHeight: 43, marginHorizontal: 19, marginTop: 17, marginBottom: 8, paddingLeft: 11, borderRadius: 11, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  searchAction: { width: 35, height: 35, marginRight: 4, borderRadius: 9, backgroundColor: EVENT_ACCENT, alignItems: 'center', justifyContent: 'center' },
-  blockAction: { minHeight: 32, paddingHorizontal: 11, borderRadius: 9, backgroundColor: EVENT_ACCENT, alignItems: 'center', justifyContent: 'center' },
+  searchAction: { width: 35, height: 35, marginRight: 4, borderRadius: 9, backgroundColor: eventColors.accent, alignItems: 'center', justifyContent: 'center' },
+  blockAction: { minHeight: 32, paddingHorizontal: 11, borderRadius: 9, backgroundColor: eventColors.accent, alignItems: 'center', justifyContent: 'center' },
   blockActionDisabled: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
-  blockActionText: { color: '#17130E', fontSize: 10, fontWeight: '900' },
+  blockActionText: { color: '#0B1016', fontSize: 10, fontWeight: '900' },
   blockActionTextDisabled: { color: colors.dim },
   noSearchResults: { color: colors.dim, fontSize: 11, lineHeight: 17, padding: 20, textAlign: 'center' },
   confirmIcon: { width: 54, height: 54, borderRadius: 17, backgroundColor: 'rgba(224,140,140,0.10)', borderWidth: 1, borderColor: 'rgba(224,140,140,0.24)', alignItems: 'center', justifyContent: 'center' },

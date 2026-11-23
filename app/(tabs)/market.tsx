@@ -1,12 +1,14 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { useAuth } from "../../lib/auth";
 import { getMarketFavoriteIds, getMarketListings, type MarketKind, type MarketListing } from "../../lib/market";
 import { getOfficialCatalog, getPlatformRoles, type OfficialProduct, type OfficialStore, type PlatformRole } from "../../lib/market-official";
 import { colors } from "../../lib/theme";
 import MarketListingCard from "../../components/market/MarketListingCard";
+import { getAppContentWidth, getMarketGridMetrics } from "../../lib/responsive";
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type MarketTab = "originals" | "community" | "saved" | "mine";
 type CommunityKind = "all" | "product" | "service";
@@ -26,22 +28,23 @@ function formatPrice(price: number, currency: "UZS" | "USD") {
 }
 
 function OfficialProductCard({ item, basis, onPress }: { item: OfficialProduct; basis: `${number}%`; onPress: () => void }) {
+  const lumoStyles = useThemedStyles(styles);
   const imageUrl = item.images?.[0];
   return (
-    <View style={[styles.productGridItem, { flexBasis: basis }]}>
-      <Pressable onPress={onPress} style={({ pressed }) => [styles.productCard, pressed && styles.pressed]} accessibilityRole="button">
-        <View style={styles.productImageWrap}>
-          {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.productImage} resizeMode="cover" /> : (
-            <View style={styles.productPlaceholder}><Ionicons name="cube-outline" size={34} color={colors.dim} /><Text style={styles.placeholderLabel}>LUMO ORIGINALS</Text></View>
+    <View style={[lumoStyles.productGridItem, { flexBasis: basis }]}>
+      <Pressable onPress={onPress} style={({ pressed }) => [lumoStyles.productCard, pressed && lumoStyles.pressed]} accessibilityRole="button">
+        <View style={lumoStyles.productImageWrap}>
+          {imageUrl ? <Image source={{ uri: imageUrl }} style={lumoStyles.productImage} resizeMode="cover" /> : (
+            <View style={lumoStyles.productPlaceholder}><Ionicons name="cube-outline" size={34} color={colors.dim} /><Text style={lumoStyles.placeholderLabel}>LUMO ORIGINALS</Text></View>
           )}
-          {item.is_featured ? <View style={styles.featuredBadge}><Ionicons name="sparkles" size={10} color={colors.bg} /><Text style={styles.featuredText}>FEATURED</Text></View> : null}
+          {item.is_featured ? <View style={lumoStyles.featuredBadge}><Ionicons name="sparkles" size={10} color={colors.bg} /><Text style={lumoStyles.featuredText}>FEATURED</Text></View> : null}
         </View>
-        <View style={styles.productInfo}>
-          <Text style={styles.productCategory}>{item.category || "LUMO ORIGINALS"}</Text>
-          <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.productPriceRow}>
-            <Text style={styles.productPrice}>{formatPrice(item.price, item.currency)}</Text>
-            <View style={styles.productArrow}><Ionicons name="arrow-forward" size={15} color={colors.accentStrong} /></View>
+        <View style={lumoStyles.productInfo}>
+          <Text style={lumoStyles.productCategory}>{item.category || "LUMO ORIGINALS"}</Text>
+          <Text style={lumoStyles.productName} numberOfLines={1}>{item.name}</Text>
+          <View style={lumoStyles.productPriceRow}>
+            <Text style={lumoStyles.productPrice}>{formatPrice(item.price, item.currency)}</Text>
+            <View style={lumoStyles.productArrow}><Ionicons name="arrow-forward" size={15} color={colors.accentStrong} /></View>
           </View>
         </View>
       </Pressable>
@@ -50,8 +53,14 @@ function OfficialProductCard({ item, basis, onPress }: { item: OfficialProduct; 
 }
 
 export default function MarketScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
+  const params = useLocalSearchParams<{ tab?: string }>();
   const { width } = useWindowDimensions();
+  const segments = useSegments();
+  const contentWidth = getAppContentWidth(width, segments[0] === "(tabs)");
+  const gridMetrics = getMarketGridMetrics(contentWidth, 1320, contentWidth < 360 ? 14 : 18);
+  const cardBasis = gridMetrics.basis;
   const { session } = useAuth();
   const userId = session?.user.id;
   const [activeTab, setActiveTab] = useState<MarketTab>("originals");
@@ -65,6 +74,12 @@ export default function MarketScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (params.tab === "mine" || params.tab === "community" || params.tab === "originals" || params.tab === "saved") {
+      setActiveTab(params.tab);
+    }
+  }, [params.tab]);
 
   const load = useCallback(async (refresh = false) => {
     if (!userId) {
@@ -99,7 +114,7 @@ export default function MarketScreen() {
   const isMine = activeTab === "mine";
   const isStaff = roles.includes("owner") || roles.includes("developer") || roles.includes("admin");
   const categories = communityKind === "service" ? serviceCategories : productCategories;
-  const cardBasis = width < 530 ? "48%" : width < 900 ? "31.5%" : "23.5%";
+
 
   const filteredListings = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -130,164 +145,164 @@ export default function MarketScreen() {
     : "Keep track of the listings you have published on Lumo.";
 
   return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <View style={styles.topLine}>
-            <View style={styles.brandLine}>
-              <View style={styles.brandMark}><Text style={styles.brandMarkText}>L</Text></View>
-              <View><Text style={styles.eyebrow}>DISCOVER / TRADE / CONNECT</Text><Text style={styles.brandName}>LUMO MARKET</Text></View>
+    <View style={lumoStyles.root}>
+      <ScrollView contentContainerStyle={lumoStyles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={[lumoStyles.container, contentWidth < 360 && lumoStyles.containerPhone]}>
+          <View style={[lumoStyles.topLine, contentWidth < 360 && lumoStyles.topLinePhone]}>
+            <View style={lumoStyles.brandLine}>
+              <View style={lumoStyles.brandMark}><Text style={lumoStyles.brandMarkText}>L</Text></View>
+              <View><Text style={lumoStyles.eyebrow}>DISCOVER / TRADE / CONNECT</Text><Text style={lumoStyles.brandName}>LUMO MARKET</Text></View>
             </View>
             {(isCommunity || isMine) ? (
-              <Pressable onPress={openCreateListing} style={({ pressed }) => [styles.sellButton, pressed && styles.pressed]}>
-                <Ionicons name="add" size={18} color={colors.bg} /><Text style={styles.sellButtonText}>Create listing</Text>
+              <Pressable onPress={openCreateListing} style={({ pressed }) => [lumoStyles.sellButton, pressed && lumoStyles.pressed]}>
+                <Ionicons name="add" size={18} color={colors.bg} /><Text style={lumoStyles.sellButtonText}>Create listing</Text>
               </Pressable>
             ) : null}
           </View>
 
-          <View style={styles.hero}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroEyebrowRow}><View style={styles.heroEyebrowLine} /><Text style={styles.heroEyebrow}>A MORE CONSIDERED MARKETPLACE</Text></View>
-              <Text style={styles.heroTitle}>Find something{"\n"}<Text style={styles.heroAccent}>worth keeping.</Text></Text>
-              <Text style={styles.heroDescription}>Explore the official Lumo collection or discover useful finds and services from the community.</Text>
-              <View style={styles.heroActions}>
-                <Pressable onPress={() => changeTab("originals")} style={({ pressed }) => [styles.heroPrimary, pressed && styles.pressed]}>
-                  <Text style={styles.heroPrimaryText}>Explore Originals</Text><Ionicons name="arrow-forward" size={16} color={colors.bg} />
+          <View style={[lumoStyles.hero, contentWidth < 530 && lumoStyles.heroPhone]}>
+            <View style={lumoStyles.heroContent}>
+              <View style={lumoStyles.heroEyebrowRow}><View style={lumoStyles.heroEyebrowLine} /><Text style={lumoStyles.heroEyebrow}>A MORE CONSIDERED MARKETPLACE</Text></View>
+              <Text style={[lumoStyles.heroTitle, contentWidth < 530 && lumoStyles.heroTitlePhone]}>Find something{"\n"}<Text style={lumoStyles.heroAccent}>worth keeping.</Text></Text>
+              <Text style={[lumoStyles.heroDescription, contentWidth < 530 && lumoStyles.heroDescriptionPhone]}>Explore the official Lumo collection or discover useful finds and services from the community.</Text>
+              <View style={lumoStyles.heroActions}>
+                <Pressable onPress={() => changeTab("originals")} style={({ pressed }) => [lumoStyles.heroPrimary, pressed && lumoStyles.pressed]}>
+                  <Text style={lumoStyles.heroPrimaryText}>Explore Originals</Text><Ionicons name="arrow-forward" size={16} color={colors.bg} />
                 </Pressable>
-                <Pressable onPress={() => changeTab("community")} style={({ pressed }) => [styles.heroSecondary, pressed && styles.pressed]}>
-                  <Text style={styles.heroSecondaryText}>Browse community</Text><Ionicons name="arrow-forward" size={15} color={colors.text} />
+                <Pressable onPress={() => changeTab("community")} style={({ pressed }) => [lumoStyles.heroSecondary, pressed && lumoStyles.pressed]}>
+                  <Text style={lumoStyles.heroSecondaryText}>Browse community</Text><Ionicons name="arrow-forward" size={15} color={colors.text} />
                 </Pressable>
               </View>
             </View>
-            {width >= 640 ? (
-              <View style={styles.heroVisual} pointerEvents="none">
-                <View style={styles.orbitOuter} /><View style={styles.orbitMiddle} />
-                <View style={styles.orbitInner}><Text style={styles.heroVisualLetter}>L</Text></View>
-                <View style={styles.heroVisualLabel}><View style={styles.heroVisualDot} /><Text style={styles.heroVisualLabelText}>ORIGINAL BY LUMO</Text></View>
-                <View style={styles.heroVisualIndex}><Text style={styles.heroVisualIndexText}>01 / 02</Text></View>
+            {contentWidth >= 640 ? (
+              <View style={lumoStyles.heroVisual} pointerEvents="none">
+                <View style={lumoStyles.orbitOuter} /><View style={lumoStyles.orbitMiddle} />
+                <View style={lumoStyles.orbitInner}><Text style={lumoStyles.heroVisualLetter}>L</Text></View>
+                <View style={lumoStyles.heroVisualLabel}><View style={lumoStyles.heroVisualDot} /><Text style={lumoStyles.heroVisualLabelText}>ORIGINAL BY LUMO</Text></View>
+                <View style={lumoStyles.heroVisualIndex}><Text style={lumoStyles.heroVisualIndexText}>01 / 02</Text></View>
               </View>
             ) : null}
           </View>
 
-          <View style={styles.searchRow}>
-            <View style={styles.searchBox}>
+          <View style={lumoStyles.searchRow}>
+            <View style={lumoStyles.searchBox}>
               <Ionicons name="search" size={19} color={colors.muted} />
-              <TextInput value={search} onChangeText={setSearch} placeholder={isOriginals ? "Search the official collection" : "Search products and services"} placeholderTextColor={colors.dim} style={styles.searchInput} returnKeyType="search" autoCorrect={false} />
+              <TextInput value={search} onChangeText={setSearch} placeholder={isOriginals ? "Search the official collection" : "Search products and services"} placeholderTextColor={colors.dim} style={lumoStyles.searchInput} returnKeyType="search" autoCorrect={false} />
               {search.length > 0 ? <Pressable onPress={() => setSearch("")} hitSlop={8}><Ionicons name="close-circle" size={18} color={colors.muted} /></Pressable> : null}
             </View>
-            <Pressable onPress={() => void load(true)} style={styles.refreshButton} accessibilityRole="button" accessibilityLabel="Refresh Market">
+            <Pressable onPress={() => void load(true)} style={lumoStyles.refreshButton} accessibilityRole="button" accessibilityLabel="Refresh Market">
               {refreshing ? <ActivityIndicator color={colors.accentStrong} size="small" /> : <Ionicons name="refresh" size={19} color={colors.accentStrong} />}
             </Pressable>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.tabs}>
             {tabs.map((tab) => {
               const selected = activeTab === tab.key;
-              return <Pressable key={tab.key} onPress={() => changeTab(tab.key)} style={[styles.tab, selected && styles.tabActive]} accessibilityRole="tab" accessibilityState={{ selected }}>
+              return <Pressable key={tab.key} onPress={() => changeTab(tab.key)} style={[lumoStyles.tab, selected && lumoStyles.tabActive]} accessibilityRole="tab" accessibilityState={{ selected }}>
                 <Ionicons name={tab.icon} size={15} color={selected ? colors.bg : colors.muted} />
-                <Text style={[styles.tabText, selected && styles.tabTextActive]}>{tab.label}</Text>
+                <Text style={[lumoStyles.tabText, selected && lumoStyles.tabTextActive]}>{tab.label}</Text>
               </Pressable>;
             })}
           </ScrollView>
 
           {!isOriginals ? (
-            <View style={styles.filtersBlock}>
-              <View style={styles.kindFilters}>
+            <View style={lumoStyles.filtersBlock}>
+              <View style={lumoStyles.kindFilters}>
                 {([
                   { key: "all", label: "All listings" },
                   { key: "product", label: "Products" },
                   { key: "service", label: "Services" },
                 ] as { key: CommunityKind; label: string }[]).map((item) => {
                   const selected = communityKind === item.key;
-                  return <Pressable key={item.key} onPress={() => { setCommunityKind(item.key); setCategory("All"); }} style={[styles.kindChip, selected && styles.kindChipActive]}>
-                    <Text style={[styles.kindChipText, selected && styles.kindChipTextActive]}>{item.label}</Text>
+                  return <Pressable key={item.key} onPress={() => { setCommunityKind(item.key); setCategory("All"); }} style={[lumoStyles.kindChip, selected && lumoStyles.kindChipActive]}>
+                    <Text style={[lumoStyles.kindChipText, selected && lumoStyles.kindChipTextActive]}>{item.label}</Text>
                   </Pressable>;
                 })}
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.categoryRow}>
                 {categories.map((item) => {
                   const selected = category === item;
-                  return <Pressable key={item} onPress={() => setCategory(item)} style={[styles.categoryChip, selected && styles.categoryChipActive]}>
-                    <Text style={[styles.categoryText, selected && styles.categoryTextActive]}>{item}</Text>
+                  return <Pressable key={item} onPress={() => setCategory(item)} style={[lumoStyles.categoryChip, selected && lumoStyles.categoryChipActive]}>
+                    <Text style={[lumoStyles.categoryText, selected && lumoStyles.categoryTextActive]}>{item}</Text>
                   </Pressable>;
                 })}
               </ScrollView>
             </View>
           ) : null}
 
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionEyebrow}>{isOriginals ? "EXCLUSIVE TO LUMO" : isMine ? "YOUR SELLER SPACE" : activeTab === "saved" ? "YOUR COLLECTION" : "FROM THE LUMO COMMUNITY"}</Text>
-              <Text style={styles.sectionTitle}>{sectionTitle}</Text>
-              <Text style={styles.sectionDescription}>{sectionDescription}</Text>
+          <View style={lumoStyles.sectionHeader}>
+            <View style={lumoStyles.sectionHeading}>
+              <Text style={lumoStyles.sectionEyebrow}>{isOriginals ? "EXCLUSIVE TO LUMO" : isMine ? "YOUR SELLER SPACE" : activeTab === "saved" ? "YOUR COLLECTION" : "FROM THE LUMO COMMUNITY"}</Text>
+              <Text style={lumoStyles.sectionTitle}>{sectionTitle}</Text>
+              <Text style={lumoStyles.sectionDescription}>{sectionDescription}</Text>
             </View>
             {isStaff && isOriginals ? (
               <Pressable
                 onPress={() => router.push("/market/originals/manage" as never)}
-                style={({ pressed }) => [styles.staffBadge, pressed && styles.pressed]}
+                style={({ pressed }) => [lumoStyles.staffBadge, pressed && lumoStyles.pressed]}
                 accessibilityRole="button"
                 accessibilityLabel="Manage Lumo Originals catalog"
               >
                 <Ionicons name="shield-checkmark-outline" size={13} color={colors.accentStrong} />
-                <Text style={styles.staffBadgeText}>MANAGE ORIGINALS</Text>
+                <Text style={lumoStyles.staffBadgeText}>MANAGE ORIGINALS</Text>
                 <Ionicons name="arrow-forward" size={12} color={colors.accentStrong} />
               </Pressable>
             ) : null}
             {!isStaff && isOriginals ? (
               <Pressable
                 onPress={() => router.push("/market/originals/my-orders" as never)}
-                style={({ pressed }) => [styles.staffBadge, pressed && styles.pressed]}
+                style={({ pressed }) => [lumoStyles.staffBadge, pressed && lumoStyles.pressed]}
                 accessibilityRole="button"
                 accessibilityLabel="View my Lumo Originals orders"
               >
                 <Ionicons name="receipt-outline" size={13} color={colors.accentStrong} />
-                <Text style={styles.staffBadgeText}>MY ORDERS</Text>
+                <Text style={lumoStyles.staffBadgeText}>MY ORDERS</Text>
                 <Ionicons name="arrow-forward" size={12} color={colors.accentStrong} />
               </Pressable>
             ) : null}
           </View>
 
           {isStaff && isOriginals && officialStore && !officialStore.is_published ? (
-            <View style={styles.staffNotice}>
+            <View style={lumoStyles.staffNotice}>
               <Ionicons name="eye-off-outline" size={17} color={colors.accentStrong} />
-              <View style={styles.staffNoticeCopy}>
-                <Text style={styles.staffNoticeTitle}>Official catalog is not published</Text>
-                <Text style={styles.staffNoticeText}>This preview is visible to Lumo staff. Public members will only see the catalog after it is published.</Text>
+              <View style={lumoStyles.staffNoticeCopy}>
+                <Text style={lumoStyles.staffNoticeTitle}>Official catalog is not published</Text>
+                <Text style={lumoStyles.staffNoticeText}>This preview is visible to Lumo staff. Public members will only see the catalog after it is published.</Text>
               </View>
             </View>
           ) : null}
 
           {loading ? (
-            <View style={styles.loadingState}><ActivityIndicator color={colors.accentStrong} size="large" /><Text style={styles.loadingText}>Loading Market...</Text></View>
+            <View style={lumoStyles.loadingState}><ActivityIndicator color={colors.accentStrong} size="large" /><Text style={lumoStyles.loadingText}>Loading Market...</Text></View>
           ) : error ? (
-            <View style={styles.errorPanel}>
-              <Ionicons name="alert-circle-outline" size={25} color={colors.like} /><Text style={styles.errorTitle}>Could not load Market</Text><Text style={styles.errorText}>{error}</Text>
-              <Pressable onPress={() => void load(true)} style={styles.retryButton}><Text style={styles.retryText}>Try again</Text></Pressable>
+            <View style={lumoStyles.errorPanel}>
+              <Ionicons name="alert-circle-outline" size={25} color={colors.like} /><Text style={lumoStyles.errorTitle}>Could not load Market</Text><Text style={lumoStyles.errorText}>{error}</Text>
+              <Pressable onPress={() => void load(true)} style={lumoStyles.retryButton}><Text style={lumoStyles.retryText}>Try again</Text></Pressable>
             </View>
           ) : isOriginals ? (
             filteredOfficial.length > 0 ? (
-              <View style={styles.listingGrid}>{filteredOfficial.map((item) => <OfficialProductCard key={item.id} item={item} basis={cardBasis} onPress={() => router.push(`/market/originals/${item.slug}` as never)} />)}</View>
+              <View style={lumoStyles.listingGrid}>{filteredOfficial.map((item) => <OfficialProductCard key={item.id} item={item} basis={cardBasis} onPress={() => router.push(`/market/originals/${item.slug}` as never)} />)}</View>
             ) : (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}><Ionicons name="sparkles-outline" size={28} color={colors.muted} /></View>
-                <Text style={styles.emptyEyebrow}>THE NEXT LUMO DROP</Text>
-                <Text style={styles.emptyTitle}>{search ? "No matching products" : "A collection is taking shape."}</Text>
-                <Text style={styles.emptyDescription}>{search ? "Try another product name or category." : "Lumo Originals is being prepared. Official pieces will appear here when the collection is ready."}</Text>
-                {isStaff && officialStore ? <Text style={styles.emptyMeta}>Catalog status: {officialStore.is_published ? "Published" : "Unpublished"}</Text> : null}
+              <View style={lumoStyles.emptyState}>
+                <View style={lumoStyles.emptyIcon}><Ionicons name="sparkles-outline" size={28} color={colors.muted} /></View>
+                <Text style={lumoStyles.emptyEyebrow}>THE NEXT LUMO DROP</Text>
+                <Text style={lumoStyles.emptyTitle}>{search ? "No matching products" : "A collection is taking shape."}</Text>
+                <Text style={lumoStyles.emptyDescription}>{search ? "Try another product name or category." : "Lumo Originals is being prepared. Official pieces will appear here when the collection is ready."}</Text>
+                {isStaff && officialStore ? <Text style={lumoStyles.emptyMeta}>Catalog status: {officialStore.is_published ? "Published" : "Unpublished"}</Text> : null}
               </View>
             )
           ) : filteredListings.length > 0 ? (
-            <View style={styles.listingGrid}>{filteredListings.map((item) => <View key={item.id} style={[styles.listingGridItem, { flexBasis: cardBasis }]}><MarketListingCard item={item} own={isMine} onPress={() => openListing(item.id)} /></View>)}</View>
+            <View style={lumoStyles.listingGrid}>{filteredListings.map((item) => <View key={item.id} style={[lumoStyles.listingGridItem, { flexBasis: cardBasis }]}><MarketListingCard item={item} own={isMine} onPress={() => openListing(item.id)} /></View>)}</View>
           ) : (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}><Ionicons name={activeTab === "saved" ? "heart-outline" : isMine ? "pricetag-outline" : "search-outline"} size={28} color={colors.muted} /></View>
-              <Text style={styles.emptyTitle}>{search ? "No matching listings" : activeTab === "saved" ? "Nothing saved yet" : isMine ? "Your seller space is ready" : "No listings yet"}</Text>
-              <Text style={styles.emptyDescription}>{search ? "Try a different keyword or category." : activeTab === "saved" ? "Save interesting products and services to find them here." : isMine ? "Your published products and services will appear here." : "Be among the first to share a product or service with the Lumo community."}</Text>
-              {!search && (isMine || isCommunity) ? <Pressable onPress={openCreateListing} style={styles.emptyAction}><Text style={styles.emptyActionText}>Create listing</Text><Ionicons name="arrow-forward" size={15} color={colors.bg} /></Pressable> : null}
+            <View style={lumoStyles.emptyState}>
+              <View style={lumoStyles.emptyIcon}><Ionicons name={activeTab === "saved" ? "heart-outline" : isMine ? "pricetag-outline" : "search-outline"} size={28} color={colors.muted} /></View>
+              <Text style={lumoStyles.emptyTitle}>{search ? "No matching listings" : activeTab === "saved" ? "Nothing saved yet" : isMine ? "Your seller space is ready" : "No listings yet"}</Text>
+              <Text style={lumoStyles.emptyDescription}>{search ? "Try a different keyword or category." : activeTab === "saved" ? "Save interesting products and services to find them here." : isMine ? "Your published products and services will appear here." : "Be among the first to share a product or service with the Lumo community."}</Text>
+              {!search && (isMine || isCommunity) ? <Pressable onPress={openCreateListing} style={lumoStyles.emptyAction}><Text style={lumoStyles.emptyActionText}>Create listing</Text><Ionicons name="arrow-forward" size={15} color={colors.bg} /></Pressable> : null}
             </View>
           )}
 
-          <View style={styles.bottomInfo}><Ionicons name="chatbubble-ellipses-outline" size={17} color={colors.muted} /><Text style={styles.bottomInfoText}>Discover independently. Connect directly. Continue the conversation through Lumo Chat.</Text></View>
+          <View style={lumoStyles.bottomInfo}><Ionicons name="chatbubble-ellipses-outline" size={17} color={colors.muted} /><Text style={lumoStyles.bottomInfoText}>Discover independently. Connect directly. Continue the conversation through Lumo Chat.</Text></View>
         </View>
       </ScrollView>
 
@@ -300,7 +315,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   scrollContent: { alignItems: "center", paddingTop: 14, paddingBottom: 54 },
   container: { width: "100%", maxWidth: 1320, paddingHorizontal: 18, gap: 20 },
+  containerPhone: { paddingHorizontal: 14 },
   topLine: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  topLinePhone: { flexDirection: "column", alignItems: "stretch", justifyContent: "flex-start" },
   brandLine: { flexDirection: "row", alignItems: "center", gap: 11 },
   brandMark: { width: 43, height: 43, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
   brandMarkText: { color: colors.accentStrong, fontSize: 25, fontWeight: "900", letterSpacing: -2 },
@@ -310,13 +327,16 @@ const styles = StyleSheet.create({
   sellButtonText: { color: colors.bg, fontSize: 11, fontWeight: "900" },
   pressed: { opacity: 0.82 },
   hero: { minHeight: 260, position: "relative", overflow: "hidden", borderRadius: 23, borderWidth: 1, borderColor: colors.glassBorder, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", paddingHorizontal: 25, paddingVertical: 27 },
+  heroPhone: { minHeight: 0, paddingHorizontal: 18, paddingVertical: 22 },
   heroContent: { flex: 1, minWidth: 0, zIndex: 2, gap: 13 },
   heroEyebrowRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   heroEyebrowLine: { width: 23, height: 1, backgroundColor: colors.accentStrong },
   heroEyebrow: { color: colors.muted, fontSize: 8, fontWeight: "900", letterSpacing: 1.5 },
   heroTitle: { color: colors.text, fontSize: 34, lineHeight: 40, fontWeight: "900", letterSpacing: -1.4, maxWidth: 630 },
+  heroTitlePhone: { fontSize: 29, lineHeight: 35, letterSpacing: -1 },
   heroAccent: { color: colors.accentStrong },
   heroDescription: { color: colors.muted, fontSize: 12, lineHeight: 19, maxWidth: 485 },
+  heroDescriptionPhone: { fontSize: 11, lineHeight: 17 },
   heroActions: { flexDirection: "row", flexWrap: "wrap", gap: 9, marginTop: 3 },
   heroPrimary: { minHeight: 41, paddingHorizontal: 14, borderRadius: 11, backgroundColor: colors.accent, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   heroPrimaryText: { color: colors.bg, fontSize: 10, fontWeight: "900" },
@@ -371,7 +391,7 @@ const styles = StyleSheet.create({
   retryButton: { marginTop: 7, paddingHorizontal: 15, paddingVertical: 9, borderRadius: 9, backgroundColor: colors.surfaceRaised },
   retryText: { color: colors.accentStrong, fontSize: 11, fontWeight: "800" },
   listingGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  listingGridItem: { minWidth: 0, flexGrow: 1 },
+  listingGridItem: { minWidth: 0, flexGrow: 0, flexShrink: 0 },
   productGridItem: { minWidth: 0, flexGrow: 0, flexShrink: 0 },
   productCard: { overflow: "hidden", borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   productImageWrap: { width: "100%", aspectRatio: 1, backgroundColor: colors.surfaceRaised, position: "relative", overflow: "hidden" },

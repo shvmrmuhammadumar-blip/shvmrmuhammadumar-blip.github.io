@@ -23,16 +23,18 @@ import {
   ResumableUpload,
   type UploadProgress,
 } from '../../lib/resumable-upload';
+import { useThemedStyles } from "../../lib/theme-styles";
+import { colors } from '../../lib/theme';
 
 const COLORS = {
-  background: '#090C12',
-  panel: '#12161C',
-  panelRaised: '#1A2029',
-  border: '#2B3440',
-  lime: '#B9C7D6',
-  text: '#F2F5F7',
-  muted: '#9AA5B2',
-  danger: '#FF6478',
+  get background() { return colors.bg; },
+  get panel() { return colors.surface; },
+  get panelRaised() { return colors.surfaceRaised; },
+  get border() { return colors.border; },
+  get lime() { return colors.accent; },
+  get text() { return colors.text; },
+  get muted() { return colors.muted; },
+  get danger() { return colors.danger; },
 };
 
 type Props = {
@@ -73,6 +75,7 @@ export function ChannelMediaUpload({
   canPost,
   onPublished,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState<PickedChannelMedia | null>(null);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -202,15 +205,15 @@ export function ChannelMediaUpload({
 
   return (
     <>
-      <View style={styles.actionRow}>
+      <View style={lumoStyles.actionRow}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Attach media or file"
           disabled={picking || busy}
           onPress={openAttachmentMenu}
           style={({ pressed }) => [
-            styles.attachButton,
-            pressed && styles.actionPressed,
+            lumoStyles.attachButton,
+            pressed && lumoStyles.actionPressed,
           ]}
         >
           {picking ? (
@@ -228,72 +231,72 @@ export function ChannelMediaUpload({
         statusBarTranslucent
         onRequestClose={close}
       >
-        <View style={styles.overlay}>
+        <View style={lumoStyles.overlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} disabled={busy} />
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
-            <View style={styles.header}>
+          <View style={lumoStyles.sheet}>
+            <View style={lumoStyles.handle} />
+            <View style={lumoStyles.header}>
               <View>
-                <Text style={styles.eyebrow}>CHANNEL ATTACHMENT</Text>
-                <Text style={styles.title}>Fayl yuborish</Text>
+                <Text style={lumoStyles.eyebrow}>CHANNEL ATTACHMENT</Text>
+                <Text style={lumoStyles.title}>Fayl yuborish</Text>
               </View>
-              <Pressable onPress={close} disabled={busy} hitSlop={12} style={styles.closeButton}>
-                <Text style={styles.closeText}>×</Text>
+              <Pressable onPress={close} disabled={busy} hitSlop={12} style={lumoStyles.closeButton}>
+                <Text style={lumoStyles.closeText}>×</Text>
               </Pressable>
             </View>
 
             {selected ? (
-              <View style={styles.fileCard}>
-                <View style={styles.fileIcon}><Text style={styles.fileIconText}>{selected.type === 'image' ? '▧' : selected.type === 'video' ? '▶' : selected.type === 'audio' ? '♫' : '↧'}</Text></View>
-                <View style={styles.fileMeta}>
-                  <Text numberOfLines={1} style={styles.fileName}>{selected.fileName}</Text>
-                  <Text style={styles.fileInfo}>{formatChannelFileSize(selected.fileSize)}  ·  {selected.mimeType}</Text>
+              <View style={lumoStyles.fileCard}>
+                <View style={lumoStyles.fileIcon}><Text style={lumoStyles.fileIconText}>{selected.type === 'image' ? '▧' : selected.type === 'video' ? '▶' : selected.type === 'audio' ? '♫' : '↧'}</Text></View>
+                <View style={lumoStyles.fileMeta}>
+                  <Text numberOfLines={1} style={lumoStyles.fileName}>{selected.fileName}</Text>
+                  <Text style={lumoStyles.fileInfo}>{formatChannelFileSize(selected.fileSize)}  ·  {selected.mimeType}</Text>
                 </View>
-                <View style={styles.limitBadge}><Text style={styles.limitText}>50 MB MAX</Text></View>
+                <View style={lumoStyles.limitBadge}><Text style={lumoStyles.limitText}>50 MB MAX</Text></View>
               </View>
             ) : null}
 
             {progress ? (
-              <View style={styles.progressCard}>
-                <View style={styles.progressTop}>
-                  <Text style={styles.progressLabel}>{getStatusLabel(progress.status)}</Text>
-                  <Text style={styles.progressPercent}>{Math.round(percent)}%</Text>
+              <View style={lumoStyles.progressCard}>
+                <View style={lumoStyles.progressTop}>
+                  <Text style={lumoStyles.progressLabel}>{getStatusLabel(progress.status)}</Text>
+                  <Text style={lumoStyles.progressPercent}>{Math.round(percent)}%</Text>
                 </View>
-                <View style={styles.track}>
-                  <View style={[styles.fill, { width: `${percent}%` }]} />
+                <View style={lumoStyles.track}>
+                  <View style={[lumoStyles.fill, { width: `${percent}%` }]} />
                 </View>
-                <View style={styles.metrics}>
-                  <Text style={styles.metric}>{formatChannelFileSize(progress.bytesUploaded)} / {formatChannelFileSize(progress.totalBytes)}</Text>
-                  <Text style={styles.metric}>{formatSpeed(progress.bytesPerSecond)}</Text>
-                  <Text style={styles.metric}>Qolgan: {formatEta(progress.etaSeconds)}</Text>
+                <View style={lumoStyles.metrics}>
+                  <Text style={lumoStyles.metric}>{formatChannelFileSize(progress.bytesUploaded)} / {formatChannelFileSize(progress.totalBytes)}</Text>
+                  <Text style={lumoStyles.metric}>{formatSpeed(progress.bytesPerSecond)}</Text>
+                  <Text style={lumoStyles.metric}>Qolgan: {formatEta(progress.etaSeconds)}</Text>
                 </View>
               </View>
             ) : null}
 
-            {errorMessage ? <Text accessibilityRole="alert" style={styles.error}>{errorMessage}</Text> : null}
+            {errorMessage ? <Text accessibilityRole="alert" style={lumoStyles.error}>{errorMessage}</Text> : null}
 
-            <View style={styles.footer}>
+            <View style={lumoStyles.footer}>
               {busy ? (
                 <>
-                  <Pressable onPress={isPaused ? resume : pause} style={styles.secondaryButton}>
-                    <Text style={styles.secondaryText}>{isPaused ? 'Davom ettirish' : 'Pauza'}</Text>
+                  <Pressable onPress={isPaused ? resume : pause} style={lumoStyles.secondaryButton}>
+                    <Text style={lumoStyles.secondaryText}>{isPaused ? 'Davom ettirish' : 'Pauza'}</Text>
                   </Pressable>
-                  <Pressable onPress={cancel} style={styles.cancelButton}>
-                    <Text style={styles.cancelText}>Bekor qilish</Text>
+                  <Pressable onPress={cancel} style={lumoStyles.cancelButton}>
+                    <Text style={lumoStyles.cancelText}>Bekor qilish</Text>
                   </Pressable>
                 </>
               ) : (
                 <>
-                  <Pressable onPress={close} style={styles.secondaryButton}>
-                    <Text style={styles.secondaryText}>Yopish</Text>
+                  <Pressable onPress={close} style={lumoStyles.secondaryButton}>
+                    <Text style={lumoStyles.secondaryText}>Yopish</Text>
                   </Pressable>
-                  <Pressable onPress={publish} disabled={!selected} style={[styles.primaryButton, !selected && styles.disabledButton]}>
-                    <Text style={styles.primaryText}>{errorMessage ? 'Qayta urinish' : 'Kanalga yuborish'}  ↗</Text>
+                  <Pressable onPress={publish} disabled={!selected} style={[lumoStyles.primaryButton, !selected && lumoStyles.disabledButton]}>
+                    <Text style={lumoStyles.primaryText}>{errorMessage ? 'Qayta urinish' : 'Kanalga yuborish'}  ↗</Text>
                   </Pressable>
                 </>
               )}
             </View>
-            <Text style={styles.footnote}>Faqat kanal egasi va adminlari fayl yubora oladi.</Text>
+            <Text style={lumoStyles.footnote}>Faqat kanal egasi va adminlari fayl yubora oladi.</Text>
           </View>
         </View>
       </Modal>

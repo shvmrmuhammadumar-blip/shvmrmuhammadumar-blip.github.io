@@ -9,6 +9,8 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  type ScrollViewInstance,
+  type TextInputInstance,
   Share,
   StyleSheet,
   Text,
@@ -17,7 +19,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import Avatar from "./Avatar";
@@ -30,9 +32,14 @@ import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import type { Profile } from "../lib/types";
 import { getPlatformRoles, type PlatformRole } from "../lib/market-official";
+import { isUserPremium } from "../lib/membership";
+import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 const C = {
   bg: "#090C12",
+  mediaBg: "#010101",
   panel: "#12161C",
   panel2: "#1A2029",
   border: "#2B3440",
@@ -97,11 +104,13 @@ function formatNumber(value: number) {
 }
 
 export default function ProfileView({ userId }: { userId: string }) {
+  const lumoStyles = useThemedStyles(styles);
   const { session, signOut } = useAuth();
   const me = session?.user?.id;
   const isMe = !!me && userId === me;
   const router = useRouter();
   const { width, height } = useWindowDimensions();
+  const segments = useSegments();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Thumb[]>([]);
@@ -152,6 +161,7 @@ export default function ProfileView({ userId }: { userId: string }) {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [myPlatformRoles, setMyPlatformRoles] = useState<PlatformRole[]>([]);
   const [profilePlatformRoles, setProfilePlatformRoles] = useState<PlatformRole[]>([]);
+  const [isPremiumProfile, setIsPremiumProfile] = useState(false);
   const [roleSaving, setRoleSaving] = useState(false);
   const canManageMemberRoles = myPlatformRoles.includes("owner") || myPlatformRoles.includes("developer") || myPlatformRoles.includes("admin");
   const targetIsAdmin = profilePlatformRoles.includes("admin");
@@ -164,8 +174,8 @@ export default function ProfileView({ userId }: { userId: string }) {
   const heartScale = useRef(new Animated.Value(0)).current;
   const heartOpacity = useRef(new Animated.Value(0)).current;
   const lastTapRef = useRef(0);
-  const postScrollRef = useRef<ScrollView>(null);
-  const commentInputRef = useRef<TextInput>(null);
+  const postScrollRef = useRef<ScrollViewInstance | null>(null);
+  const commentInputRef = useRef<TextInputInstance | null>(null);
 
   const pressScale = (value: Animated.Value, to: number) => {
     Animated.spring(value, {
@@ -187,6 +197,7 @@ export default function ProfileView({ userId }: { userId: string }) {
     if (!me) {
       setProfile(null);
       setPosts([]);
+      setIsPremiumProfile(false);
       setLoadError("Please sign in to view this profile.");
       return;
     }
@@ -201,7 +212,8 @@ export default function ProfileView({ userId }: { userId: string }) {
       setProfilePlatformRoles([]);
     }
 
-    const [profileResult, postsResult, followersResult, followingResult] =
+    setIsPremiumProfile(false);
+    const [profileResult, postsResult, followersResult, followingResult, premiumProfile] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -224,6 +236,8 @@ export default function ProfileView({ userId }: { userId: string }) {
           .from("follows")
           .select("*", { count: "exact", head: true })
           .eq("follower_id", userId),
+
+        isUserPremium(userId).catch(() => false),
       ]);
 
     if (profileResult.error) throw profileResult.error;
@@ -232,6 +246,7 @@ export default function ProfileView({ userId }: { userId: string }) {
     if (followingResult.error) throw followingResult.error;
 
     setProfile((profileResult.data as Profile | null) ?? null);
+    setIsPremiumProfile(premiumProfile);
     setPosts((postsResult.data as Thumb[]) ?? []);
     setFollowers(followersResult.count ?? 0);
     setFollowing(followingResult.count ?? 0);
@@ -775,8 +790,10 @@ export default function ProfileView({ userId }: { userId: string }) {
     return rows;
   }, [currentPosts]);
 
-  const appShellInset = width >= 1040 ? 236 : width >= 760 ? 76 : 0;
-  const contentWidth = Math.max(320, width - appShellInset);
+  const appShellInset = segments[0] === "(tabs)"
+    ? width >= 1040 ? 236 : width >= 760 ? 76 : 0
+    : 0;
+  const contentWidth = Math.max(0, width - appShellInset);
   const isDesktopProfile = contentWidth >= 1100;
   const isWidePost = contentWidth >= 1100 && height >= 640;
   const tileWidth = isDesktopProfile
@@ -784,12 +801,12 @@ export default function ProfileView({ userId }: { userId: string }) {
     : Math.min((Math.min(contentWidth, 1280) - 48) / 2, 480);
 
   const identityPanel = (
-    <View style={styles.desktopIdentityPanel}>
-      <View style={styles.desktopPanelTop}>
-        <Text style={styles.desktopPanelHeading}>Profile</Text>
+    <View style={lumoStyles.desktopIdentityPanel}>
+      <View style={lumoStyles.desktopPanelTop}>
+        <Text style={lumoStyles.desktopPanelHeading}>Profile</Text>
         {isMe && (
           <Pressable
-            style={styles.desktopSettingsBtn}
+            style={lumoStyles.desktopSettingsBtn}
             onPress={() => router.push("/settings")}
             accessibilityRole="button"
           >
@@ -798,7 +815,7 @@ export default function ProfileView({ userId }: { userId: string }) {
         )}
       </View>
 
-      <View style={styles.desktopAvatarFrame}>
+      <View style={lumoStyles.desktopAvatarFrame}>
         <Avatar
           uri={profile?.avatar_url}
           name={profile?.username ?? ""}
@@ -806,29 +823,34 @@ export default function ProfileView({ userId }: { userId: string }) {
           hasStory={false}
         />
         {isMe && (
-          <View style={styles.avatarAddBadge}>
+          <View style={lumoStyles.avatarAddBadge}>
             <Ionicons name="add" size={13} color={C.bg} />
           </View>
         )}
       </View>
 
-      <Text style={styles.desktopFullName} numberOfLines={2}>
-        {profile?.full_name || profile?.username || "Lumo member"}
-      </Text>
-      <Text style={styles.desktopHandle}>@{profile?.username ?? "user"}</Text>
-      <Text style={styles.desktopIdentityTag}>{profileRoleLabel} ACCOUNT</Text>
+      <View style={lumoStyles.desktopNameRow}>
+        <Text style={lumoStyles.desktopFullName} numberOfLines={2}>
+          {profile?.full_name || profile?.username || "Lumo member"}
+        </Text>
+        {isPremiumProfile && (
+          <Ionicons name="checkmark-circle" size={19} color={resolveThemeColor("#3998FF", "color")} />
+        )}
+      </View>
+      <Text style={lumoStyles.desktopHandle}>@{profile?.username ?? "user"}</Text>
+      <Text style={lumoStyles.desktopIdentityTag}>{profileRoleLabel} ACCOUNT</Text>
 
       {!!profile?.bio && (
-        <View style={styles.desktopBioArea}>
+        <View style={lumoStyles.desktopBioArea}>
           <Text
-            style={styles.desktopBio}
+            style={lumoStyles.desktopBio}
             numberOfLines={bioExpanded ? undefined : 5}
           >
             {profile.bio}
           </Text>
           {profile.bio.length > 90 && (
             <Pressable onPress={() => setBioExpanded(v => !v)} hitSlop={6}>
-              <Text style={styles.bioToggleText}>
+              <Text style={lumoStyles.bioToggleText}>
                 {bioExpanded ? "Show less" : "Show more"}
               </Text>
             </Pressable>
@@ -838,63 +860,63 @@ export default function ProfileView({ userId }: { userId: string }) {
 
       {!!(profile as any)?.website && (
         <Pressable
-          style={styles.desktopWebsite}
+          style={lumoStyles.desktopWebsite}
           onPress={() => void Share.share({ message: (profile as any).website })}
         >
           <Ionicons name="arrow-up-right-box" size={16} color={C.lime} />
-          <Text style={styles.websiteText} numberOfLines={1}>
+          <Text style={lumoStyles.websiteText} numberOfLines={1}>
             {(profile as any).website}
           </Text>
         </Pressable>
       )}
 
-      <View style={styles.desktopNetworkCard}>
-        <Text style={styles.desktopNetworkTitle}>Connections</Text>
-        <View style={styles.desktopMetricsRow}>
+      <View style={lumoStyles.desktopNetworkCard}>
+        <Text style={lumoStyles.desktopNetworkTitle}>Connections</Text>
+        <View style={lumoStyles.desktopMetricsRow}>
           <Pressable
-            style={styles.desktopMetric}
+            style={lumoStyles.desktopMetric}
             onPress={() => void openConnections("followers")}
           >
-            <Text style={styles.desktopMetricValue}>
+            <Text style={lumoStyles.desktopMetricValue}>
               {formatNumber(followers)}
             </Text>
-            <Text style={styles.desktopMetricLabel}>FOLLOWERS</Text>
+            <Text style={lumoStyles.desktopMetricLabel}>FOLLOWERS</Text>
           </Pressable>
-          <View style={styles.desktopNetworkDivider} />
+          <View style={lumoStyles.desktopNetworkDivider} />
           <Pressable
-            style={styles.desktopMetric}
+            style={lumoStyles.desktopMetric}
             onPress={() => void openConnections("following")}
           >
-            <Text style={styles.desktopMetricValue}>
+            <Text style={lumoStyles.desktopMetricValue}>
               {formatNumber(following)}
             </Text>
-            <Text style={styles.desktopMetricLabel}>FOLLOWING</Text>
+            <Text style={lumoStyles.desktopMetricLabel}>FOLLOWING</Text>
           </Pressable>
         </View>
       </View>
 
       {isMe ? (
-        <View style={styles.desktopOwnActions}>
+        <View style={lumoStyles.desktopOwnActions}>
           <Pressable
-            style={[styles.desktopPrimaryAction, styles.desktopOwnPrimaryAction]}
+            style={[lumoStyles.desktopPrimaryAction, lumoStyles.desktopOwnPrimaryAction]}
             onPress={() => router.push("/edit-profile")}
             accessibilityRole="button"
           >
             <Ionicons name="create-outline" size={17} color={C.bg} />
-            <Text style={styles.desktopPrimaryText}>CHANGE PROFILE</Text>
+            <Text style={lumoStyles.desktopPrimaryText}>CHANGE PROFILE</Text>
           </Pressable>
-          <View style={styles.desktopActionSecondaryRow}>
+          <View style={lumoStyles.desktopActionSecondaryRow}>
             <Pressable
-              style={styles.desktopSecondaryAction}
+              style={lumoStyles.desktopSecondaryAction}
               onPress={() => router.push("/switch-profile")}
               accessibilityRole="button"
               accessibilityLabel="Switch profile"
             >
               <Ionicons name="repeat-outline" size={16} color={C.text} />
-              <Text style={styles.desktopSecondaryText}>SWITCH PROFILE</Text>
+              <Text style={lumoStyles.desktopSecondaryText}>SWITCH PROFILE</Text>
             </Pressable>
             <Pressable
-              style={styles.desktopIconAction}
+              style={lumoStyles.desktopIconAction}
               onPress={() => void Share.share({
                 message: `Check out @${profile?.username ?? "user"} on Lumo!`,
               })}
@@ -906,11 +928,11 @@ export default function ProfileView({ userId }: { userId: string }) {
           </View>
         </View>
       ) : (
-        <View style={styles.desktopActions}>
+        <View style={lumoStyles.desktopActions}>
           <Pressable
             style={[
-              styles.desktopPrimaryAction,
-              isFollowing && styles.desktopFollowingAction,
+              lumoStyles.desktopPrimaryAction,
+              isFollowing && lumoStyles.desktopFollowingAction,
             ]}
             onPress={() => void toggleFollow()}
             disabled={followLoading}
@@ -919,22 +941,22 @@ export default function ProfileView({ userId }: { userId: string }) {
               <ActivityIndicator color={isFollowing ? C.lime : C.bg} size="small" />
             ) : (
               <Text style={[
-                styles.desktopPrimaryText,
-                isFollowing && styles.desktopFollowingText,
+                lumoStyles.desktopPrimaryText,
+                isFollowing && lumoStyles.desktopFollowingText,
               ]}>
                 {isFollowing ? "FOLLOWING" : "FOLLOW"}
               </Text>
             )}
           </Pressable>
           <Pressable
-            style={styles.desktopIconAction}
+            style={lumoStyles.desktopIconAction}
             onPress={() => router.push(`/chat/${userId}`)}
             accessibilityLabel="Message"
           >
             <Ionicons name="chatbubble-outline" size={18} color={C.text} />
           </Pressable>
           <Pressable
-            style={styles.desktopIconAction}
+            style={lumoStyles.desktopIconAction}
             onPress={() => void Share.share({
               message: `Check out @${profile?.username ?? "user"} on Lumo!`,
             })}
@@ -945,20 +967,20 @@ export default function ProfileView({ userId }: { userId: string }) {
         </View>
       )}
       {canManageMemberRoles && !isMe && (
-        <View style={styles.platformRolePanel}>
-          <View style={styles.platformRoleInfo}>
-            <Text style={styles.platformRoleEyebrow}>PLATFORM ACCESS</Text>
-            <Text style={styles.platformRoleTitle}>
+        <View style={lumoStyles.platformRolePanel}>
+          <View style={lumoStyles.platformRoleInfo}>
+            <Text style={lumoStyles.platformRoleEyebrow}>PLATFORM ACCESS</Text>
+            <Text style={lumoStyles.platformRoleTitle}>
               {profileRoleLabel}
             </Text>
           </View>
           <Pressable
-            style={[styles.platformRoleButton, targetIsAdmin && styles.platformRoleButtonRemove, roleSaving && styles.roleButtonDisabled]}
+            style={[lumoStyles.platformRoleButton, targetIsAdmin && lumoStyles.platformRoleButtonRemove, roleSaving && lumoStyles.roleButtonDisabled]}
             onPress={() => void toggleAdminRole()}
             disabled={roleSaving}
           >
             {roleSaving ? <ActivityIndicator size="small" color={C.bg} /> : <Ionicons name={targetIsAdmin ? "remove-circle-outline" : "shield-checkmark-outline"} size={15} color={targetIsAdmin ? C.text : C.bg} />}
-            <Text style={[styles.platformRoleButtonText, targetIsAdmin && styles.platformRoleButtonRemoveText]}>
+            <Text style={[lumoStyles.platformRoleButtonText, targetIsAdmin && lumoStyles.platformRoleButtonRemoveText]}>
               {roleSaving ? "SAVING..." : targetIsAdmin ? "REMOVE ADMIN" : "MAKE ADMIN"}
             </Text>
           </Pressable>
@@ -968,58 +990,58 @@ export default function ProfileView({ userId }: { userId: string }) {
   );
 
   const archiveHeader = (
-    <View style={styles.desktopArchiveHeader}>
-      <View style={styles.desktopArchiveHeading}>
+    <View style={lumoStyles.desktopArchiveHeader}>
+      <View style={lumoStyles.desktopArchiveHeading}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.desktopEyebrow}>PERSONAL SPACE / COLLECTION</Text>
-          <Text style={styles.desktopArchiveTitle}>
+          <Text style={lumoStyles.desktopEyebrow}>PERSONAL SPACE / COLLECTION</Text>
+          <Text style={lumoStyles.desktopArchiveTitle}>
             {activeTab === "posts"
               ? "Work archive"
               : activeTab === "reels"
                 ? "Motion archive"
                 : "Saved collection"}
           </Text>
-          <Text style={styles.desktopArchiveSubtitle}>
+          <Text style={lumoStyles.desktopArchiveSubtitle}>
             A record of everything you have shared.
           </Text>
         </View>
-        <View style={styles.desktopArchiveCount}>
-          <Text style={styles.desktopMetricLabel}>TOTAL ITEMS</Text>
-          <Text style={styles.desktopArchiveCountValue}>
+        <View style={lumoStyles.desktopArchiveCount}>
+          <Text style={lumoStyles.desktopMetricLabel}>TOTAL ITEMS</Text>
+          <Text style={lumoStyles.desktopArchiveCountValue}>
             {String(currentPosts.length).padStart(2, "0")}
           </Text>
         </View>
       </View>
 
-      <View style={styles.desktopArchiveTabs}>
+      <View style={lumoStyles.desktopArchiveTabs}>
         <Pressable
-          style={[styles.desktopArchiveTab, activeTab === "posts" && styles.desktopArchiveTabActive]}
+          style={[lumoStyles.desktopArchiveTab, activeTab === "posts" && lumoStyles.desktopArchiveTabActive]}
           onPress={() => setActiveTab("posts")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "posts" }}
         >
-          <Text style={[styles.desktopArchiveTabText, activeTab === "posts" && styles.desktopArchiveTabTextActive]}>
+          <Text style={[lumoStyles.desktopArchiveTabText, activeTab === "posts" && lumoStyles.desktopArchiveTabTextActive]}>
             WORK
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.desktopArchiveTab, activeTab === "reels" && styles.desktopArchiveTabActive]}
+          style={[lumoStyles.desktopArchiveTab, activeTab === "reels" && lumoStyles.desktopArchiveTabActive]}
           onPress={() => setActiveTab("reels")}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "reels" }}
         >
-          <Text style={[styles.desktopArchiveTabText, activeTab === "reels" && styles.desktopArchiveTabTextActive]}>
+          <Text style={[lumoStyles.desktopArchiveTabText, activeTab === "reels" && lumoStyles.desktopArchiveTabTextActive]}>
             MOTION
           </Text>
         </Pressable>
         {isMe && (
           <Pressable
-            style={[styles.desktopArchiveTab, activeTab === "saved" && styles.desktopArchiveTabActive]}
+            style={[lumoStyles.desktopArchiveTab, activeTab === "saved" && lumoStyles.desktopArchiveTabActive]}
             onPress={() => setActiveTab("saved")}
             accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === "saved" }}
           >
-            <Text style={[styles.desktopArchiveTabText, activeTab === "saved" && styles.desktopArchiveTabTextActive]}>
+            <Text style={[lumoStyles.desktopArchiveTabText, activeTab === "saved" && lumoStyles.desktopArchiveTabTextActive]}>
               SAVED
             </Text>
           </Pressable>
@@ -1028,23 +1050,23 @@ export default function ProfileView({ userId }: { userId: string }) {
     </View>
   );
   const header = (
-    <View style={styles.profileHeaderContainer}>
+    <View style={lumoStyles.profileHeaderContainer}>
       {/* Top Bar: username with dropdown + hamburger menu */}
-      <View style={styles.profileTopBar}>
-        <View style={styles.usernameDropdown}>
-          <Text style={styles.usernameText} numberOfLines={1}>
+      <View style={lumoStyles.profileTopBar}>
+        <View style={lumoStyles.usernameDropdown}>
+          <Text style={lumoStyles.usernameText} numberOfLines={1}>
             {profile?.username ?? "user"}
           </Text>
-          {!!(profile as any)?.is_verified && (
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark" size={10} color={C.bg} />
+          {isPremiumProfile && (
+            <View style={lumoStyles.verifiedBadge}>
+              <Ionicons name="checkmark" size={10} color={colors.inverseText} />
             </View>
           )}
           <Ionicons name="chevron-down" size={15} color={C.text} />
         </View>
 
         <Pressable
-          style={styles.settingsMenuBtn}
+          style={lumoStyles.settingsMenuBtn}
           onPress={() => router.push("/settings")}
           hitSlop={8}
           accessibilityRole="button"
@@ -1055,8 +1077,8 @@ export default function ProfileView({ userId }: { userId: string }) {
       </View>
 
       {/* Avatar & Stats */}
-      <View style={styles.identityStatsRow}>
-        <View style={[styles.avatarWrap, styles.avatarRing]}>
+      <View style={lumoStyles.identityStatsRow}>
+        <View style={[lumoStyles.avatarWrap, lumoStyles.avatarRing]}>
           <Avatar
             uri={profile?.avatar_url}
             name={profile?.username ?? ""}
@@ -1064,43 +1086,43 @@ export default function ProfileView({ userId }: { userId: string }) {
             hasStory={false}
           />
           {isMe && (
-            <View style={styles.avatarAddBadge}>
+            <View style={lumoStyles.avatarAddBadge}>
               <Ionicons name="add" size={13} color={C.bg} />
             </View>
           )}
         </View>
 
-        <View style={styles.statsRowNew}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{formatNumber(posts.length)}</Text>
-            <Text style={styles.statLabelTitle}>Posts</Text>
+        <View style={lumoStyles.statsRowNew}>
+          <View style={lumoStyles.statBox}>
+            <Text style={lumoStyles.statNumber}>{formatNumber(posts.length)}</Text>
+            <Text style={lumoStyles.statLabelTitle}>Posts</Text>
           </View>
           <Pressable
-            style={styles.statBox}
+            style={lumoStyles.statBox}
             onPress={() => void openConnections("followers")}
           >
-            <Text style={styles.statNumber}>{formatNumber(followers)}</Text>
-            <Text style={styles.statLabelTitle}>Followers</Text>
+            <Text style={lumoStyles.statNumber}>{formatNumber(followers)}</Text>
+            <Text style={lumoStyles.statLabelTitle}>Followers</Text>
           </Pressable>
           <Pressable
-            style={styles.statBox}
+            style={lumoStyles.statBox}
             onPress={() => void openConnections("following")}
           >
-            <Text style={styles.statNumber}>{formatNumber(following)}</Text>
-            <Text style={styles.statLabelTitle}>Following</Text>
+            <Text style={lumoStyles.statNumber}>{formatNumber(following)}</Text>
+            <Text style={lumoStyles.statLabelTitle}>Following</Text>
           </Pressable>
         </View>
       </View>
 
       {/* Full Name & Bio */}
-      <View style={styles.bioArea}>
+      <View style={lumoStyles.bioArea}>
         {!!profile?.full_name && (
-          <Text style={styles.profileFullName}>{profile.full_name}</Text>
+          <Text style={lumoStyles.profileFullName}>{profile.full_name}</Text>
         )}
         {!!profile?.bio && (
           <>
             <Text
-              style={styles.profileBioText}
+              style={lumoStyles.profileBioText}
               numberOfLines={bioExpanded ? undefined : 3}
             >
               {profile.bio}
@@ -1110,7 +1132,7 @@ export default function ProfileView({ userId }: { userId: string }) {
                 onPress={() => setBioExpanded((value) => !value)}
                 hitSlop={6}
               >
-                <Text style={styles.bioToggleText}>
+                <Text style={lumoStyles.bioToggleText}>
                   {bioExpanded ? "Show less" : "Show more"}
                 </Text>
               </Pressable>
@@ -1119,14 +1141,14 @@ export default function ProfileView({ userId }: { userId: string }) {
         )}
         {!!(profile as any)?.website && (
           <Pressable
-            style={styles.websiteRow}
+            style={lumoStyles.websiteRow}
             onPress={() => {
               void Share.share({ message: (profile as any).website });
             }}
             hitSlop={6}
           >
             <Ionicons name="link-outline" size={13} color={C.lime} />
-            <Text style={styles.websiteText} numberOfLines={1}>
+            <Text style={lumoStyles.websiteText} numberOfLines={1}>
               {(profile as any).website}
             </Text>
           </Pressable>
@@ -1134,26 +1156,26 @@ export default function ProfileView({ userId }: { userId: string }) {
       </View>
 
       {/* Action Buttons Row */}
-      <View style={styles.actionButtonsRow}>
+      <View style={lumoStyles.actionButtonsRow}>
         {isMe ? (
           <>
             <Pressable
-              style={styles.editBtn}
+              style={lumoStyles.editBtn}
               onPress={() => router.push("/edit-profile")}
             >
-              <Text style={styles.editBtnText}>Change Profile</Text>
+              <Text style={lumoStyles.editBtnText}>Change Profile</Text>
             </Pressable>
             <Pressable
-              style={styles.switchProfileBtn}
+              style={lumoStyles.switchProfileBtn}
               onPress={() => router.push("/switch-profile")}
               accessibilityRole="button"
               accessibilityLabel="Switch profile"
             >
               <Ionicons name="repeat-outline" size={16} color={C.text} />
-              <Text style={styles.switchProfileBtnText}>Switch Profile</Text>
+              <Text style={lumoStyles.switchProfileBtnText}>Switch Profile</Text>
             </Pressable>
             <Pressable
-              style={styles.iconBtn}
+              style={lumoStyles.iconBtn}
               onPress={() => {
                 void Share.share({
                   message: `Check out @${profile?.username ?? "user"} on Lumo!`,
@@ -1170,7 +1192,7 @@ export default function ProfileView({ userId }: { userId: string }) {
               style={[{ flex: 1 }, { transform: [{ scale: primaryBtnScale }] }]}
             >
               <Pressable
-                style={[styles.followBtn, isFollowing && styles.followingBtn]}
+                style={[lumoStyles.followBtn, isFollowing && lumoStyles.followingBtn]}
                 onPress={() => void toggleFollow()}
                 onPressIn={() => pressScale(primaryBtnScale, 0.96)}
                 onPressOut={() => pressScale(primaryBtnScale, 1)}
@@ -1184,8 +1206,8 @@ export default function ProfileView({ userId }: { userId: string }) {
                 ) : (
                   <Text
                     style={[
-                      styles.followBtnText,
-                      isFollowing && styles.followingBtnText,
+                      lumoStyles.followBtnText,
+                      isFollowing && lumoStyles.followingBtnText,
                     ]}
                   >
                     {isFollowing ? "Following" : "Follow"}
@@ -1194,13 +1216,13 @@ export default function ProfileView({ userId }: { userId: string }) {
               </Pressable>
             </Animated.View>
             <Pressable
-              style={styles.messageBtn}
+              style={lumoStyles.messageBtn}
               onPress={() => router.push(`/chat/${userId}`)}
             >
-              <Text style={styles.messageBtnText}>Message</Text>
+              <Text style={lumoStyles.messageBtnText}>Message</Text>
             </Pressable>
             <Pressable
-              style={styles.iconBtn}
+              style={lumoStyles.iconBtn}
               onPress={() => {
                 void Share.share({
                   message: `Check out @${profile?.username ?? "user"} on Lumo!`,
@@ -1215,20 +1237,20 @@ export default function ProfileView({ userId }: { userId: string }) {
       </View>
 
       {canManageMemberRoles && !isMe && (
-        <View style={styles.platformRolePanel}>
-          <View style={styles.platformRoleInfo}>
-            <Text style={styles.platformRoleEyebrow}>PLATFORM ACCESS</Text>
-            <Text style={styles.platformRoleTitle}>
+        <View style={lumoStyles.platformRolePanel}>
+          <View style={lumoStyles.platformRoleInfo}>
+            <Text style={lumoStyles.platformRoleEyebrow}>PLATFORM ACCESS</Text>
+            <Text style={lumoStyles.platformRoleTitle}>
               {profileRoleLabel}
             </Text>
           </View>
           <Pressable
-            style={[styles.platformRoleButton, targetIsAdmin && styles.platformRoleButtonRemove, roleSaving && styles.roleButtonDisabled]}
+            style={[lumoStyles.platformRoleButton, targetIsAdmin && lumoStyles.platformRoleButtonRemove, roleSaving && lumoStyles.roleButtonDisabled]}
             onPress={() => void toggleAdminRole()}
             disabled={roleSaving}
           >
             {roleSaving ? <ActivityIndicator size="small" color={C.bg} /> : <Ionicons name={targetIsAdmin ? "remove-circle-outline" : "shield-checkmark-outline"} size={15} color={targetIsAdmin ? C.text : C.bg} />}
-            <Text style={[styles.platformRoleButtonText, targetIsAdmin && styles.platformRoleButtonRemoveText]}>
+            <Text style={[lumoStyles.platformRoleButtonText, targetIsAdmin && lumoStyles.platformRoleButtonRemoveText]}>
               {roleSaving ? "SAVING..." : targetIsAdmin ? "REMOVE ADMIN" : "MAKE ADMIN"}
             </Text>
           </Pressable>
@@ -1236,11 +1258,11 @@ export default function ProfileView({ userId }: { userId: string }) {
       )}
 
       {/* Content Tabs (Grid, Videos/Reels, Saved) */}
-      <View style={styles.contentTabsRow}>
+      <View style={lumoStyles.contentTabsRow}>
         <Pressable
           style={[
-            styles.contentTabItem,
-            activeTab === "posts" && styles.contentTabItemActive,
+            lumoStyles.contentTabItem,
+            activeTab === "posts" && lumoStyles.contentTabItemActive,
           ]}
           onPress={() => setActiveTab("posts")}
         >
@@ -1252,8 +1274,8 @@ export default function ProfileView({ userId }: { userId: string }) {
         </Pressable>
         <Pressable
           style={[
-            styles.contentTabItem,
-            activeTab === "reels" && styles.contentTabItemActive,
+            lumoStyles.contentTabItem,
+            activeTab === "reels" && lumoStyles.contentTabItemActive,
           ]}
           onPress={() => setActiveTab("reels")}
         >
@@ -1266,8 +1288,8 @@ export default function ProfileView({ userId }: { userId: string }) {
         {isMe && (
           <Pressable
             style={[
-              styles.contentTabItem,
-              activeTab === "saved" && styles.contentTabItemActive,
+              lumoStyles.contentTabItem,
+              activeTab === "saved" && lumoStyles.contentTabItemActive,
             ]}
             onPress={() => setActiveTab("saved")}
           >
@@ -1278,8 +1300,8 @@ export default function ProfileView({ userId }: { userId: string }) {
                 color={activeTab === "saved" ? C.lime : C.muted}
               />
               {savedPosts.length > 0 && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>
+                <View style={lumoStyles.tabBadge}>
+                  <Text style={lumoStyles.tabBadgeText}>
                     {savedPosts.length > 99 ? "99+" : savedPosts.length}
                   </Text>
                 </View>
@@ -1293,35 +1315,35 @@ export default function ProfileView({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={lumoStyles.center}>
         <Image
           source={require("../assets/lumo-mark.png")}
-          style={styles.loaderLogo}
+          style={lumoStyles.loaderLogo}
           contentFit="contain"
         />
 
         <ActivityIndicator color={C.lime} size="small" />
 
-        <Text style={styles.loadingText}>Opening profile space...</Text>
+        <Text style={lumoStyles.loadingText}>Opening profile space...</Text>
       </View>
     );
   }
 
   if (!profile) {
     return (
-      <View style={styles.center}>
-        <View style={styles.emptySymbol}>
-          <Text style={styles.emptySymbolText}>↗</Text>
+      <View style={lumoStyles.center}>
+        <View style={lumoStyles.emptySymbol}>
+          <Text style={lumoStyles.emptySymbolText}>↗</Text>
         </View>
 
-        <Text style={styles.emptyTitle}>Profile unavailable</Text>
+        <Text style={lumoStyles.emptyTitle}>Profile unavailable</Text>
 
-        <Text style={styles.emptyDescription}>
+        <Text style={lumoStyles.emptyDescription}>
           {loadError || "This profile could not be found."}
         </Text>
 
-        <Pressable style={styles.retryButton} onPress={() => void refresh()}>
-          <Text style={styles.retryButtonText}>Try again</Text>
+        <Pressable style={lumoStyles.retryButton} onPress={() => void refresh()}>
+          <Text style={lumoStyles.retryButtonText}>Try again</Text>
         </Pressable>
       </View>
     );
@@ -1329,26 +1351,26 @@ export default function ProfileView({ userId }: { userId: string }) {
 
   const renderPostRow = ({ item }: { item: PostRow }) => {
     return (
-      <View style={styles.postPair}>
+      <View style={lumoStyles.postPair}>
         {item.items.map((post, index) => (
           <Pressable
             key={post.id}
             onPress={() => void openPost(post)}
             style={[
-              styles.smallPost,
+              lumoStyles.smallPost,
               { width: tileWidth },
-              index > 0 && styles.smallPostSecond,
+              index > 0 && lumoStyles.smallPostSecond,
             ]}
           >
             <Image
               source={post.image_url ? { uri: post.image_url } : null}
-              style={[styles.smallPostImage, { aspectRatio: 1 }]}
+              style={[lumoStyles.smallPostImage, { aspectRatio: 1 }]}
               contentFit="cover"
               transition={180}
             />
             {activeTab === "reels" && (
-              <View style={styles.reelsBadge}>
-                <Ionicons name="play" size={12} color="#FFFFFF" />
+              <View style={lumoStyles.reelsBadge}>
+                <Ionicons name="play" size={12} color={colors.mediaText} />
               </View>
             )}
           </Pressable>
@@ -1372,16 +1394,16 @@ export default function ProfileView({ userId }: { userId: string }) {
   const selectedIsVideo = selectedPost?.media_type === "video" || Boolean(selectedPost?.video_url);
 
   const postOwnerContent = selectedPost ? (
-    <View style={[styles.postOwner, styles.premiumPostOwner]}>
+    <View style={[lumoStyles.postOwner, lumoStyles.premiumPostOwner]}>
       <Avatar uri={profile.avatar_url} name={profile.username} size={44} />
-      <View style={styles.postOwnerCopy}>
-        <Text style={styles.ownerName}>@{profile.username}</Text>
+      <View style={lumoStyles.postOwnerCopy}>
+        <Text style={lumoStyles.ownerName}>@{profile.username}</Text>
         {!!profile.full_name && (
-          <Text style={styles.ownerFullName}>{profile.full_name}</Text>
+          <Text style={lumoStyles.ownerFullName}>{profile.full_name}</Text>
         )}
       </View>
-      <View style={[styles.ownerBadge, styles.premiumOwnerBadge]}>
-        <Text style={styles.ownerBadgeText}>CREATOR</Text>
+      <View style={[lumoStyles.ownerBadge, lumoStyles.premiumOwnerBadge]}>
+        <Text style={lumoStyles.ownerBadgeText}>CREATOR</Text>
       </View>
     </View>
   ) : null;
@@ -1389,28 +1411,28 @@ export default function ProfileView({ userId }: { userId: string }) {
   const postMediaContent = selectedPost ? (
     selectedIsVideo ? (
       selectedPost.video_url ? (
-        <View style={[styles.postMediaWrap, isWidePost ? styles.desktopPostMediaWrap : { width: mediaWidth }]}>
+        <View style={[lumoStyles.postMediaWrap, isWidePost ? lumoStyles.desktopPostMediaWrap : { width: mediaWidth }]}>
           <View
             style={[
-              styles.postImageFrame,
-              styles.premiumPostImageFrame,
-              isWidePost && styles.desktopPostImageFrame,
+              lumoStyles.postImageFrame,
+              lumoStyles.premiumPostImageFrame,
+              isWidePost && lumoStyles.desktopPostImageFrame,
               { height: postMediaHeight },
             ]}
           >
             <LumoVideoPlayer
               uri={selectedPost.video_url}
               analytics={{ ownerId: selectedPost.user_id, contentId: selectedPost.id, contentType: 'post' }}
-              style={[styles.postVideoPlayer, { width: "100%", height: "100%" }]}
+              style={[lumoStyles.postVideoPlayer, { width: "100%", height: "100%" }]}
               bottomInset={10}
             />
           </View>
-          <View style={styles.videoCornerLabel}>
-            <Ionicons name="videocam" size={12} color="#CBDD9B" />
-            <Text style={styles.imageCornerLabelText}>LUMO MOTION</Text>
+          <View style={lumoStyles.videoCornerLabel}>
+            <Ionicons name="videocam" size={12} color={resolveThemeColor("#CBDD9B", "color")} />
+            <Text style={lumoStyles.imageCornerLabelText}>LUMO MOTION</Text>
           </View>
           <Pressable
-            style={styles.mediaExpandButton}
+            style={lumoStyles.mediaExpandButton}
             onPress={() => setImageViewerVisible(true)}
             hitSlop={8}
             accessibilityRole="button"
@@ -1422,47 +1444,47 @@ export default function ProfileView({ userId }: { userId: string }) {
       ) : (
         <View
           style={[
-            styles.postMediaUnavailable,
-            isWidePost && styles.desktopPostImageFrame,
+            lumoStyles.postMediaUnavailable,
+            isWidePost && lumoStyles.desktopPostImageFrame,
             { width: mediaWidth, height: postMediaHeight },
           ]}
         >
           <Ionicons name="videocam-off-outline" size={32} color={C.muted} />
-          <Text style={styles.postMediaUnavailableText}>Video unavailable</Text>
+          <Text style={lumoStyles.postMediaUnavailableText}>Video unavailable</Text>
         </View>
       )
     ) : selectedPost.image_url ? (
-      <View style={[styles.postMediaWrap, isWidePost ? styles.desktopPostMediaWrap : { width: mediaWidth }]}>
+      <View style={[lumoStyles.postMediaWrap, isWidePost ? lumoStyles.desktopPostMediaWrap : { width: mediaWidth }]}>
         <Pressable
           style={[
-            styles.postImageFrame,
-            styles.premiumPostImageFrame,
-            isWidePost && styles.desktopPostImageFrame,
+            lumoStyles.postImageFrame,
+            lumoStyles.premiumPostImageFrame,
+            isWidePost && lumoStyles.desktopPostImageFrame,
             { height: postMediaHeight },
           ]}
           onPress={handleImagePress}
         >
           <Image
             source={{ uri: selectedPost.image_url }}
-            style={[styles.postImage, { width: "100%", height: "100%" }]}
+            style={[lumoStyles.postImage, { width: "100%", height: "100%" }]}
             contentFit="contain"
             transition={180}
           />
-          <View style={styles.imageCornerLabel}>
-            <Text style={styles.imageCornerLabelText}>IMAGE</Text>
+          <View style={lumoStyles.imageCornerLabel}>
+            <Text style={lumoStyles.imageCornerLabelText}>IMAGE</Text>
           </View>
           <Animated.View
             pointerEvents="none"
             style={[
-              styles.heartBurst,
+              lumoStyles.heartBurst,
               { opacity: heartOpacity, transform: [{ scale: heartScale }] },
             ]}
           >
-            <Text style={styles.heartBurstIcon}>♥</Text>
+            <Text style={lumoStyles.heartBurstIcon}>♥</Text>
           </Animated.View>
         </Pressable>
         <Pressable
-          style={styles.mediaExpandButton}
+          style={lumoStyles.mediaExpandButton}
           onPress={() => setImageViewerVisible(true)}
           hitSlop={8}
           accessibilityRole="button"
@@ -1474,60 +1496,60 @@ export default function ProfileView({ userId }: { userId: string }) {
     ) : (
       <View
         style={[
-          styles.postMediaUnavailable,
+          lumoStyles.postMediaUnavailable,
           { width: mediaWidth, height: postMediaHeight },
-          isWidePost && styles.desktopPostImageFrame,
+          isWidePost && lumoStyles.desktopPostImageFrame,
         ]}
       >
         <Ionicons name="image-outline" size={32} color={C.muted} />
-        <Text style={styles.postMediaUnavailableText}>Media unavailable</Text>
+        <Text style={lumoStyles.postMediaUnavailableText}>Media unavailable</Text>
       </View>
     )
   ) : null;
 
   const postActionsContent = (
-    <View style={[styles.postActions, styles.premiumPostActions]}>
+    <View style={[lumoStyles.postActions, lumoStyles.premiumPostActions]}>
       <Pressable
-        style={[styles.postAction, styles.premiumPostAction, liked && styles.postActionLikeActive]}
+        style={[lumoStyles.postAction, lumoStyles.premiumPostAction, liked && lumoStyles.postActionLikeActive]}
         onPress={() => void toggleLike()}
         disabled={likeLoading}
         accessibilityRole="button"
         accessibilityLabel={liked ? "Unlike post" : "Like post"}
       >
-        <Ionicons name={liked ? "heart" : "heart-outline"} size={19} color={liked ? "#FF7888" : C.text} />
-        <Text style={[styles.postActionLabel, styles.premiumActionLabel, liked && styles.postActionLabelLikeActive]}>
+        <Ionicons name={liked ? "heart" : "heart-outline"} size={19} color={liked ? resolveThemeColor("#FF7888", "color") : C.text} />
+        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel, liked && lumoStyles.postActionLabelLikeActive]}>
           {liked ? "Liked" : "Like"}
         </Text>
       </Pressable>
       <Pressable
-        style={[styles.postAction, styles.premiumPostAction]}
+        style={[lumoStyles.postAction, lumoStyles.premiumPostAction]}
         onPress={() => setCommentsSheetVisible(true)}
         accessibilityRole="button"
         accessibilityLabel="Go to comments"
       >
         <Ionicons name="chatbubble-outline" size={19} color={C.text} />
-        <Text style={[styles.postActionLabel, styles.premiumActionLabel]}>
+        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel]}>
           {commentsCount > 0 ? `Comment · ${formatNumber(commentsCount)}` : "Comment"}
         </Text>
       </Pressable>
       <Pressable
-        style={[styles.postAction, styles.premiumPostAction]}
+        style={[lumoStyles.postAction, lumoStyles.premiumPostAction]}
         onPress={sharePost}
         accessibilityRole="button"
         accessibilityLabel="Forward post"
       >
         <Ionicons name="arrow-redo-outline" size={19} color={C.text} />
-        <Text style={[styles.postActionLabel, styles.premiumActionLabel]}>Forward</Text>
+        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel]}>Forward</Text>
       </Pressable>
       <Pressable
-        style={[styles.postAction, styles.premiumPostAction, saved && styles.postActionSaveActive]}
+        style={[lumoStyles.postAction, lumoStyles.premiumPostAction, saved && lumoStyles.postActionSaveActive]}
         onPress={() => void toggleSave()}
         disabled={saveLoading}
         accessibilityRole="button"
         accessibilityLabel={saved ? "Remove saved post" : "Save post"}
       >
-        <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={19} color={saved ? "#E6C77D" : C.text} />
-        <Text style={[styles.postActionLabel, styles.premiumActionLabel, saved && styles.postActionLabelSaveActive]}>
+        <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={19} color={saved ? resolveThemeColor("#E6C77D", "color") : C.text} />
+        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel, saved && lumoStyles.postActionLabelSaveActive]}>
           {saved ? "Saved" : "Save"}
         </Text>
       </Pressable>
@@ -1536,27 +1558,27 @@ export default function ProfileView({ userId }: { userId: string }) {
 
   const postMetadataContent = (
     <>
-      <Pressable onPress={() => void openLikers()} style={[styles.likeInfo, styles.premiumLikeInfo]}>
-        <Text style={styles.likeInfoTitle}>
+      <Pressable onPress={() => void openLikers()} style={[lumoStyles.likeInfo, lumoStyles.premiumLikeInfo]}>
+        <Text style={lumoStyles.likeInfoTitle}>
           {formatNumber(likesCount)} {likesCount === 1 ? "like" : "likes"}
         </Text>
-        <Text style={styles.likeInfoAction}>VIEW LIKES ↗</Text>
+        <Text style={lumoStyles.likeInfoAction}>VIEW LIKES ↗</Text>
       </Pressable>
       {!!selectedPost?.caption?.trim() && (
-        <View style={[styles.postCaption, styles.premiumPostCaption]}>
-          <Text style={styles.postCaptionLabel}>CAPTION</Text>
-          <Text style={styles.postCaptionText}>{selectedPost.caption.trim()}</Text>
+        <View style={[lumoStyles.postCaption, lumoStyles.premiumPostCaption]}>
+          <Text style={lumoStyles.postCaptionLabel}>CAPTION</Text>
+          <Text style={lumoStyles.postCaptionText}>{selectedPost.caption.trim()}</Text>
         </View>
       )}
     </>
   );
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       {isDesktopProfile ? (
         <ScrollView
-          style={styles.desktopPageScroll}
-          contentContainerStyle={styles.desktopPageScrollContent}
+          style={lumoStyles.desktopPageScroll}
+          contentContainerStyle={lumoStyles.desktopPageScrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -1568,10 +1590,10 @@ export default function ProfileView({ userId }: { userId: string }) {
             />
           }
         >
-          <View style={styles.desktopPageContentRow}>
+          <View style={lumoStyles.desktopPageContentRow}>
             {identityPanel}
 
-            <View style={styles.desktopArchiveFlow}>
+            <View style={lumoStyles.desktopArchiveFlow}>
               {archiveHeader}
 
               {postRows.length > 0 ? (
@@ -1581,12 +1603,12 @@ export default function ProfileView({ userId }: { userId: string }) {
                   </React.Fragment>
                 ))
               ) : (
-                <View style={styles.emptyWorks}>
-                  <View style={styles.emptyWorksIcon}>
-                    <Text style={styles.emptyWorksIconText}>+</Text>
+                <View style={lumoStyles.emptyWorks}>
+                  <View style={lumoStyles.emptyWorksIcon}>
+                    <Text style={lumoStyles.emptyWorksIconText}>+</Text>
                   </View>
-                  <Text style={styles.emptyWorksTitle}>A fresh canvas</Text>
-                  <Text style={styles.emptyWorksText}>
+                  <Text style={lumoStyles.emptyWorksTitle}>A fresh canvas</Text>
+                  <Text style={lumoStyles.emptyWorksText}>
                     {isMe
                       ? "Your first post will appear here when you share it."
                       : "There are no published works here yet."}
@@ -1603,14 +1625,14 @@ export default function ProfileView({ userId }: { userId: string }) {
         renderItem={renderPostRow}
         ListHeaderComponent={header}
         ListEmptyComponent={
-          <View style={styles.emptyWorks}>
-            <View style={styles.emptyWorksIcon}>
-              <Text style={styles.emptyWorksIconText}>＋</Text>
+          <View style={lumoStyles.emptyWorks}>
+            <View style={lumoStyles.emptyWorksIcon}>
+              <Text style={lumoStyles.emptyWorksIconText}>＋</Text>
             </View>
 
-            <Text style={styles.emptyWorksTitle}>A fresh canvas</Text>
+            <Text style={lumoStyles.emptyWorksTitle}>A fresh canvas</Text>
 
-            <Text style={styles.emptyWorksText}>
+            <Text style={lumoStyles.emptyWorksText}>
               {isMe
                 ? "Your first post will appear here when you share it."
                 : "There are no published works here yet."}
@@ -1626,7 +1648,7 @@ export default function ProfileView({ userId }: { userId: string }) {
             progressBackgroundColor={C.panel}
           />
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={lumoStyles.listContent}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={8}
@@ -1640,64 +1662,64 @@ export default function ProfileView({ userId }: { userId: string }) {
         onRequestClose={closePost}
       >
         <KeyboardAvoidingView
-          style={styles.modalScreen}
+          style={lumoStyles.modalScreen}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={[styles.modalHeader, styles.premiumModalHeader]}>
+          <View style={[lumoStyles.modalHeader, lumoStyles.premiumModalHeader]}>
             <Pressable
               onPress={closePost}
               hitSlop={12}
-              style={[styles.backButton, styles.premiumBackButton]}
+              style={[lumoStyles.backButton, lumoStyles.premiumBackButton]}
             >
-              <Text style={styles.backButtonText}>←</Text>
+              <Text style={lumoStyles.backButtonText}>←</Text>
             </Pressable>
 
-            <View style={styles.modalHeaderCenter}>
-              <Text style={styles.modalOverline}>LUMO / PROFILE</Text>
-              <Text style={styles.modalTitle}>POST</Text>
+            <View style={lumoStyles.modalHeaderCenter}>
+              <Text style={lumoStyles.modalOverline}>LUMO / PROFILE</Text>
+              <Text style={lumoStyles.modalTitle}>POST</Text>
             </View>
 
-            <View style={styles.modalHeaderIndex}>
-              <Text style={styles.modalHeaderIndexText}>L.</Text>
+            <View style={lumoStyles.modalHeaderIndex}>
+              <Text style={lumoStyles.modalHeaderIndexText}>L.</Text>
             </View>
           </View>
 
           {selectedPost && (
             isWidePost ? (
-              <View style={styles.desktopPostLayout}>
-                <View style={styles.desktopPostMediaColumn}>
-                  <View style={styles.desktopMediaHeading}>
+              <View style={lumoStyles.desktopPostLayout}>
+                <View style={lumoStyles.desktopPostMediaColumn}>
+                  <View style={lumoStyles.desktopMediaHeading}>
                     <View>
-                      <Text style={styles.desktopMediaEyebrow}>LUMO / MEDIA STAGE</Text>
-                      <Text style={styles.desktopMediaTitle}>ORIGINAL CONTENT</Text>
+                      <Text style={lumoStyles.desktopMediaEyebrow}>LUMO / MEDIA STAGE</Text>
+                      <Text style={lumoStyles.desktopMediaTitle}>ORIGINAL CONTENT</Text>
                     </View>
-                    <View style={styles.desktopMediaTypeBadge}>
+                    <View style={lumoStyles.desktopMediaTypeBadge}>
                       <Ionicons name={selectedIsVideo ? "videocam" : "image"} size={14} color={C.lime} />
-                      <Text style={styles.desktopMediaTypeText}>{selectedIsVideo ? "VIDEO" : "PHOTO"}</Text>
+                      <Text style={lumoStyles.desktopMediaTypeText}>{selectedIsVideo ? "VIDEO" : "PHOTO"}</Text>
                     </View>
                   </View>
-                  <View style={[styles.desktopPostMediaStage, { height: postMediaHeight }]}>
+                  <View style={[lumoStyles.desktopPostMediaStage, { height: postMediaHeight }]}>
                     {postMediaContent}
                   </View>
-                  <View style={styles.desktopMediaFooter}>
-                    <View style={styles.desktopMediaFooterDot} />
-                    <Text style={styles.desktopMediaFooterText}>ORIGINAL ASPECT RATIO · FULL MEDIA VIEW</Text>
+                  <View style={lumoStyles.desktopMediaFooter}>
+                    <View style={lumoStyles.desktopMediaFooterDot} />
+                    <Text style={lumoStyles.desktopMediaFooterText}>ORIGINAL ASPECT RATIO · FULL MEDIA VIEW</Text>
                   </View>
                 </View>
 
-                <View style={[styles.desktopPostDetailsPanel, { height: postMediaHeight + 62 }]}>
-                  <View style={styles.desktopDetailsHeading}>
+                <View style={[lumoStyles.desktopPostDetailsPanel, { height: postMediaHeight + 62 }]}>
+                  <View style={lumoStyles.desktopDetailsHeading}>
                     <View>
-                      <Text style={styles.desktopDetailsEyebrow}>PROFILE / PUBLICATION</Text>
-                      <Text style={styles.desktopDetailsTitle}>Post details</Text>
+                      <Text style={lumoStyles.desktopDetailsEyebrow}>PROFILE / PUBLICATION</Text>
+                      <Text style={lumoStyles.desktopDetailsTitle}>Post details</Text>
                     </View>
-                    <Text style={styles.desktopDetailsIndex}>L.</Text>
+                    <Text style={lumoStyles.desktopDetailsIndex}>L.</Text>
                   </View>
                   {postOwnerContent}
                   <ScrollView
                     ref={postScrollRef}
-                    style={styles.desktopPostDetailsScroll}
-                    contentContainerStyle={styles.desktopPostDetailsContent}
+                    style={lumoStyles.desktopPostDetailsScroll}
+                    contentContainerStyle={lumoStyles.desktopPostDetailsContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                   >
@@ -1705,17 +1727,17 @@ export default function ProfileView({ userId }: { userId: string }) {
                     {postMetadataContent}
                   </ScrollView>
                   <Pressable
-                    style={styles.desktopCommentEntry}
+                    style={lumoStyles.desktopCommentEntry}
                     onPress={() => setCommentsSheetVisible(true)}
                     accessibilityRole="button"
                     accessibilityLabel="Open post comments"
                   >
-                    <View style={styles.desktopCommentEntryIcon}>
+                    <View style={lumoStyles.desktopCommentEntryIcon}>
                       <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.lime} />
                     </View>
-                    <View style={styles.desktopCommentEntryCopy}>
-                      <Text style={styles.desktopCommentEntryTitle}>COMMENTS & REPLIES</Text>
-                      <Text style={styles.desktopCommentEntrySubtitle}>
+                    <View style={lumoStyles.desktopCommentEntryCopy}>
+                      <Text style={lumoStyles.desktopCommentEntryTitle}>COMMENTS & REPLIES</Text>
+                      <Text style={lumoStyles.desktopCommentEntrySubtitle}>
                         {commentsCount > 0 ? `${formatNumber(commentsCount)} conversations` : "Start the conversation"}
                       </Text>
                     </View>
@@ -1726,8 +1748,8 @@ export default function ProfileView({ userId }: { userId: string }) {
             ) : (
               <ScrollView
                 ref={postScrollRef}
-                style={styles.postScroll}
-                contentContainerStyle={styles.postScrollContent}
+                style={lumoStyles.postScroll}
+                contentContainerStyle={lumoStyles.postScrollContent}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
@@ -1752,56 +1774,56 @@ export default function ProfileView({ userId }: { userId: string }) {
           )}
 
           {likersVisible && (
-            <View style={styles.likersOverlay}>
+            <View style={lumoStyles.likersOverlay}>
               <Pressable
                 style={StyleSheet.absoluteFill}
                 onPress={() => setLikersVisible(false)}
               />
 
-              <View style={styles.likersSheet}>
-                <View style={styles.sheetHandle} />
+              <View style={lumoStyles.likersSheet}>
+                <View style={lumoStyles.sheetHandle} />
 
-                <View style={styles.likersHeader}>
+                <View style={lumoStyles.likersHeader}>
                   <View>
-                    <Text style={styles.eyebrow}>COMMUNITY</Text>
-                    <Text style={styles.likersTitle}>People who liked it</Text>
+                    <Text style={lumoStyles.eyebrow}>COMMUNITY</Text>
+                    <Text style={lumoStyles.likersTitle}>People who liked it</Text>
                   </View>
 
                   <Pressable
                     onPress={() => setLikersVisible(false)}
-                    style={styles.sheetClose}
+                    style={lumoStyles.sheetClose}
                   >
-                    <Text style={styles.sheetCloseText}>×</Text>
+                    <Text style={lumoStyles.sheetCloseText}>×</Text>
                   </Pressable>
                 </View>
 
                 {likersLoading ? (
-                  <View style={styles.sheetLoading}>
+                  <View style={lumoStyles.sheetLoading}>
                     <ActivityIndicator color={C.lime} />
                   </View>
                 ) : (
                   <ScrollView showsVerticalScrollIndicator={false}>
                     {likers.map((liker) => (
-                      <View key={liker.id} style={styles.personRow}>
+                      <View key={liker.id} style={lumoStyles.personRow}>
                         <Avatar
                           uri={liker.avatar_url}
                           name={liker.username}
                           size={42}
                         />
 
-                        <View style={styles.personCopy}>
-                          <Text style={styles.personName}>
+                        <View style={lumoStyles.personCopy}>
+                          <Text style={lumoStyles.personName}>
                             @{liker.username}
                           </Text>
-                          <Text style={styles.personLabel}>LUMO MEMBER</Text>
+                          <Text style={lumoStyles.personLabel}>LUMO MEMBER</Text>
                         </View>
 
-                        <Text style={styles.personArrow}>↗</Text>
+                        <Text style={lumoStyles.personArrow}>↗</Text>
                       </View>
                     ))}
 
                     {!likersLoading && likers.length === 0 && (
-                      <Text style={styles.sheetEmptyText}>No likes yet.</Text>
+                      <Text style={lumoStyles.sheetEmptyText}>No likes yet.</Text>
                     )}
                   </ScrollView>
                 )}
@@ -1817,7 +1839,7 @@ export default function ProfileView({ userId }: { userId: string }) {
         presentationStyle="fullScreen"
         onRequestClose={() => setImageViewerVisible(false)}
       >
-        <View style={styles.imageViewerScreen}>
+        <View style={lumoStyles.imageViewerScreen}>
           {selectedIsVideo && selectedPost?.video_url ? (
             <LumoVideoPlayer
               uri={selectedPost.video_url}
@@ -1829,16 +1851,16 @@ export default function ProfileView({ userId }: { userId: string }) {
           ) : selectedPost?.image_url ? (
             <Image
               source={{ uri: selectedPost.image_url }}
-              style={styles.imageViewerImage}
+              style={lumoStyles.imageViewerImage}
               contentFit="contain"
               transition={180}
             />
           ) : null}
 
-          <Text style={styles.imageViewerLabel}>{selectedIsVideo ? "VIDEO / ORIGINAL" : "PHOTO / ORIGINAL"}</Text>
+          <Text style={lumoStyles.imageViewerLabel}>{selectedIsVideo ? "VIDEO / ORIGINAL" : "PHOTO / ORIGINAL"}</Text>
 
           <Pressable
-            style={styles.imageViewerClose}
+            style={lumoStyles.imageViewerClose}
             onPress={() => setImageViewerVisible(false)}
             hitSlop={8}
             accessibilityRole="button"
@@ -1855,42 +1877,42 @@ export default function ProfileView({ userId }: { userId: string }) {
         transparent
         onRequestClose={() => setConnectionsVisible(false)}
       >
-        <View style={styles.connectionsOverlay}>
+        <View style={lumoStyles.connectionsOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setConnectionsVisible(false)}
           />
 
-          <View style={styles.connectionsSheet}>
-            <View style={styles.sheetHandle} />
+          <View style={lumoStyles.connectionsSheet}>
+            <View style={lumoStyles.sheetHandle} />
 
-            <View style={styles.connectionsHeader}>
+            <View style={lumoStyles.connectionsHeader}>
               <View>
-                <Text style={styles.eyebrow}>SOCIAL CIRCLE</Text>
-                <Text style={styles.connectionsTitle}>
+                <Text style={lumoStyles.eyebrow}>SOCIAL CIRCLE</Text>
+                <Text style={lumoStyles.connectionsTitle}>
                   {connectionsMode === "followers" ? "Followers" : "Following"}
                 </Text>
               </View>
 
               <Pressable
                 onPress={() => setConnectionsVisible(false)}
-                style={styles.sheetClose}
+                style={lumoStyles.sheetClose}
               >
-                <Text style={styles.sheetCloseText}>×</Text>
+                <Text style={lumoStyles.sheetCloseText}>×</Text>
               </Pressable>
             </View>
 
             {connectionsLoading ? (
-              <View style={styles.sheetLoading}>
+              <View style={lumoStyles.sheetLoading}>
                 <ActivityIndicator color={C.lime} />
-                <Text style={styles.commentsLoadingText}>
+                <Text style={lumoStyles.commentsLoadingText}>
                   Finding people...
                 </Text>
               </View>
             ) : connections.length === 0 ? (
-              <View style={styles.sheetEmpty}>
-                <Text style={styles.noCommentsMark}>✳</Text>
-                <Text style={styles.noCommentsTitle}>Nothing here yet</Text>
+              <View style={lumoStyles.sheetEmpty}>
+                <Text style={lumoStyles.noCommentsMark}>✳</Text>
+                <Text style={lumoStyles.noCommentsTitle}>Nothing here yet</Text>
               </View>
             ) : (
               <FlatList
@@ -1898,19 +1920,19 @@ export default function ProfileView({ userId }: { userId: string }) {
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
-                  <View style={styles.personRow}>
+                  <View style={lumoStyles.personRow}>
                     <Avatar
                       uri={item.avatar_url}
                       name={item.username}
                       size={42}
                     />
 
-                    <View style={styles.personCopy}>
-                      <Text style={styles.personName}>@{item.username}</Text>
-                      <Text style={styles.personLabel}>LUMO MEMBER</Text>
+                    <View style={lumoStyles.personCopy}>
+                      <Text style={lumoStyles.personName}>@{item.username}</Text>
+                      <Text style={lumoStyles.personLabel}>LUMO MEMBER</Text>
                     </View>
 
-                    <Text style={styles.personArrow}>↗</Text>
+                    <Text style={lumoStyles.personArrow}>↗</Text>
                   </View>
                 )}
               />
@@ -1927,32 +1949,32 @@ export default function ProfileView({ userId }: { userId: string }) {
           if (!commentDeleteLoading) setCommentToDelete(null);
         }}
       >
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmDialog}>
-            <Text style={styles.eyebrow}>CONFIRM ACTION</Text>
-            <Text style={styles.confirmTitle}>Delete this comment?</Text>
-            <Text style={styles.confirmMessage}>
+        <View style={lumoStyles.confirmOverlay}>
+          <View style={lumoStyles.confirmDialog}>
+            <Text style={lumoStyles.eyebrow}>CONFIRM ACTION</Text>
+            <Text style={lumoStyles.confirmTitle}>Delete this comment?</Text>
+            <Text style={lumoStyles.confirmMessage}>
               It will be removed immediately.
             </Text>
 
-            <View style={styles.confirmActions}>
+            <View style={lumoStyles.confirmActions}>
               <Pressable
                 onPress={() => setCommentToDelete(null)}
                 disabled={commentDeleteLoading}
-                style={styles.confirmCancelButton}
+                style={lumoStyles.confirmCancelButton}
               >
-                <Text style={styles.confirmCancelText}>Cancel</Text>
+                <Text style={lumoStyles.confirmCancelText}>Cancel</Text>
               </Pressable>
 
               <Pressable
                 onPress={() => void confirmRemoveComment()}
                 disabled={commentDeleteLoading}
-                style={styles.confirmDeleteButton}
+                style={lumoStyles.confirmDeleteButton}
               >
                 {commentDeleteLoading ? (
                   <ActivityIndicator color={C.bg} size="small" />
                 ) : (
-                  <Text style={styles.confirmDeleteText}>Delete</Text>
+                  <Text style={lumoStyles.confirmDeleteText}>Delete</Text>
                 )}
               </Pressable>
             </View>
@@ -1975,30 +1997,31 @@ function Stat({
   onPress?: () => void;
   last?: boolean;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   const content = (
     <>
-      <Text style={styles.statValue}>{formatNumber(value)}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={lumoStyles.statValue}>{formatNumber(value)}</Text>
+      <Text style={lumoStyles.statLabel}>{label}</Text>
     </>
   );
 
   if (onPress) {
     return (
       <Pressable
-        style={[styles.statCell, last && styles.statCellLast]}
+        style={[lumoStyles.statCell, last && lumoStyles.statCellLast]}
         onPress={onPress}
         accessibilityRole="button"
       >
         {content}
-        <Text style={styles.statHint}>VIEW ↗</Text>
+        <Text style={lumoStyles.statHint}>VIEW ↗</Text>
       </Pressable>
     );
   }
 
   return (
-    <View style={[styles.statCell, last && styles.statCellLast]}>
+    <View style={[lumoStyles.statCell, last && lumoStyles.statCellLast]}>
       {content}
-      <Text style={styles.statHint}>COLLECTION</Text>
+      <Text style={lumoStyles.statHint}>COLLECTION</Text>
     </View>
   );
 }
@@ -2030,7 +2053,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginHorizontal: 0,
     borderRadius: 18,
-    backgroundColor: "#000000",
+    backgroundColor: C.mediaBg,
   },
   mediaExpandButton: {
     position: "absolute",
@@ -2180,7 +2203,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginVertical: 0,
     borderRadius: 17,
-    backgroundColor: "#000000",
+    backgroundColor: C.mediaBg,
   },
   desktopMediaFooter: {
     height: 30,
@@ -2292,7 +2315,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#000000",
+    backgroundColor: C.mediaBg,
   },
   imageViewerImage: {
     width: "100%",
@@ -2450,7 +2473,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     borderRadius: 8,
-    backgroundColor: C.lime,
+    backgroundColor: "#3998FF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -2511,6 +2534,7 @@ const styles = StyleSheet.create({
     color: C.text,
     fontSize: 15,
     fontWeight: "800",
+    flexShrink: 1,
   },
   profileBioText: {
     color: "#D1D5CB",
@@ -3184,7 +3208,7 @@ const styles = StyleSheet.create({
 
   postImageFrame: {
     marginHorizontal: 16,
-    backgroundColor: "#000000",
+    backgroundColor: C.mediaBg,
     borderRadius: 21,
     overflow: "hidden",
     alignItems: "center",
@@ -3195,7 +3219,7 @@ const styles = StyleSheet.create({
 
   postImage: {
     height: 260,
-    backgroundColor: "#000000",
+    backgroundColor: C.mediaBg,
   },
 
   imageCornerLabel: {
@@ -3546,7 +3570,7 @@ const styles = StyleSheet.create({
   },
 
   likersOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: C.overlay,
     justifyContent: "flex-end",
   },
@@ -3840,14 +3864,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     position: "relative",
   },
-  desktopFullName: {
+  desktopNameRow: {
     width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  desktopFullName: {
+    maxWidth: "92%",
     color: C.text,
     fontSize: 27,
     lineHeight: 32,
     fontWeight: "800",
     letterSpacing: -0.8,
     textAlign: "center",
+    flexShrink: 1,
   },
   desktopHandle: {
     color: C.muted,

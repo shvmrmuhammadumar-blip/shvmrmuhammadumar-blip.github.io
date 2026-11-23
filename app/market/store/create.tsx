@@ -20,8 +20,10 @@ import {
   type MarketImageAsset,
 } from "../../../lib/market";
 import { colors } from "../../../lib/theme";
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 export default function CreateStoreScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -113,90 +115,90 @@ export default function CreateStoreScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={lumoStyles.root}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={lumoStyles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <View style={lumoStyles.container}>
+          <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
             <Ionicons name="arrow-back" size={18} color={colors.muted} />
-            <Text style={styles.backText}>Back to Market</Text>
+            <Text style={lumoStyles.backText}>Back to Market</Text>
           </Pressable>
 
-          <View style={styles.heading}>
-            <Text style={styles.eyebrow}>LUMO MARKET / SELLER SPACE</Text>
-            <Text style={styles.title}>Create your store.</Text>
-            <Text style={styles.subtitle}>
+          <View style={lumoStyles.heading}>
+            <Text style={lumoStyles.eyebrow}>LUMO MARKET / SELLER SPACE</Text>
+            <Text style={lumoStyles.title}>Create your store.</Text>
+            <Text style={lumoStyles.subtitle}>
               Build a storefront for your business, brand or personal shop.
               Customize its identity and publish products in one place.
             </Text>
           </View>
 
-          <View style={styles.freeBanner}>
-            <View style={styles.freeIcon}>
+          <View style={lumoStyles.freeBanner}>
+            <View style={lumoStyles.freeIcon}>
               <Ionicons name="checkmark-circle" size={20} color={colors.success} />
             </View>
-            <View style={styles.freeCopy}>
-              <Text style={styles.freeTitle}>Your store is free</Text>
-              <Text style={styles.freeDescription}>
+            <View style={lumoStyles.freeCopy}>
+              <Text style={lumoStyles.freeTitle}>Your store is free</Text>
+              <Text style={lumoStyles.freeDescription}>
                 No store creation fee, no listing fees and no sales commission.
               </Text>
             </View>
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>Store identity</Text>
-              <Text style={styles.sectionCaption}>
+          <View style={lumoStyles.section}>
+            <View style={lumoStyles.sectionHeading}>
+              <Text style={lumoStyles.sectionTitle}>Store identity</Text>
+              <Text style={lumoStyles.sectionCaption}>
                 Make your storefront recognizable.
               </Text>
             </View>
 
             <Pressable
               onPress={() => void pickImage("cover")}
-              style={styles.coverPicker}
+              style={lumoStyles.coverPicker}
             >
               {cover ? (
                 <Image
                   source={{ uri: cover.uri }}
-                  style={styles.coverPreview}
+                  style={lumoStyles.coverPreview}
                   contentFit="cover"
                 />
               ) : (
-                <View style={styles.coverPlaceholder}>
+                <View style={lumoStyles.coverPlaceholder}>
                   <Ionicons
                     name="image-outline"
                     size={27}
                     color={colors.muted}
                   />
-                  <Text style={styles.coverText}>Add store cover</Text>
-                  <Text style={styles.coverHint}>Wide banner · JPG, PNG, WebP</Text>
+                  <Text style={lumoStyles.coverText}>Add store cover</Text>
+                  <Text style={lumoStyles.coverHint}>Wide banner · JPG, PNG, WebP</Text>
                 </View>
               )}
 
-              <View style={styles.coverEdit}>
+              <View style={lumoStyles.coverEdit}>
                 <Ionicons name="camera-outline" size={15} color={colors.text} />
-                <Text style={styles.coverEditText}>
+                <Text style={lumoStyles.coverEditText}>
                   {cover ? "Change cover" : "Upload cover"}
                 </Text>
               </View>
             </Pressable>
 
-            <View style={styles.logoRow}>
+            <View style={lumoStyles.logoRow}>
               <Pressable
                 onPress={() => void pickImage("avatar")}
-                style={styles.logoPicker}
+                style={lumoStyles.logoPicker}
               >
                 {avatar ? (
                   <Image
                     source={{ uri: avatar.uri }}
-                    style={styles.logoPreview}
+                    style={lumoStyles.logoPreview}
                     contentFit="cover"
                   />
                 ) : (
-                  <View style={styles.logoPlaceholder}>
+                  <View style={lumoStyles.logoPlaceholder}>
                     <Ionicons
                       name="storefront-outline"
                       size={27}
@@ -205,18 +207,18 @@ export default function CreateStoreScreen() {
                   </View>
                 )}
 
-                <View style={styles.logoCamera}>
+                <View style={lumoStyles.logoCamera}>
                   <Ionicons name="camera" size={12} color={colors.bg} />
                 </View>
               </Pressable>
 
-              <View style={styles.logoCopy}>
-                <Text style={styles.logoTitle}>Store logo</Text>
-                <Text style={styles.logoDescription}>
+              <View style={lumoStyles.logoCopy}>
+                <Text style={lumoStyles.logoTitle}>Store logo</Text>
+                <Text style={lumoStyles.logoDescription}>
                   Choose a square image that represents your store.
                 </Text>
                 <Pressable onPress={() => void pickImage("avatar")}>
-                  <Text style={styles.uploadLink}>
+                  <Text style={lumoStyles.uploadLink}>
                     {avatar ? "Change logo" : "Upload logo"}
                   </Text>
                 </Pressable>
@@ -224,26 +226,26 @@ export default function CreateStoreScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>Store information</Text>
-              <Text style={styles.sectionCaption}>
+          <View style={lumoStyles.section}>
+            <View style={lumoStyles.sectionHeading}>
+              <Text style={lumoStyles.sectionTitle}>Store information</Text>
+              <Text style={lumoStyles.sectionCaption}>
                 Tell people what your store offers.
               </Text>
             </View>
 
-            <Text style={styles.fieldLabel}>STORE NAME *</Text>
+            <Text style={lumoStyles.fieldLabel}>STORE NAME *</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="e.g. Urban Objects"
               placeholderTextColor={colors.dim}
               maxLength={80}
-              style={styles.input}
+              style={lumoStyles.input}
             />
-            <Text style={styles.counter}>{name.length}/80</Text>
+            <Text style={lumoStyles.counter}>{name.length}/80</Text>
 
-            <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+            <Text style={lumoStyles.fieldLabel}>DESCRIPTION</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
@@ -252,45 +254,45 @@ export default function CreateStoreScreen() {
               multiline
               textAlignVertical="top"
               maxLength={2000}
-              style={[styles.input, styles.textArea]}
+              style={[lumoStyles.input, lumoStyles.textArea]}
             />
-            <Text style={styles.counter}>{description.length}/2000</Text>
+            <Text style={lumoStyles.counter}>{description.length}/2000</Text>
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>Store location</Text>
-              <Text style={styles.sectionCaption}>
+          <View style={lumoStyles.section}>
+            <View style={lumoStyles.sectionHeading}>
+              <Text style={lumoStyles.sectionTitle}>Store location</Text>
+              <Text style={lumoStyles.sectionCaption}>
                 Help nearby customers discover you.
               </Text>
             </View>
 
-            <Text style={styles.fieldLabel}>REGION</Text>
+            <Text style={lumoStyles.fieldLabel}>REGION</Text>
             <TextInput
               value={region}
               onChangeText={setRegion}
               placeholder="Region"
               placeholderTextColor={colors.dim}
-              style={styles.input}
+              style={lumoStyles.input}
             />
 
-            <Text style={styles.fieldLabel}>CITY / DISTRICT</Text>
+            <Text style={lumoStyles.fieldLabel}>CITY / DISTRICT</Text>
             <TextInput
               value={city}
               onChangeText={setCity}
               placeholder="City or district"
               placeholderTextColor={colors.dim}
-              style={styles.input}
+              style={lumoStyles.input}
             />
           </View>
 
-          <View style={styles.bottomNote}>
+          <View style={lumoStyles.bottomNote}>
             <Ionicons
               name="information-circle-outline"
               size={18}
               color={colors.muted}
             />
-            <Text style={styles.bottomNoteText}>
+            <Text style={lumoStyles.bottomNoteText}>
               You can update your logo, banner, description and location later
               from Store Manager.
             </Text>
@@ -300,8 +302,8 @@ export default function CreateStoreScreen() {
             onPress={() => void submit()}
             disabled={saving || name.trim().length < 2}
             style={[
-              styles.submitButton,
-              (saving || name.trim().length < 2) && styles.submitDisabled,
+              lumoStyles.submitButton,
+              (saving || name.trim().length < 2) && lumoStyles.submitDisabled,
             ]}
           >
             {saving ? (
@@ -309,7 +311,7 @@ export default function CreateStoreScreen() {
             ) : (
               <>
                 <Ionicons name="storefront" size={18} color={colors.bg} />
-                <Text style={styles.submitText}>Create my store</Text>
+                <Text style={lumoStyles.submitText}>Create my store</Text>
                 <Ionicons name="arrow-forward" size={17} color={colors.bg} />
               </>
             )}

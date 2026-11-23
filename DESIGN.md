@@ -84,3 +84,19 @@ Every control must have a real action or be visibly disabled with a reason. Keyb
 ## Brand mark and assets
 
 The lowercase open-top `u` mark remains the Lumo symbol. Preserve the locally bundled brand and authentication assets; do not substitute remote placeholder imagery for user-generated media.
+
+
+## User-selectable appearance
+
+The canonical runtime palette catalog lives in `lib/theme.ts`. Do not define additional palette copies in feature components.
+
+LUMO supports five selectable palettes:
+- **Obsidian** — default graphite / soft-silver identity.
+- **Light** — neutral off-white canvas and dark text.
+- **AMOLED** — true-black canvas for OLED displays.
+- **Forest** — muted deep green with sage accents.
+- **Sandstone** — warm charcoal / stone / beige.
+
+The selection and locale are persisted per signed-in account on the current device by `lib/preferences.tsx`. The initial locale is detected from the device (Uzbek fallback). Locale catalog and lookup live in `lib/localization.ts`.
+
+The preference-aware app shell, navigation, Settings screens, Feed controls, and shared `LumoModulePage` surfaces consume the selected palette. Feature modules that still use module-level static styles (including parts of Profile, Wallet, Gifts, Chat, and Studio) must be migrated before describing appearance support as complete across every screen. Keep their existing geometry and responsive breakpoints unchanged during that migration.

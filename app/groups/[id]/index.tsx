@@ -45,19 +45,22 @@ import {
   type GroupMessageWithSender,
 } from '../../../lib/groups';
 import { supabase } from '../../../lib/supabase';
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+import { colors } from '../../../lib/theme';
+
 
 const palette = {
-  bg: '#090C12',
-  surface: '#12161C',
-  raised: '#1A2029',
-  soft: '#20252D',
-  text: '#F2F5F7',
-  muted: '#9AA5B2',
-  dim: '#697263',
-  border: '#2B3440',
-  lime: '#B9C7D6',
-  limeDark: '#1E2717',
-  danger: '#FF6478',
+  get bg() { return colors.bg; },
+  get surface() { return colors.surface; },
+  get raised() { return colors.surfaceRaised; },
+  get soft() { return colors.surfaceSoft; },
+  get text() { return colors.text; },
+  get muted() { return colors.muted; },
+  get dim() { return colors.dim; },
+  get border() { return colors.border; },
+  get lime() { return colors.accent; },
+  get limeDark() { return colors.accentDark; },
+  get danger() { return colors.danger; },
 };
 
 type Reaction = {
@@ -90,6 +93,7 @@ function formatBytes(value: number | null) {
 }
 
 export default function GroupChat() {
+  const lumoStyles = useThemedStyles(styles);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const groupId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -514,18 +518,18 @@ export default function GroupChat() {
   const myRole = members.find((member) => member.user_id === me)?.role;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={lumoStyles.safeArea} edges={['top', 'left', 'right']}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={styles.screen}
+        style={lumoStyles.screen}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 18}
       >
-        <View style={styles.header}>
+        <View style={lumoStyles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={styles.headerButton}
+            style={lumoStyles.headerButton}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
@@ -533,7 +537,7 @@ export default function GroupChat() {
           </Pressable>
 
           <Pressable
-            style={styles.groupIdentity}
+            style={lumoStyles.groupIdentity}
             onPress={() => setMembersVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="View group members"
@@ -544,11 +548,11 @@ export default function GroupChat() {
               size={43}
             />
 
-            <View style={styles.headerCopy}>
-              <Text style={styles.groupName} numberOfLines={1}>
+            <View style={lumoStyles.headerCopy}>
+              <Text style={lumoStyles.groupName} numberOfLines={1}>
                 {group?.name ?? 'Group chat'}
               </Text>
-              <Text style={styles.groupSubtitle} numberOfLines={1}>
+              <Text style={lumoStyles.groupSubtitle} numberOfLines={1}>
                 {members.length} members
                 {myRole ? ` · ${myRole}` : ''}
               </Text>
@@ -559,7 +563,7 @@ export default function GroupChat() {
             onPress={() => {
               if (group) router.push(`/groups/${group.id}/member`);
             }}
-            style={styles.headerButton}
+            style={lumoStyles.headerButton}
             accessibilityRole="button"
             accessibilityLabel="Manage group members"
           >
@@ -569,7 +573,7 @@ export default function GroupChat() {
             onPress={() => {
               if (group) router.push(`/groups/${group.id}/settings`);
             }}
-            style={styles.headerButton}
+            style={lumoStyles.headerButton}
             accessibilityRole="button"
             accessibilityLabel="Group settings"
           >
@@ -578,27 +582,27 @@ export default function GroupChat() {
         </View>
 
         {loading ? (
-          <View style={styles.centerState}>
+          <View style={lumoStyles.centerState}>
             <ActivityIndicator color={palette.lime} size="large" />
-            <Text style={styles.stateText}>Opening group...</Text>
+            <Text style={lumoStyles.stateText}>Opening group...</Text>
           </View>
         ) : errorText && !group ? (
-          <View style={styles.centerState}>
+          <View style={lumoStyles.centerState}>
             <Ionicons name="cloud-offline-outline" size={30} color={palette.lime} />
-            <Text style={styles.stateTitle}>Group unavailable</Text>
-            <Text style={styles.stateText}>{errorText}</Text>
-            <Pressable onPress={() => void refresh()} style={styles.retryButton}>
-              <Text style={styles.retryText}>Try again</Text>
+            <Text style={lumoStyles.stateTitle}>Group unavailable</Text>
+            <Text style={lumoStyles.stateText}>{errorText}</Text>
+            <Pressable onPress={() => void refresh()} style={lumoStyles.retryButton}>
+              <Text style={lumoStyles.retryText}>Try again</Text>
             </Pressable>
           </View>
         ) : (
           <>
             {!!errorText && (
-              <Pressable onPress={() => void refresh()} style={styles.inlineError}>
-                <Text style={styles.inlineErrorText} numberOfLines={2}>
+              <Pressable onPress={() => void refresh()} style={lumoStyles.inlineError}>
+                <Text style={lumoStyles.inlineErrorText} numberOfLines={2}>
                   {errorText}
                 </Text>
-                <Text style={styles.retryLink}>Retry</Text>
+                <Text style={lumoStyles.retryLink}>Retry</Text>
               </Pressable>
             )}
 
@@ -622,8 +626,8 @@ export default function GroupChat() {
               }}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={[
-                styles.messageList,
-                visibleMessages.length === 0 && styles.messageListEmpty,
+                lumoStyles.messageList,
+                visibleMessages.length === 0 && lumoStyles.messageListEmpty,
               ]}
               refreshing={refreshing}
               onRefresh={() => void refresh()}
@@ -656,29 +660,29 @@ export default function GroupChat() {
                   />
                 );
               }}              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <View style={styles.emptyIcon}>
+                <View style={lumoStyles.emptyState}>
+                  <View style={lumoStyles.emptyIcon}>
                     <Ionicons name="people" size={29} color={palette.bg} />
                   </View>
-                  <Text style={styles.emptyTitle}>Your group starts here.</Text>
-                  <Text style={styles.emptyDescription}>
+                  <Text style={lumoStyles.emptyTitle}>Your group starts here.</Text>
+                  <Text style={lumoStyles.emptyDescription}>
                     Send the first message and bring everyone into the conversation.
                   </Text>
                 </View>
               }
             />
 
-            <View style={styles.composer}>
+            <View style={lumoStyles.composer}>
               {(replyTo || editingMessage) && (
-                <View style={styles.composerContext}>
-                  <View style={styles.contextAccent} />
-                  <View style={styles.contextCopy}>
-                    <Text style={styles.contextTitle}>
+                <View style={lumoStyles.composerContext}>
+                  <View style={lumoStyles.contextAccent} />
+                  <View style={lumoStyles.contextCopy}>
+                    <Text style={lumoStyles.contextTitle}>
                       {editingMessage
                         ? 'Editing message'
                         : `Replying to ${replyTo?.sender?.username ?? 'member'}`}
                     </Text>
-                    <Text style={styles.contextBody} numberOfLines={1}>
+                    <Text style={lumoStyles.contextBody} numberOfLines={1}>
                       {editingMessage?.body ?? replyTo?.body ?? 'Attachment'}
                     </Text>
                   </View>
@@ -688,7 +692,7 @@ export default function GroupChat() {
                       setEditingMessage(null);
                       setText('');
                     }}
-                    style={styles.removeButton}
+                    style={lumoStyles.removeButton}
                   >
                     <Ionicons name="close" size={17} color={palette.text} />
                   </Pressable>
@@ -696,12 +700,12 @@ export default function GroupChat() {
               )}
 
               {pendingMedia && (
-                <View style={styles.attachmentPreview}>
-                  <View style={styles.attachmentIcon}>
+                <View style={lumoStyles.attachmentPreview}>
+                  <View style={lumoStyles.attachmentIcon}>
                     {pendingMedia.type === 'image' ? (
                       <Image
                         source={{ uri: pendingMedia.uri }}
-                        style={styles.previewImage}
+                        style={lumoStyles.previewImage}
                         contentFit="cover"
                       />
                     ) : (
@@ -718,23 +722,23 @@ export default function GroupChat() {
                       />
                     )}
                   </View>
-                  <View style={styles.attachmentCopy}>
-                    <Text style={styles.attachmentName} numberOfLines={1}>
+                  <View style={lumoStyles.attachmentCopy}>
+                    <Text style={lumoStyles.attachmentName} numberOfLines={1}>
                       {pendingMedia.fileName || 'Selected attachment'}
                     </Text>
-                    <Text style={styles.attachmentSize}>
+                    <Text style={lumoStyles.attachmentSize}>
                       {formatBytes(pendingMedia.fileSize)} · 50 MB max
                     </Text>
                   </View>
-                  <Pressable onPress={() => setPendingMedia(null)} style={styles.removeButton}>
+                  <Pressable onPress={() => setPendingMedia(null)} style={lumoStyles.removeButton}>
                     <Ionicons name="close" size={17} color={palette.text} />
                   </Pressable>
                 </View>
               )}
 
-              <View style={styles.composerRow}>
+              <View style={lumoStyles.composerRow}>
                 <Pressable
-                  style={styles.attachButton}
+                  style={lumoStyles.attachButton}
                   onPress={() => void chooseMedia()}
                   disabled={sending || !!editingMessage}
                 >
@@ -742,16 +746,16 @@ export default function GroupChat() {
                 </Pressable>
 
                 <Pressable
-                  style={styles.fileButton}
+                  style={lumoStyles.fileButton}
                   onPress={() => void chooseFile()}
                   disabled={sending || !!editingMessage}
                 >
                   <Ionicons name="document-outline" size={19} color={palette.lime} />
                 </Pressable>
 
-                <View style={styles.inputShell}>
+                <View style={lumoStyles.inputShell}>
                   <TextInput
-                    style={styles.input}
+                    style={lumoStyles.input}
                     value={text}
                     onChangeText={setText}
                     placeholder={editingMessage ? 'Edit your message…' : 'Write something real…'}
@@ -764,7 +768,7 @@ export default function GroupChat() {
                 </View>
 
                 <Pressable
-                  style={[styles.sendButton, !canSend && styles.sendDisabled]}
+                  style={[lumoStyles.sendButton, !canSend && lumoStyles.sendDisabled]}
                   onPress={() => void send()}
                   disabled={!canSend}
                   accessibilityRole="button"
@@ -778,16 +782,16 @@ export default function GroupChat() {
                 </Pressable>
               </View>
 
-              <View style={styles.composerFooter}>
+              <View style={lumoStyles.composerFooter}>
                 <Ionicons name="sparkles" size={11} color={palette.lime} />
-                <Text style={styles.footerText}>YOUR PEOPLE. YOUR MOMENTS.</Text>
+                <Text style={lumoStyles.footerText}>YOUR PEOPLE. YOUR MOMENTS.</Text>
               </View>
             </View>
           </>
         )}
       </KeyboardAvoidingView>
 
-      <SafeAreaView edges={['bottom']} style={styles.bottomSafe} />
+      <SafeAreaView edges={['bottom']} style={lumoStyles.bottomSafe} />
 
       <Modal
         visible={membersVisible}
@@ -795,19 +799,19 @@ export default function GroupChat() {
         animationType="slide"
         onRequestClose={() => setMembersVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={lumoStyles.modalOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setMembersVisible(false)}
           />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeader}>
+          <View style={lumoStyles.sheet}>
+            <View style={lumoStyles.sheetHandle} />
+            <View style={lumoStyles.sheetHeader}>
               <View>
-                <Text style={styles.sheetTitle}>Group members</Text>
-                <Text style={styles.sheetSubtitle}>{members.length} people</Text>
+                <Text style={lumoStyles.sheetTitle}>Group members</Text>
+                <Text style={lumoStyles.sheetSubtitle}>{members.length} people</Text>
               </View>
-              <Pressable onPress={() => setMembersVisible(false)} style={styles.closeButton}>
+              <Pressable onPress={() => setMembersVisible(false)} style={lumoStyles.closeButton}>
                 <Ionicons name="close" size={19} color={palette.text} />
               </Pressable>
             </View>
@@ -815,27 +819,27 @@ export default function GroupChat() {
             <FlatList
               data={members}
               keyExtractor={(item) => item.user_id}
-              style={styles.memberList}
+              style={lumoStyles.memberList}
               renderItem={({ item }) => (
-                <View style={styles.memberRow}>
+                <View style={lumoStyles.memberRow}>
                   <Avatar
                     uri={item.profile?.avatar_url}
                     name={item.profile?.username ?? 'Member'}
                     size={42}
                   />
-                  <View style={styles.memberCopy}>
-                    <Text style={styles.memberName}>
+                  <View style={lumoStyles.memberCopy}>
+                    <Text style={lumoStyles.memberName}>
                       {item.profile?.full_name || item.profile?.username || 'Lumo member'}
                     </Text>
-                    <Text style={styles.memberUsername}>
+                    <Text style={lumoStyles.memberUsername}>
                       @{item.profile?.username ?? 'member'}
                     </Text>
                   </View>
-                  <Text style={styles.memberRole}>{item.role}</Text>
+                  <Text style={lumoStyles.memberRole}>{item.role}</Text>
                 </View>
               )}
               ListEmptyComponent={
-                <Text style={styles.noMembers}>No member details available.</Text>
+                <Text style={lumoStyles.noMembers}>No member details available.</Text>
               }
             />
           </View>
@@ -853,7 +857,7 @@ export default function GroupChat() {
           }
         }}
       >
-        <View style={styles.modalOverlay}>
+        <View style={lumoStyles.modalOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => {
@@ -863,45 +867,45 @@ export default function GroupChat() {
               }
             }}
           />
-          <View style={styles.messageActionSheet}>
-            <View style={styles.messageActionHandle} />
-            <Text style={styles.messageActionTitle}>
+          <View style={lumoStyles.messageActionSheet}>
+            <View style={lumoStyles.messageActionHandle} />
+            <Text style={lumoStyles.messageActionTitle}>
               {confirmingDelete ? 'Delete this message?' : 'Message options'}
             </Text>
-            <Text style={styles.messageActionSubtitle} numberOfLines={2}>
+            <Text style={lumoStyles.messageActionSubtitle} numberOfLines={2}>
               {selectedMessage?.body || 'Group message'}
             </Text>
 
             {confirmingDelete ? (
-              <View style={styles.messageActionButtons}>
+              <View style={lumoStyles.messageActionButtons}>
                 <Pressable
-                  style={styles.messageActionSecondary}
+                  style={lumoStyles.messageActionSecondary}
                   onPress={() => setConfirmingDelete(false)}
                   disabled={actionLoading}
                 >
-                  <Text style={styles.messageActionText}>Cancel</Text>
+                  <Text style={lumoStyles.messageActionText}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={styles.messageActionDanger}
+                  style={lumoStyles.messageActionDanger}
                   onPress={() => void deleteSelectedMessage()}
                   disabled={actionLoading}
                 >
                   {actionLoading ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={colors.text} size="small" />
                   ) : (
-                    <Text style={styles.messageActionDangerText}>Delete</Text>
+                    <Text style={lumoStyles.messageActionDangerText}>Delete</Text>
                   )}
                 </Pressable>
               </View>
             ) : (
-              <View style={styles.messageActionButtons}>
-                <Pressable style={styles.messageActionSecondary} onPress={startReply}>
+              <View style={lumoStyles.messageActionButtons}>
+                <Pressable style={lumoStyles.messageActionSecondary} onPress={startReply}>
                   <Ionicons name="arrow-undo-outline" size={17} color={palette.text} />
-                  <Text style={styles.messageActionText}>Reply</Text>
+                  <Text style={lumoStyles.messageActionText}>Reply</Text>
                 </Pressable>
 
                 <Pressable
-                  style={styles.messageActionSecondary}
+                  style={lumoStyles.messageActionSecondary}
                   onPress={() => {
                     if (!selectedMessage) return;
 
@@ -925,14 +929,14 @@ export default function GroupChat() {
                   }}
                 >
                   <Ionicons name="arrow-redo-outline" size={17} color={palette.text} />
-                  <Text style={styles.messageActionText}>Forward</Text>
+                  <Text style={lumoStyles.messageActionText}>Forward</Text>
                 </Pressable>
 
                 <Pressable
                   style={[
-                    styles.messageActionSecondary,
-                    selectedMessage?.sender_id !== me && styles.messageActionDisabled,
-                    selectedMessage?.message_type !== 'text' && styles.messageActionDisabled,
+                    lumoStyles.messageActionSecondary,
+                    selectedMessage?.sender_id !== me && lumoStyles.messageActionDisabled,
+                    selectedMessage?.message_type !== 'text' && lumoStyles.messageActionDisabled,
                   ]}
                   disabled={
                     selectedMessage?.sender_id !== me ||
@@ -941,27 +945,27 @@ export default function GroupChat() {
                   onPress={startEdit}
                 >
                   <Ionicons name="create-outline" size={17} color={palette.text} />
-                  <Text style={styles.messageActionText}>Edit</Text>
+                  <Text style={lumoStyles.messageActionText}>Edit</Text>
                 </Pressable>
 
                 <Pressable
-                  style={styles.messageActionSecondary}
+                  style={lumoStyles.messageActionSecondary}
                   onPress={() => {
                     if (selectedMessage) void toggleReaction(selectedMessage, '❤️');
                     setSelectedMessage(null);
                   }}
                 >
-                  <Text style={styles.messageActionEmoji}>❤️</Text>
-                  <Text style={styles.messageActionText}>React</Text>
+                  <Text style={lumoStyles.messageActionEmoji}>❤️</Text>
+                  <Text style={lumoStyles.messageActionText}>React</Text>
                 </Pressable>
 
                 {selectedMessage?.sender_id === me && (
                   <Pressable
-                    style={styles.messageActionDeleteRow}
+                    style={lumoStyles.messageActionDeleteRow}
                     onPress={() => setConfirmingDelete(true)}
                   >
                     <Ionicons name="trash-outline" size={17} color={palette.danger} />
-                    <Text style={styles.messageActionDeleteText}>Delete message</Text>
+                    <Text style={lumoStyles.messageActionDeleteText}>Delete message</Text>
                   </Pressable>
                 )}
               </View>
@@ -1139,6 +1143,8 @@ const styles = StyleSheet.create({
   },
   videoCard: {
     width: 205,
+    maxWidth: '100%',
+    minWidth: 0,
     height: 112,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1149,8 +1155,8 @@ const styles = StyleSheet.create({
   videoText: { color: palette.text, fontSize: 10, marginTop: 3 },
   attachmentUnavailable: { color: palette.danger, fontSize: 11, padding: 12 },
   fileCard: {
-    minWidth: 190,
-    maxWidth: 250,
+    minWidth: 0,
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,

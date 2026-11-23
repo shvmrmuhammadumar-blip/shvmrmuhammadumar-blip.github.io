@@ -19,10 +19,14 @@ import { supabase } from '../../lib/supabase';
 import { dayAgoIso, timeAgo } from '../../lib/api';
 import { trackContentOpen } from '../../lib/studio-analytics';
 import type { Story } from '../../lib/types';
+import { colors } from '../../lib/theme';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 const SLIDE_MS = 5000;
 
 export default function StoryViewer() {
+  const lumoStyles = useThemedStyles(styles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const me = session!.user.id;
@@ -141,20 +145,20 @@ export default function StoryViewer() {
 
   if (loading) {
     return (
-      <View style={styles.black}>
-        <ActivityIndicator color="#fff" />
+      <View style={lumoStyles.black}>
+        <ActivityIndicator color={resolveThemeColor(colors.mediaText, "color")} />
       </View>
     );
   }
   if (stories.length === 0) {
     return (
-      <View style={styles.black}>
-        <Text style={{ color: '#fff', fontWeight: '700' }}>
+      <View style={lumoStyles.black}>
+        <Text style={{ color: resolveThemeColor(colors.mediaText, "color"), fontWeight: '700' }}>
           {loadError ? 'Stories could not be loaded' : 'No stories to show.'}
         </Text>
-        {!!loadError && <Text style={{ color: '#9AA5B2', textAlign: 'center', marginTop: 8, paddingHorizontal: 24 }}>{loadError}</Text>}
+        {!!loadError && <Text style={{ color: resolveThemeColor("#9AA5B2", "color"), textAlign: 'center', marginTop: 8, paddingHorizontal: 24 }}>{loadError}</Text>}
         <Pressable onPress={() => router.back()} style={{ marginTop: 16, padding: 12 }} accessibilityRole="button">
-          <Text style={{ color: '#B9C7D6', fontWeight: '700' }}>Close</Text>
+          <Text style={{ color: resolveThemeColor("#B9C7D6", "color"), fontWeight: '700' }}>Close</Text>
         </Pressable>
       </View>
     );
@@ -163,7 +167,7 @@ export default function StoryViewer() {
   const story = currentStory;
 
   return (
-    <View style={styles.black}>
+    <View style={lumoStyles.black}>
       {story.image_url ? <Image source={{ uri: story.image_url }} style={StyleSheet.absoluteFill} contentFit="contain" /> : story.video_url ? (
         <VideoView player={storyPlayer} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} />
       ) : null}
@@ -173,24 +177,24 @@ export default function StoryViewer() {
         <Pressable style={{ flex: 2 }} onPress={nextStory} />
       </View>
 
-      <SafeAreaView style={styles.top} pointerEvents="box-none">
-        <View style={styles.bars}>
+      <SafeAreaView style={lumoStyles.top} pointerEvents="box-none">
+        <View style={lumoStyles.bars}>
           {stories.map((s, i) => (
-            <View key={s.id} style={[styles.bar, { width: (width - 24 - (stories.length - 1) * 4) / stories.length, opacity: i <= index ? 1 : 0.35 }]} />
+            <View key={s.id} style={[lumoStyles.bar, { width: (width - 24 - (stories.length - 1) * 4) / stories.length, opacity: i <= index ? 1 : 0.35 }]} />
           ))}
         </View>
-        <View style={styles.header}>
+        <View style={lumoStyles.header}>
           <Avatar uri={story.profiles?.avatar_url} name={story.profiles?.username} size={32} />
-          <Text style={styles.name}>{story.profiles?.username ?? 'user'}</Text>
-          <Text style={styles.time}>{timeAgo(story.created_at)}</Text>
+          <Text style={lumoStyles.name}>{story.profiles?.username ?? 'user'}</Text>
+          <Text style={lumoStyles.time}>{timeAgo(story.created_at)}</Text>
           <View style={{ flex: 1 }} />
           {id === me && (
             <Pressable onPress={removeCurrent} hitSlop={10}>
-              <Ionicons name="trash-outline" size={24} color="#fff" />
+              <Ionicons name="trash-outline" size={24} color={resolveThemeColor(colors.mediaText, "color")} />
             </Pressable>
           )}
           <Pressable onPress={() => router.back()} hitSlop={10}>
-            <Ionicons name="close" size={30} color="#fff" />
+            <Ionicons name="close" size={30} color={resolveThemeColor(colors.mediaText, "color")} />
           </Pressable>
         </View>
       </SafeAreaView>
@@ -199,11 +203,11 @@ export default function StoryViewer() {
 }
 
 const styles = StyleSheet.create({
-  black: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+  black: { flex: 1, backgroundColor: colors.mediaBg, alignItems: 'center', justifyContent: 'center' },
   top: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 12, gap: 10 },
   bars: { flexDirection: 'row', gap: 4, marginTop: 6 },
-  bar: { height: 3, borderRadius: 2, backgroundColor: '#fff' },
+  bar: { height: 3, borderRadius: 2, backgroundColor: colors.mediaText },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  name: { color: '#fff', fontWeight: '700' },
-  time: { color: '#ddd' },
+  name: { color: colors.mediaText, fontWeight: '700' },
+  time: { color: colors.mediaText },
 });

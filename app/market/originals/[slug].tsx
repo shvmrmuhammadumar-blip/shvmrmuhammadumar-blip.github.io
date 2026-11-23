@@ -23,6 +23,7 @@ import {
 } from "../../../lib/market-official";
 import { createOfficialOrder } from "../../../lib/market-orders";
 import { colors } from "../../../lib/theme";
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 const COLOR_SWATCHES: Record<string, string> = {
   black: "#17191D",
@@ -67,6 +68,7 @@ function getPhone(store: OfficialStore | null) {
 }
 
 export default function OfficialProductDetailScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const params = useLocalSearchParams<{ slug?: string | string[] }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const router = useRouter();
@@ -214,141 +216,141 @@ export default function OfficialProductDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.stateRoot}>
+      <View style={lumoStyles.stateRoot}>
         <ActivityIndicator size="large" color={colors.accentStrong} />
-        <Text style={styles.stateText}>Loading product...</Text>
+        <Text style={lumoStyles.stateText}>Loading product...</Text>
       </View>
     );
   }
 
   if (!product || error) {
     return (
-      <View style={styles.stateRoot}>
-        <View style={styles.stateIcon}>
+      <View style={lumoStyles.stateRoot}>
+        <View style={lumoStyles.stateIcon}>
           <Ionicons name="cube-outline" size={27} color={colors.accentStrong} />
         </View>
-        <Text style={styles.stateTitle}>Product unavailable</Text>
-        <Text style={styles.stateText}>{error ?? "This product could not be found."}</Text>
-        <Pressable onPress={() => router.replace("/market" as never)} style={styles.backButton}>
+        <Text style={lumoStyles.stateTitle}>Product unavailable</Text>
+        <Text style={lumoStyles.stateText}>{error ?? "This product could not be found."}</Text>
+        <Pressable onPress={() => router.replace("/market" as never)} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={15} color={colors.bg} />
-          <Text style={styles.backButtonText}>Back to Market</Text>
+          <Text style={lumoStyles.backButtonText}>Back to Market</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <View style={styles.topBar}>
-            <Pressable onPress={() => router.back()} style={styles.backLink} accessibilityRole="button">
+    <View style={lumoStyles.root}>
+      <ScrollView contentContainerStyle={lumoStyles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={lumoStyles.container}>
+          <View style={lumoStyles.topBar}>
+            <Pressable onPress={() => router.back()} style={lumoStyles.backLink} accessibilityRole="button">
               <Ionicons name="arrow-back" size={17} color={colors.text} />
-              <Text style={styles.backLinkText}>Market</Text>
+              <Text style={lumoStyles.backLinkText}>Market</Text>
             </Pressable>
-            <View style={styles.brandLockup}>
-              <View style={styles.brandMark}><Text style={styles.brandMarkText}>L</Text></View>
+            <View style={lumoStyles.brandLockup}>
+              <View style={lumoStyles.brandMark}><Text style={lumoStyles.brandMarkText}>L</Text></View>
               <View>
-                <Text style={styles.brandEyebrow}>THE OFFICIAL COLLECTION</Text>
-                <Text style={styles.brandName}>LUMO ORIGINALS</Text>
+                <Text style={lumoStyles.brandEyebrow}>THE OFFICIAL COLLECTION</Text>
+                <Text style={lumoStyles.brandName}>LUMO ORIGINALS</Text>
               </View>
             </View>
-            <Pressable onPress={() => void shareProduct()} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Share product">
+            <Pressable onPress={() => void shareProduct()} style={lumoStyles.iconButton} accessibilityRole="button" accessibilityLabel="Share product">
               <Ionicons name="share-social-outline" size={18} color={colors.accentStrong} />
             </Pressable>
           </View>
 
-          <View style={[styles.productLayout, isWide && styles.productLayoutWide]}>
-            <View style={[styles.galleryColumn, isWide && styles.wideColumn]}>
-              <Pressable onPress={() => images.length > 0 && setImageViewerOpen(true)} style={styles.imageStage} accessibilityRole="button" accessibilityLabel="View product image">
+          <View style={[lumoStyles.productLayout, isWide && lumoStyles.productLayoutWide]}>
+            <View style={[lumoStyles.galleryColumn, isWide && lumoStyles.wideColumn]}>
+              <Pressable onPress={() => images.length > 0 && setImageViewerOpen(true)} style={lumoStyles.imageStage} accessibilityRole="button" accessibilityLabel="View product image">
                 {images.length > 0 ? (
                   <Image
                     source={{ uri: images[Math.min(selectedImage, images.length - 1)] }}
-                    style={styles.heroImage}
+                    style={lumoStyles.heroImage}
                     contentFit="cover"
                     transition={180}
                   />
                 ) : (
-                  <View style={styles.imageFallback}>
+                  <View style={lumoStyles.imageFallback}>
                     <Ionicons name="image-outline" size={42} color={colors.dim} />
-                    <Text style={styles.imageFallbackText}>LUMO ORIGINALS</Text>
+                    <Text style={lumoStyles.imageFallbackText}>LUMO ORIGINALS</Text>
                   </View>
                 )}
                 {product.is_featured ? (
-                  <View style={styles.featuredPill}>
+                  <View style={lumoStyles.featuredPill}>
                     <Ionicons name="sparkles" size={11} color={colors.bg} />
-                    <Text style={styles.featuredText}>LUMO SELECTED</Text>
+                    <Text style={lumoStyles.featuredText}>LUMO SELECTED</Text>
                   </View>
                 ) : null}
-                <View style={styles.zoomHint}>
+                <View style={lumoStyles.zoomHint}>
                   <Ionicons name="expand-outline" size={13} color={colors.text} />
-                  <Text style={styles.zoomHintText}>VIEW</Text>
+                  <Text style={lumoStyles.zoomHintText}>VIEW</Text>
                 </View>
                 {images.length > 1 ? (
-                  <View style={styles.imageCount}>
-                    <Text style={styles.imageCountText}>{selectedImage + 1} / {images.length}</Text>
+                  <View style={lumoStyles.imageCount}>
+                    <Text style={lumoStyles.imageCountText}>{selectedImage + 1} / {images.length}</Text>
                   </View>
                 ) : null}
               </Pressable>
 
               {images.length > 1 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbnailRow}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.thumbnailRow}>
                   {images.map((image, index) => (
                     <Pressable
                       key={image + index}
                       onPress={() => setSelectedImage(index)}
-                      style={[styles.thumbnail, selectedImage === index && styles.thumbnailSelected]}
+                      style={[lumoStyles.thumbnail, selectedImage === index && lumoStyles.thumbnailSelected]}
                       accessibilityRole="button"
                       accessibilityLabel={"View image " + (index + 1)}
                     >
-                      <Image source={{ uri: image }} style={styles.thumbnailImage} contentFit="cover" />
+                      <Image source={{ uri: image }} style={lumoStyles.thumbnailImage} contentFit="cover" />
                     </Pressable>
                   ))}
                 </ScrollView>
               ) : null}
-              <View style={styles.trustLine}>
+              <View style={lumoStyles.trustLine}>
                 <Ionicons name="shield-checkmark-outline" size={14} color={colors.success} />
-                <Text style={styles.trustText}>Official LUMO ORIGINALS product</Text>
+                <Text style={lumoStyles.trustText}>Official LUMO ORIGINALS product</Text>
               </View>
             </View>
 
-            <View style={[styles.infoColumn, isWide && styles.wideInfoColumn]}>
-              <View style={styles.categoryRow}>
-                <Text style={styles.categoryText}>{product.category.toUpperCase()}</Text>
-                <View style={styles.categoryDot} />
-                <Text style={styles.categoryText}>LUMO ORIGINALS</Text>
+            <View style={[lumoStyles.infoColumn, isWide && lumoStyles.wideInfoColumn]}>
+              <View style={lumoStyles.categoryRow}>
+                <Text style={lumoStyles.categoryText}>{product.category.toUpperCase()}</Text>
+                <View style={lumoStyles.categoryDot} />
+                <Text style={lumoStyles.categoryText}>LUMO ORIGINALS</Text>
               </View>
 
-              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={lumoStyles.productName}>{product.name}</Text>
 
-              <View style={styles.priceLine}>
-                <Text style={styles.price}>{formatProductPrice(shownPrice, product.currency)}</Text>
-                {selectedVariant?.price_override != null ? <Text style={styles.priceNote}>Selected option price</Text> : null}
+              <View style={lumoStyles.priceLine}>
+                <Text style={lumoStyles.price}>{formatProductPrice(shownPrice, product.currency)}</Text>
+                {selectedVariant?.price_override != null ? <Text style={lumoStyles.priceNote}>Selected option price</Text> : null}
               </View>
 
               {product.sku ? (
-                <View style={styles.codeLine}>
-                  <Text style={styles.codeLabel}>PRODUCT CODE</Text>
-                  <Text style={styles.codeValue}>{product.sku}</Text>
+                <View style={lumoStyles.codeLine}>
+                  <Text style={lumoStyles.codeLabel}>PRODUCT CODE</Text>
+                  <Text style={lumoStyles.codeValue}>{product.sku}</Text>
                 </View>
               ) : null}
 
-              <View style={styles.separator} />
+              <View style={lumoStyles.separator} />
 
               {colorsAvailable.length > 0 ? (
-                <View style={styles.selectorBlock}>
-                  <View style={styles.selectorHeader}>
-                    <Text style={styles.selectorLabel}>COLOR</Text>
-                    <Text style={styles.selectorValue}>{selectedVariant?.color ?? ""}</Text>
+                <View style={lumoStyles.selectorBlock}>
+                  <View style={lumoStyles.selectorHeader}>
+                    <Text style={lumoStyles.selectorLabel}>COLOR</Text>
+                    <Text style={lumoStyles.selectorValue}>{selectedVariant?.color ?? ""}</Text>
                   </View>
-                  <View style={styles.colorChoices}>
+                  <View style={lumoStyles.colorChoices}>
                     {colorsAvailable.map((color) => {
                       const selected = selectedVariant?.color === color;
                       const swatch = COLOR_SWATCHES[color.toLowerCase()] ?? "#7E8792";
                       return (
-                        <Pressable key={color} onPress={() => chooseColor(color)} style={[styles.colorChoice, selected && styles.colorChoiceSelected]}>
-                          <View style={[styles.colorSwatch, { backgroundColor: swatch }, color.toLowerCase() === "white" && styles.whiteSwatch]} />
-                          <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{color}</Text>
+                        <Pressable key={color} onPress={() => chooseColor(color)} style={[lumoStyles.colorChoice, selected && lumoStyles.colorChoiceSelected]}>
+                          <View style={[lumoStyles.colorSwatch, { backgroundColor: swatch }, color.toLowerCase() === "white" && lumoStyles.whiteSwatch]} />
+                          <Text style={[lumoStyles.choiceText, selected && lumoStyles.choiceTextSelected]}>{color}</Text>
                           {selected ? <Ionicons name="checkmark-circle" size={14} color={colors.accentStrong} /> : null}
                         </Pressable>
                       );
@@ -358,31 +360,31 @@ export default function OfficialProductDetailScreen() {
               ) : null}
 
               {sizesAvailable.length > 0 ? (
-                <View style={styles.selectorBlock}>
-                  <View style={styles.selectorHeader}>
-                    <Text style={styles.selectorLabel}>SIZE</Text>
-                    <Text style={styles.selectorValue}>{selectedVariant?.size ?? ""}</Text>
+                <View style={lumoStyles.selectorBlock}>
+                  <View style={lumoStyles.selectorHeader}>
+                    <Text style={lumoStyles.selectorLabel}>SIZE</Text>
+                    <Text style={lumoStyles.selectorValue}>{selectedVariant?.size ?? ""}</Text>
                   </View>
-                  <View style={styles.sizeChoices}>
+                  <View style={lumoStyles.sizeChoices}>
                     {sizesAvailable.map((size) => {
                       const selected = selectedVariant?.size === size;
                       return (
-                        <Pressable key={size} onPress={() => chooseSize(size)} style={[styles.sizeChoice, selected && styles.sizeChoiceSelected]}>
-                          <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{size}</Text>
+                        <Pressable key={size} onPress={() => chooseSize(size)} style={[lumoStyles.sizeChoice, selected && lumoStyles.sizeChoiceSelected]}>
+                          <Text style={[lumoStyles.choiceText, selected && lumoStyles.choiceTextSelected]}>{size}</Text>
                         </Pressable>
                       );
                     })}
                   </View>
                 </View>
               ) : activeVariants.length > 0 ? (
-                <View style={styles.selectorBlock}>
-                  <Text style={styles.selectorLabel}>OPTION</Text>
-                  <View style={styles.sizeChoices}>
+                <View style={lumoStyles.selectorBlock}>
+                  <Text style={lumoStyles.selectorLabel}>OPTION</Text>
+                  <View style={lumoStyles.sizeChoices}>
                     {activeVariants.map((variant) => {
                       const selected = selectedVariant?.id === variant.id;
                       return (
-                        <Pressable key={variant.id} onPress={() => setSelectedVariantId(variant.id)} style={[styles.sizeChoice, selected && styles.sizeChoiceSelected]}>
-                          <Text style={[styles.choiceText, selected && styles.choiceTextSelected]}>{variant.name}</Text>
+                        <Pressable key={variant.id} onPress={() => setSelectedVariantId(variant.id)} style={[lumoStyles.sizeChoice, selected && lumoStyles.sizeChoiceSelected]}>
+                          <Text style={[lumoStyles.choiceText, selected && lumoStyles.choiceTextSelected]}>{variant.name}</Text>
                         </Pressable>
                       );
                     })}
@@ -390,90 +392,90 @@ export default function OfficialProductDetailScreen() {
                 </View>
               ) : null}
 
-              <View style={styles.quantityStockRow}>
-                <View style={styles.quantityBlock}>
-                  <Text style={styles.selectorLabel}>QUANTITY</Text>
-                  <View style={styles.quantityControl}>
-                    <Pressable onPress={() => setQuantity((value) => Math.max(1, value - 1))} style={styles.quantityButton} accessibilityLabel="Decrease quantity">
+              <View style={lumoStyles.quantityStockRow}>
+                <View style={lumoStyles.quantityBlock}>
+                  <Text style={lumoStyles.selectorLabel}>QUANTITY</Text>
+                  <View style={lumoStyles.quantityControl}>
+                    <Pressable onPress={() => setQuantity((value) => Math.max(1, value - 1))} style={lumoStyles.quantityButton} accessibilityLabel="Decrease quantity">
                       <Ionicons name="remove" size={16} color={colors.text} />
                     </Pressable>
-                    <Text style={styles.quantityValue}>{quantity}</Text>
-                    <Pressable onPress={() => setQuantity((value) => Math.min(99, value + 1))} style={styles.quantityButton} accessibilityLabel="Increase quantity">
+                    <Text style={lumoStyles.quantityValue}>{quantity}</Text>
+                    <Pressable onPress={() => setQuantity((value) => Math.min(99, value + 1))} style={lumoStyles.quantityButton} accessibilityLabel="Increase quantity">
                       <Ionicons name="add" size={16} color={colors.text} />
                     </Pressable>
                   </View>
                 </View>
-                <View style={styles.stockBlock}>
-                  <View style={[styles.stockDot, hasStock ? styles.stockDotAvailable : styles.stockDotOnRequest]} />
-                  <View style={styles.stockCopy}>
-                    <Text style={styles.stockTitle}>{hasStock ? "IN STOCK" : "CHECK AVAILABILITY"}</Text>
-                    <Text style={styles.stockText}>{hasStock ? stock + " available" : "Confirm before ordering"}</Text>
+                <View style={lumoStyles.stockBlock}>
+                  <View style={[lumoStyles.stockDot, hasStock ? lumoStyles.stockDotAvailable : lumoStyles.stockDotOnRequest]} />
+                  <View style={lumoStyles.stockCopy}>
+                    <Text style={lumoStyles.stockTitle}>{hasStock ? "IN STOCK" : "CHECK AVAILABILITY"}</Text>
+                    <Text style={lumoStyles.stockText}>{hasStock ? stock + " available" : "Confirm before ordering"}</Text>
                   </View>
                 </View>
               </View>
 
-              <View style={styles.separator} />
+              <View style={lumoStyles.separator} />
 
-              <View style={styles.locationCard}>
-                <View style={styles.locationIcon}>
+              <View style={lumoStyles.locationCard}>
+                <View style={lumoStyles.locationIcon}>
                   <Ionicons name="location-outline" size={18} color={colors.accentStrong} />
                 </View>
-                <View style={styles.locationCopy}>
-                  <Text style={styles.locationTitle}>STORE LOCATION</Text>
-                  <Text style={styles.locationText}>{address || "Ask us for the pickup location"}</Text>
+                <View style={lumoStyles.locationCopy}>
+                  <Text style={lumoStyles.locationTitle}>STORE LOCATION</Text>
+                  <Text style={lumoStyles.locationText}>{address || "Ask us for the pickup location"}</Text>
                 </View>
                 {address ? (
-                  <Pressable onPress={openDirections} style={styles.directionsButton} accessibilityLabel="Open directions">
+                  <Pressable onPress={openDirections} style={lumoStyles.directionsButton} accessibilityLabel="Open directions">
                     <Ionicons name="navigate-outline" size={17} color={colors.accentStrong} />
                   </Pressable>
                 ) : null}
               </View>
 
-              <View style={styles.contactCard}>
-                <View style={styles.contactAvatar}><Ionicons name="headset-outline" size={17} color={colors.accentStrong} /></View>
-                <View style={styles.contactCopy}>
-                  <Text style={styles.contactLabel}>CONTACT</Text>
-                  <Text style={styles.contactName}>{contactName}</Text>
-                  <Text style={styles.contactPhone}>{phone ? "+" + phone : "Contact details not added"}</Text>
+              <View style={lumoStyles.contactCard}>
+                <View style={lumoStyles.contactAvatar}><Ionicons name="headset-outline" size={17} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.contactCopy}>
+                  <Text style={lumoStyles.contactLabel}>CONTACT</Text>
+                  <Text style={lumoStyles.contactName}>{contactName}</Text>
+                  <Text style={lumoStyles.contactPhone}>{phone ? "+" + phone : "Contact details not added"}</Text>
                 </View>
                 {phone ? (
-                  <Pressable onPress={callSupport} style={styles.callButton} accessibilityLabel="Call LUMO">
+                  <Pressable onPress={callSupport} style={lumoStyles.callButton} accessibilityLabel="Call LUMO">
                     <Ionicons name="call-outline" size={17} color={colors.accentStrong} />
                   </Pressable>
                 ) : null}
               </View>
 
-              <Pressable onPress={() => setDetailsOpen((value) => !value)} style={styles.detailsToggle} accessibilityRole="button" accessibilityState={{ expanded: detailsOpen }}>
-                <View style={styles.detailsToggleLeft}>
+              <Pressable onPress={() => setDetailsOpen((value) => !value)} style={lumoStyles.detailsToggle} accessibilityRole="button" accessibilityState={{ expanded: detailsOpen }}>
+                <View style={lumoStyles.detailsToggleLeft}>
                   <Ionicons name="information-circle-outline" size={17} color={colors.accentStrong} />
-                  <Text style={styles.detailsToggleText}>PRODUCT DETAILS</Text>
+                  <Text style={lumoStyles.detailsToggleText}>PRODUCT DETAILS</Text>
                 </View>
                 <Ionicons name={detailsOpen ? "chevron-up" : "chevron-down"} size={17} color={colors.muted} />
               </Pressable>
 
               {detailsOpen ? (
-                <View style={styles.detailsPanel}>
-                  <Text style={styles.detailText}>{product.description || product.short_description || "No additional product details."}</Text>
-                  <View style={styles.detailSpecRow}>
-                    <Text style={styles.detailSpecLabel}>Category</Text>
-                    <Text style={styles.detailSpecValue}>{product.category}</Text>
+                <View style={lumoStyles.detailsPanel}>
+                  <Text style={lumoStyles.detailText}>{product.description || product.short_description || "No additional product details."}</Text>
+                  <View style={lumoStyles.detailSpecRow}>
+                    <Text style={lumoStyles.detailSpecLabel}>Category</Text>
+                    <Text style={lumoStyles.detailSpecValue}>{product.category}</Text>
                   </View>
                   {product.sku ? (
-                    <View style={styles.detailSpecRow}>
-                      <Text style={styles.detailSpecLabel}>Product code</Text>
-                      <Text style={styles.detailSpecValue}>{product.sku}</Text>
+                    <View style={lumoStyles.detailSpecRow}>
+                      <Text style={lumoStyles.detailSpecLabel}>Product code</Text>
+                      <Text style={lumoStyles.detailSpecValue}>{product.sku}</Text>
                     </View>
                   ) : null}
                   {selectedVariant?.color ? (
-                    <View style={styles.detailSpecRow}>
-                      <Text style={styles.detailSpecLabel}>Color</Text>
-                      <Text style={styles.detailSpecValue}>{selectedVariant.color}</Text>
+                    <View style={lumoStyles.detailSpecRow}>
+                      <Text style={lumoStyles.detailSpecLabel}>Color</Text>
+                      <Text style={lumoStyles.detailSpecValue}>{selectedVariant.color}</Text>
                     </View>
                   ) : null}
                   {selectedVariant?.size ? (
-                    <View style={styles.detailSpecRow}>
-                      <Text style={styles.detailSpecLabel}>Size</Text>
-                      <Text style={styles.detailSpecValue}>{selectedVariant.size}</Text>
+                    <View style={lumoStyles.detailSpecRow}>
+                      <Text style={lumoStyles.detailSpecLabel}>Size</Text>
+                      <Text style={lumoStyles.detailSpecValue}>{selectedVariant.size}</Text>
                     </View>
                   ) : null}
                 </View>
@@ -481,14 +483,14 @@ export default function OfficialProductDetailScreen() {
             </View>
           </View>
 
-          <View style={styles.recommendationsSection}>
-              <View style={styles.recommendationsHeader}>
-                <View style={styles.recommendationsHeading}>
-                  <Text style={styles.recommendationsEyebrow}>THE LUMO EDIT</Text>
-                  <Text style={styles.recommendationsTitle}>You may also like</Text>
+          <View style={lumoStyles.recommendationsSection}>
+              <View style={lumoStyles.recommendationsHeader}>
+                <View style={lumoStyles.recommendationsHeading}>
+                  <Text style={lumoStyles.recommendationsEyebrow}>THE LUMO EDIT</Text>
+                  <Text style={lumoStyles.recommendationsTitle}>You may also like</Text>
                 </View>
-                <Pressable onPress={() => router.replace("/market" as never)} style={styles.viewAllButton}>
-                  <Text style={styles.viewAllText}>VIEW ALL</Text>
+                <Pressable onPress={() => router.replace("/market" as never)} style={lumoStyles.viewAllButton}>
+                  <Text style={lumoStyles.viewAllText}>VIEW ALL</Text>
                   <Ionicons name="arrow-forward" size={13} color={colors.accentStrong} />
                 </Pressable>
               </View>
@@ -496,161 +498,161 @@ export default function OfficialProductDetailScreen() {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.recommendationsRail}
+                  contentContainerStyle={lumoStyles.recommendationsRail}
                 >
                   {recommendedProducts.map((item) => (
                     <Pressable
                       key={item.id}
                       onPress={() => router.push(("/market/originals/" + item.slug) as never)}
-                      style={({ pressed }) => [styles.recommendationCard, pressed && styles.recommendationPressed]}
+                      style={({ pressed }) => [lumoStyles.recommendationCard, pressed && lumoStyles.recommendationPressed]}
                       accessibilityRole="button"
                       accessibilityLabel={"View " + item.name}
                     >
-                      <View style={styles.recommendationImageWrap}>
+                      <View style={lumoStyles.recommendationImageWrap}>
                         {item.images?.[0] ? (
-                          <Image source={{ uri: item.images[0] }} style={styles.recommendationImage} contentFit="cover" />
+                          <Image source={{ uri: item.images[0] }} style={lumoStyles.recommendationImage} contentFit="cover" />
                         ) : (
-                          <View style={styles.recommendationPlaceholder}>
+                          <View style={lumoStyles.recommendationPlaceholder}>
                             <Ionicons name="image-outline" size={25} color={colors.dim} />
                           </View>
                         )}
                         {item.is_featured ? (
-                          <View style={styles.recommendationBadge}>
+                          <View style={lumoStyles.recommendationBadge}>
                             <Ionicons name="sparkles" size={9} color={colors.bg} />
-                            <Text style={styles.recommendationBadgeText}>SELECTED</Text>
+                            <Text style={lumoStyles.recommendationBadgeText}>SELECTED</Text>
                           </View>
                         ) : null}
                       </View>
-                      <View style={styles.recommendationInfo}>
-                        <Text style={styles.recommendationCategory} numberOfLines={1}>{item.category}</Text>
-                        <Text style={styles.recommendationName} numberOfLines={1}>{item.name}</Text>
-                        <Text style={styles.recommendationPrice}>{formatProductPrice(item.price, item.currency)}</Text>
+                      <View style={lumoStyles.recommendationInfo}>
+                        <Text style={lumoStyles.recommendationCategory} numberOfLines={1}>{item.category}</Text>
+                        <Text style={lumoStyles.recommendationName} numberOfLines={1}>{item.name}</Text>
+                        <Text style={lumoStyles.recommendationPrice}>{formatProductPrice(item.price, item.currency)}</Text>
                       </View>
                     </Pressable>
                   ))}
                 </ScrollView>
               ) : (
-                <View style={styles.recommendationsEmpty}>
+                <View style={lumoStyles.recommendationsEmpty}>
                   <Ionicons name="sparkles-outline" size={17} color={colors.dim} />
-                  <Text style={styles.recommendationsEmptyText}>More LUMO pieces are coming soon.</Text>
+                  <Text style={lumoStyles.recommendationsEmptyText}>More LUMO pieces are coming soon.</Text>
                 </View>
               )}
           </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerBrand}>LUMO ORIGINALS</Text>
-            <Text style={styles.footerTagline}>Everyday essentials. Elevated style.</Text>
+          <View style={lumoStyles.footer}>
+            <Text style={lumoStyles.footerBrand}>LUMO ORIGINALS</Text>
+            <Text style={lumoStyles.footerTagline}>Everyday essentials. Elevated style.</Text>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.stickyBar}>
-        <View style={styles.stickyPriceBlock}>
-          <Text style={styles.stickyPriceLabel}>SUBTOTAL</Text>
-          <Text style={styles.stickyPrice}>{formatProductPrice(shownPrice * quantity, product.currency)}</Text>
+      <View style={lumoStyles.stickyBar}>
+        <View style={lumoStyles.stickyPriceBlock}>
+          <Text style={lumoStyles.stickyPriceLabel}>SUBTOTAL</Text>
+          <Text style={lumoStyles.stickyPrice}>{formatProductPrice(shownPrice * quantity, product.currency)}</Text>
         </View>
-        <Pressable onPress={openOrderForm} style={({ pressed }) => [styles.orderButton, pressed && styles.orderButtonPressed]}>
+        <Pressable onPress={openOrderForm} style={({ pressed }) => [lumoStyles.orderButton, pressed && lumoStyles.orderButtonPressed]}>
           <Ionicons name="bag-handle-outline" size={18} color={colors.bg} />
-          <Text style={styles.orderButtonText}>{hasStock ? "PLACE ORDER" : "REQUEST ORDER"}</Text>
+          <Text style={lumoStyles.orderButtonText}>{hasStock ? "PLACE ORDER" : "REQUEST ORDER"}</Text>
           <Ionicons name="arrow-forward" size={16} color={colors.bg} />
         </Pressable>
       </View>
 
       <Modal visible={orderModalOpen} transparent animationType="slide" onRequestClose={() => setOrderModalOpen(false)}>
-        <View style={styles.orderModalBackdrop}>
-          <View style={styles.orderModalCard}>
-            <View style={styles.orderModalHeader}>
+        <View style={lumoStyles.orderModalBackdrop}>
+          <View style={lumoStyles.orderModalCard}>
+            <View style={lumoStyles.orderModalHeader}>
               <View>
-                <Text style={styles.orderModalEyebrow}>LUMO ORIGINALS</Text>
-                <Text style={styles.orderModalTitle}>Complete your order</Text>
+                <Text style={lumoStyles.orderModalEyebrow}>LUMO ORIGINALS</Text>
+                <Text style={lumoStyles.orderModalTitle}>Complete your order</Text>
               </View>
-              <Pressable onPress={() => setOrderModalOpen(false)} style={styles.iconButton}>
+              <Pressable onPress={() => setOrderModalOpen(false)} style={lumoStyles.iconButton}>
                 <Ionicons name="close" size={19} color={colors.text} />
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={styles.orderFormContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <View style={styles.orderSummary}>
-                <Text style={styles.orderSummaryName}>{product.name}</Text>
-                <Text style={styles.orderSummaryMeta}>{selectedVariant?.name ?? "Standard option"} · Qty {quantity}</Text>
-                <Text style={styles.orderSummaryPrice}>{formatProductPrice(shownPrice * quantity, product.currency)}</Text>
+            <ScrollView contentContainerStyle={lumoStyles.orderFormContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={lumoStyles.orderSummary}>
+                <Text style={lumoStyles.orderSummaryName}>{product.name}</Text>
+                <Text style={lumoStyles.orderSummaryMeta}>{selectedVariant?.name ?? "Standard option"} · Qty {quantity}</Text>
+                <Text style={lumoStyles.orderSummaryPrice}>{formatProductPrice(shownPrice * quantity, product.currency)}</Text>
               </View>
 
               {orderError ? (
-                <View style={styles.orderError}>
+                <View style={lumoStyles.orderError}>
                   <Ionicons name="alert-circle-outline" size={15} color={colors.like} />
-                  <Text style={styles.orderErrorText}>{orderError}</Text>
+                  <Text style={lumoStyles.orderErrorText}>{orderError}</Text>
                 </View>
               ) : null}
 
-              <Text style={styles.orderFieldLabel}>FULL NAME *</Text>
+              <Text style={lumoStyles.orderFieldLabel}>FULL NAME *</Text>
               <TextInput
                 value={customerName}
                 onChangeText={setCustomerName}
                 placeholder="Your full name"
                 placeholderTextColor={colors.dim}
                 autoCapitalize="words"
-                style={styles.orderInput}
+                style={lumoStyles.orderInput}
               />
 
-              <Text style={styles.orderFieldLabel}>PHONE NUMBER *</Text>
+              <Text style={lumoStyles.orderFieldLabel}>PHONE NUMBER *</Text>
               <TextInput
                 value={customerPhone}
                 onChangeText={setCustomerPhone}
                 placeholder="+998 90 123 45 67"
                 placeholderTextColor={colors.dim}
                 keyboardType="phone-pad"
-                style={styles.orderInput}
+                style={lumoStyles.orderInput}
               />
 
-              <Text style={styles.orderFieldLabel}>DELIVERY ADDRESS</Text>
+              <Text style={lumoStyles.orderFieldLabel}>DELIVERY ADDRESS</Text>
               <TextInput
                 value={customerAddress}
                 onChangeText={setCustomerAddress}
                 placeholder="City, street, house or pickup point"
                 placeholderTextColor={colors.dim}
                 multiline
-                style={[styles.orderInput, styles.orderInputMultiline]}
+                style={[lumoStyles.orderInput, lumoStyles.orderInputMultiline]}
               />
 
-              <Text style={styles.orderFieldLabel}>NOTE (OPTIONAL)</Text>
+              <Text style={lumoStyles.orderFieldLabel}>NOTE (OPTIONAL)</Text>
               <TextInput
                 value={customerNote}
                 onChangeText={setCustomerNote}
                 placeholder="Additional information"
                 placeholderTextColor={colors.dim}
                 multiline
-                style={[styles.orderInput, styles.orderInputMultiline]}
+                style={[lumoStyles.orderInput, lumoStyles.orderInputMultiline]}
               />
 
-              <Text style={styles.orderDisclaimer}>This submits an order request. Payment and final availability are confirmed by LUMO.</Text>
+              <Text style={lumoStyles.orderDisclaimer}>This submits an order request. Payment and final availability are confirmed by LUMO.</Text>
             </ScrollView>
 
             <Pressable
               onPress={() => void submitOrder()}
               disabled={submittingOrder}
-              style={[styles.submitOrderButton, submittingOrder && styles.submitOrderDisabled]}
+              style={[lumoStyles.submitOrderButton, submittingOrder && lumoStyles.submitOrderDisabled]}
             >
               {submittingOrder ? <ActivityIndicator size="small" color={colors.bg} /> : <Ionicons name="checkmark-circle-outline" size={18} color={colors.bg} />}
-              <Text style={styles.submitOrderText}>{submittingOrder ? "SUBMITTING..." : "SUBMIT ORDER"}</Text>
+              <Text style={lumoStyles.submitOrderText}>{submittingOrder ? "SUBMITTING..." : "SUBMIT ORDER"}</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
       <Modal visible={imageViewerOpen} transparent animationType="fade" onRequestClose={() => setImageViewerOpen(false)}>
-        <View style={styles.imageViewer}>
-          <Pressable onPress={() => setImageViewerOpen(false)} style={styles.imageViewerClose} accessibilityLabel="Close image viewer">
+        <View style={lumoStyles.imageViewer}>
+          <Pressable onPress={() => setImageViewerOpen(false)} style={lumoStyles.imageViewerClose} accessibilityLabel="Close image viewer">
             <Ionicons name="close" size={23} color={colors.text} />
           </Pressable>
-          {images.length > 0 ? <Image source={{ uri: images[Math.min(selectedImage, images.length - 1)] }} style={styles.imageViewerImage} contentFit="contain" /> : null}
+          {images.length > 0 ? <Image source={{ uri: images[Math.min(selectedImage, images.length - 1)] }} style={lumoStyles.imageViewerImage} contentFit="contain" /> : null}
           {images.length > 1 ? (
-            <View style={styles.imageViewerControls}>
-              <Pressable onPress={() => setSelectedImage((value) => (value - 1 + images.length) % images.length)} style={styles.imageNavButton}>
+            <View style={lumoStyles.imageViewerControls}>
+              <Pressable onPress={() => setSelectedImage((value) => (value - 1 + images.length) % images.length)} style={lumoStyles.imageNavButton}>
                 <Ionicons name="chevron-back" size={20} color={colors.text} />
               </Pressable>
-              <Text style={styles.imageViewerCount}>{selectedImage + 1} / {images.length}</Text>
-              <Pressable onPress={() => setSelectedImage((value) => (value + 1) % images.length)} style={styles.imageNavButton}>
+              <Text style={lumoStyles.imageViewerCount}>{selectedImage + 1} / {images.length}</Text>
+              <Pressable onPress={() => setSelectedImage((value) => (value + 1) % images.length)} style={lumoStyles.imageNavButton}>
                 <Ionicons name="chevron-forward" size={20} color={colors.text} />
               </Pressable>
             </View>

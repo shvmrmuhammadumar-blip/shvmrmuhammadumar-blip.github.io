@@ -9,15 +9,23 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Alert } from '../lib/alert';
 import { Image } from 'expo-image';
 import { useAuth } from '../lib/auth';
 import { isConfigured } from '../lib/supabase';
 import { colors } from '../lib/theme';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 export default function Login() {
+  const lumoStyles = useThemedStyles(styles);
   const { signIn, signUp } = useAuth();
+  const { width: viewportWidth } = useWindowDimensions();
+  const horizontalPadding = viewportWidth < 360 ? 12 : 16;
+  const contentWidth = Math.max(0, viewportWidth - horizontalPadding * 2);
+  const cardWidth = Math.min(contentWidth, 560);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,14 +34,14 @@ export default function Login() {
 
   if (!isConfigured) {
     return (
-      <View style={styles.center}>
+      <View style={lumoStyles.center}>
         <Image
           source={require('../assets/lumo-mark.png')}
-          style={styles.logoImage}
+          style={lumoStyles.logoImage}
           contentFit="contain"
         />
-        <Text style={styles.logo}>Lumo</Text>
-        <Text style={styles.setup}>
+        <Text style={lumoStyles.logo}>Lumo</Text>
+        <Text style={lumoStyles.setup}>
           Supabase is not set up yet.{'\n\n'}Copy .env.example to .env, add your project URL and anon key, then restart the app
           with "npx expo start -c".
         </Text>
@@ -65,24 +73,24 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.heroPanel}>
+    <KeyboardAvoidingView style={[lumoStyles.root, { width: viewportWidth }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={[lumoStyles.scrollView, { width: viewportWidth }]} contentContainerStyle={[lumoStyles.container, { width: viewportWidth, paddingHorizontal: horizontalPadding }]} keyboardShouldPersistTaps="handled">
+        <View style={[lumoStyles.heroPanel, { width: cardWidth }]}>
           <Image
             source={require('../assets/lumo-mark.png')}
-            style={styles.logoImage}
+            style={lumoStyles.logoImage}
             contentFit="contain"
             accessibilityLabel="Lumo lowercase u logo"
           />
-          <Text style={styles.logo}>Lumo</Text>
-          <Text style={styles.tagline}>Private moments. Shared energy.</Text>
+          <Text style={lumoStyles.logo}>Lumo</Text>
+          <Text style={lumoStyles.tagline}>Private moments. Shared energy.</Text>
 
         </View>
 
-        <View style={styles.panel}>
+        <View style={[lumoStyles.panel, { width: cardWidth }]}>
           {mode === 'signup' && (
             <TextInput
-              style={styles.input}
+              style={lumoStyles.input}
               placeholder="Username"
               placeholderTextColor={colors.muted}
               autoCapitalize="none"
@@ -92,7 +100,7 @@ export default function Login() {
             />
           )}
           <TextInput
-            style={styles.input}
+            style={lumoStyles.input}
             placeholder="Email"
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
@@ -102,7 +110,7 @@ export default function Login() {
             onChangeText={setEmail}
           />
           <TextInput
-            style={styles.input}
+            style={lumoStyles.input}
             placeholder="Password"
             placeholderTextColor={colors.muted}
             secureTextEntry
@@ -110,12 +118,12 @@ export default function Login() {
             onChangeText={setPassword}
           />
 
-          <Pressable style={[styles.button, busy && { opacity: 0.6 }]} onPress={submit} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Log in' : 'Create account'}</Text>}
+          <Pressable style={[lumoStyles.button, busy && { opacity: 0.6 }]} onPress={submit} disabled={busy}>
+            {busy ? <ActivityIndicator color={colors.inverseText} /> : <Text style={lumoStyles.buttonText}>{mode === 'login' ? 'Log in' : 'Create account'}</Text>}
           </Pressable>
 
           <Pressable onPress={() => setMode(mode === 'login' ? 'signup' : 'login')} style={{ marginTop: 8 }}>
-            <Text style={styles.switch}>
+            <Text style={lumoStyles.switch}>
               {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
               <Text style={{ color: colors.lime, fontWeight: '700' }}>{mode === 'login' ? 'Sign up' : 'Log in'}</Text>
             </Text>
@@ -127,14 +135,19 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: 28, gap: 16 },
+  root: { flex: 1, width: '100%', minWidth: 0, backgroundColor: colors.bg },
+  scrollView: { flex: 1, width: '100%', minWidth: 0 },
+  container: { flexGrow: 1, width: '100%', minWidth: 0, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 28, gap: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28, backgroundColor: colors.bg },
-  heroPanel: { alignItems: 'center', gap: 8, marginBottom: 4 },
+  heroPanel: { width: '100%', maxWidth: 560, minWidth: 0, alignItems: 'center', gap: 8, marginBottom: 4 },
   heroArtwork: { width: '100%', height: 184, borderRadius: 20, borderWidth: 1, borderColor: colors.border, marginTop: 8, backgroundColor: colors.surfaceRaised },
   logoImage: { width: 76, height: 76, borderRadius: 20 },
   logo: { fontSize: 52, fontWeight: '900', color: colors.lime, textAlign: 'center', letterSpacing: 0.5 },
   tagline: { textAlign: 'center', color: colors.muted, marginBottom: 8, fontWeight: '600' },
   panel: {
+    width: '100%',
+    maxWidth: 560,
+    minWidth: 0,
     backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 18,

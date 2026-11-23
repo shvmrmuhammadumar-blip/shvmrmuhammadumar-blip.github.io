@@ -1,19 +1,28 @@
 /**
- * Lumo visual foundation — Soft Apple-inspired premium graphite.
- * Keep aliases for older components while gradually migrating to semantic roles.
+ * LUMO semantic theme palettes.
+ * Every theme owns its full color system; visual identity is not inherited
+ * accidentally from the Obsidian base.
  */
-export const colors = {
+const obsidian = {
   bg: '#090C12',
   surface: '#12161C',
   surfaceRaised: '#1A2029',
   surfaceSoft: '#20252D',
   text: '#F2F5F7',
+  inverseText: '#0B1016',
+  mediaBg: '#010101',
+  mediaText: '#FEFEFE',
+  shadow: '#000000',
   muted: '#9AA5B2',
   dim: '#6E7A89',
   border: '#2B3440',
   accent: '#B9C7D6',
   accentStrong: '#E0E8F0',
   accentDark: '#2A3542',
+  accentSoft: '#1D2732',
+  successSoft: '#1C2B25',
+  dangerSoft: '#302126',
+  verifiedSoft: '#1C2834',
   like: '#D58B9A',
   success: '#9EBEAE',
   danger: '#D8878D',
@@ -26,10 +35,178 @@ export const colors = {
   glass: 'rgba(26, 32, 41, 0.78)',
   glassBorder: 'rgba(224, 232, 240, 0.12)',
   focus: '#D6E3F0',
-  // Backward-compatible aliases used across older feature components.
   lime: '#B9C7D6',
   limeGlow: 'rgba(185, 199, 214, 0.18)',
-} as const;
+};
+
+export type AppColors = typeof obsidian;
+
+export const themePalettes = {
+  obsidian,
+  light: {
+    bg: '#F3F6F8',
+    surface: '#FFFFFF',
+    surfaceRaised: '#E8EEF2',
+    surfaceSoft: '#DCE5EA',
+    text: '#18232C',
+    inverseText: '#FFFFFF',
+    mediaBg: '#010101',
+    mediaText: '#FEFEFE',
+    shadow: '#273946',
+    muted: '#536675',
+    dim: '#71828F',
+    border: '#D0DAE1',
+    accent: '#466579',
+    accentStrong: '#304C60',
+    accentDark: '#D5E0E7',
+    accentSoft: '#E2EBF0',
+    successSoft: '#E7F1EA',
+    dangerSoft: '#F6E8EB',
+    verifiedSoft: '#E8EEF5',
+    like: '#A64761',
+    success: '#2E7955',
+    danger: '#B64C5B',
+    verified: '#3E648B',
+    chatOutgoing: '#DCEAF0',
+    chatOutgoingText: '#17242D',
+    chatIncoming: '#EEF3F6',
+    chatIncomingText: '#18232C',
+    overlay: 'rgba(18, 28, 36, 0.50)',
+    glass: 'rgba(255, 255, 255, 0.90)',
+    glassBorder: 'rgba(34, 53, 67, 0.12)',
+    focus: '#3C6179',
+    lime: '#466579',
+    limeGlow: 'rgba(70, 101, 121, 0.14)',
+  },
+  amoled: {
+    bg: '#000000',
+    surface: '#080808',
+    surfaceRaised: '#121212',
+    surfaceSoft: '#1D1D1D',
+    text: '#F1F1F1',
+    inverseText: '#050505',
+    mediaBg: '#010101',
+    mediaText: '#FEFEFE',
+    shadow: '#000000',
+    muted: '#B5B5B5',
+    dim: '#858585',
+    border: '#2C2C2C',
+    accent: '#F0F0F0',
+    accentStrong: '#F6F6F6',
+    accentDark: '#242424',
+    accentSoft: '#363636',
+    successSoft: '#153321',
+    dangerSoft: '#321820',
+    verifiedSoft: '#162436',
+    like: '#E4A1AE',
+    success: '#8FCAA8',
+    danger: '#E18D99',
+    verified: '#A7C5E8',
+    chatOutgoing: '#E6E6E6',
+    chatOutgoingText: '#000000',
+    chatIncoming: '#101010',
+    chatIncomingText: '#F1F1F1',
+    overlay: 'rgba(0, 0, 0, 0.94)',
+    glass: 'rgba(8, 8, 8, 0.94)',
+    glassBorder: 'rgba(255, 255, 255, 0.13)',
+    focus: '#FFFFFF',
+    lime: '#F0F0F0',
+    limeGlow: 'rgba(255, 255, 255, 0.14)',
+  },
+  forest: {
+    bg: '#091711',
+    surface: '#10261B',
+    surfaceRaised: '#193628',
+    surfaceSoft: '#244735',
+    text: '#ECF6EF',
+    inverseText: '#102016',
+    mediaBg: '#010101',
+    mediaText: '#FEFEFE',
+    shadow: '#000000',
+    muted: '#A7C0AF',
+    dim: '#779381',
+    border: '#315540',
+    accent: '#AACFAF',
+    accentStrong: '#D6EBDD',
+    accentDark: '#2B4D35',
+    accentSoft: '#223B2A',
+    successSoft: '#25442D',
+    dangerSoft: '#3A1F26',
+    verifiedSoft: '#1E3530',
+    like: '#D49AA5',
+    success: '#91C99B',
+    danger: '#DD9298',
+    verified: '#9DC8BE',
+    chatOutgoing: '#D9EBDD',
+    chatOutgoingText: '#102016',
+    chatIncoming: '#193628',
+    chatIncomingText: '#ECF6EF',
+    overlay: 'rgba(2, 15, 8, 0.86)',
+    glass: 'rgba(16, 38, 27, 0.84)',
+    glassBorder: 'rgba(214, 235, 221, 0.13)',
+    focus: '#CAE6D0',
+    lime: '#AACFAF',
+    limeGlow: 'rgba(170, 207, 175, 0.16)',
+  },
+  sandstone: {
+    bg: '#18130E',
+    surface: '#251E16',
+    surfaceRaised: '#33291E',
+    surfaceSoft: '#413426',
+    text: '#F5EEE3',
+    inverseText: '#20180F',
+    mediaBg: '#010101',
+    mediaText: '#FEFEFE',
+    shadow: '#080604',
+    muted: '#C3B49D',
+    dim: '#96846B',
+    border: '#51402D',
+    accent: '#DCC39B',
+    accentStrong: '#F0DDBE',
+    accentDark: '#4A3825',
+    accentSoft: '#392D1E',
+    successSoft: '#34402A',
+    dangerSoft: '#402822',
+    verifiedSoft: '#3C3527',
+    like: '#D7A193',
+    success: '#B7C79B',
+    danger: '#D99886',
+    verified: '#C0B18F',
+    chatOutgoing: '#EAD9BB',
+    chatOutgoingText: '#20180F',
+    chatIncoming: '#31261A',
+    chatIncomingText: '#F5EEE3',
+    overlay: 'rgba(13, 9, 5, 0.88)',
+    glass: 'rgba(37, 30, 22, 0.85)',
+    glassBorder: 'rgba(240, 221, 190, 0.14)',
+    focus: '#EBDDCA',
+    lime: '#DCC39B',
+    limeGlow: 'rgba(220, 195, 155, 0.15)',
+  },
+} satisfies Record<string, AppColors>;
+
+export type ThemeId = keyof typeof themePalettes;
+export const DEFAULT_THEME: ThemeId = 'obsidian';
+
+export const themeOptions: { id: ThemeId; label: string; description: string }[] = [
+  { id: 'obsidian', label: 'Obsidian', description: 'Graphite and soft silver' },
+  { id: 'light', label: 'Light', description: 'Clean light surfaces' },
+  { id: 'amoled', label: 'AMOLED', description: 'Pure black backgrounds' },
+  { id: 'forest', label: 'Forest', description: 'Deep green and sage' },
+  { id: 'sandstone', label: 'Sandstone', description: 'Warm stone and beige' },
+];
+
+let activeTheme: ThemeId = DEFAULT_THEME;
+
+export function setActiveTheme(theme: ThemeId) {
+  activeTheme = theme;
+}
+
+export const colors = new Proxy(themePalettes[DEFAULT_THEME], {
+  get(_target, property: keyof AppColors) {
+    return themePalettes[activeTheme][property];
+  },
+}) as AppColors;
 
 export const spacing = {
   xxs: 4,

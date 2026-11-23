@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
   TextInput,
@@ -32,13 +33,16 @@ import {
   subscribeToChannelPosts,
 } from '../../../lib/channels';
 import type { Channel, ChannelPostWithSender } from '../../../lib/channels';
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+
 
 export default function ChannelScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const me = session?.user.id;
-  const feedRef = useRef<ScrollView>(null);
+  const feedRef = useRef<ScrollViewInstance | null>(null);
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [posts, setPosts] = useState<ChannelPostWithSender[]>([]);
@@ -341,65 +345,65 @@ export default function ChannelScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingScreen}>
+      <View style={lumoStyles.loadingScreen}>
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" color={colors.lime} />
-        <Text style={styles.loadingText}>Opening channel...</Text>
+        <Text style={lumoStyles.loadingText}>Opening channel...</Text>
       </View>
     );
   }
 
   if (error || !channel) {
     return (
-      <View style={styles.loadingScreen}>
+      <View style={lumoStyles.loadingScreen}>
         <Stack.Screen options={{ headerShown: false }} />
         <Ionicons name="alert-circle-outline" size={38} color={colors.muted} />
-        <Text style={styles.errorTitle}>Channel unavailable</Text>
-        <Text style={styles.errorText}>
+        <Text style={lumoStyles.errorTitle}>Channel unavailable</Text>
+        <Text style={lumoStyles.errorText}>
           {error || 'This channel could not be found.'}
         </Text>
-        <Pressable style={styles.retryButton} onPress={() => void loadChannel()}>
+        <Pressable style={lumoStyles.retryButton} onPress={() => void loadChannel()}>
           <Ionicons name="refresh" size={16} color={colors.bg} />
-          <Text style={styles.retryText}>Try again</Text>
+          <Text style={lumoStyles.retryText}>Try again</Text>
         </Pressable>
-        <Pressable onPress={() => router.back()} style={styles.backLink}>
-          <Text style={styles.backLinkText}>Go back</Text>
+        <Pressable onPress={() => router.back()} style={lumoStyles.backLink}>
+          <Text style={lumoStyles.backLinkText}>Go back</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={lumoStyles.safeArea} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
-      style={styles.screen}
+      style={lumoStyles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
+      <View style={lumoStyles.header}>
         <Pressable
           onPress={() => router.back()}
-          style={styles.headerButton}
+          style={lumoStyles.headerButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
 
-        <View style={styles.channelIdentity}>
+        <View style={lumoStyles.channelIdentity}>
           <Avatar
             uri={channel.avatar_url}
             name={channel.name}
             size={43}
           />
 
-          <View style={styles.headerCopy}>
-            <Text style={styles.channelName} numberOfLines={1}>
+          <View style={lumoStyles.headerCopy}>
+            <Text style={lumoStyles.channelName} numberOfLines={1}>
               {channel.name}
             </Text>
-            <Text style={styles.channelSubtitle} numberOfLines={1}>
+            <Text style={lumoStyles.channelSubtitle} numberOfLines={1}>
               @{channel.username} · {posts.length} updates
             </Text>
           </View>
@@ -407,7 +411,7 @@ export default function ChannelScreen() {
 
         <Pressable
           onPress={() => router.push(`/channels/${id}/members`)}
-          style={styles.headerButton}
+          style={lumoStyles.headerButton}
           accessibilityRole="button"
           accessibilityLabel="Channel members"
         >
@@ -416,7 +420,7 @@ export default function ChannelScreen() {
 
         <Pressable
           onPress={() => router.push(`/channels/${id}/settings`)}
-          style={styles.headerButton}
+          style={lumoStyles.headerButton}
           accessibilityRole="button"
           accessibilityLabel="Channel settings"
         >
@@ -427,39 +431,39 @@ export default function ChannelScreen() {
 
       <ScrollView
         ref={feedRef}
-        style={styles.feed}
+        style={lumoStyles.feed}
         contentContainerStyle={[
-          styles.messageList,
-          posts.length === 0 && styles.messageListEmpty,
+          lumoStyles.messageList,
+          posts.length === 0 && lumoStyles.messageListEmpty,
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {!!error && (
           <Pressable
-            style={styles.inlineError}
+            style={lumoStyles.inlineError}
             onPress={() => void loadChannel()}
           >
-            <Text style={styles.inlineErrorText} numberOfLines={2}>
+            <Text style={lumoStyles.inlineErrorText} numberOfLines={2}>
               {error}
             </Text>
-            <Text style={styles.retryLink}>Retry</Text>
+            <Text style={lumoStyles.retryLink}>Retry</Text>
           </Pressable>
         )}
 
         {posts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
+          <View style={lumoStyles.emptyState}>
+            <View style={lumoStyles.emptyIcon}>
               <Ionicons
                 name="megaphone"
                 size={28}
                 color={colors.bg}
               />
             </View>
-            <Text style={styles.emptyTitle}>
+            <Text style={lumoStyles.emptyTitle}>
               No updates yet.
             </Text>
-            <Text style={styles.emptyDescription}>
+            <Text style={lumoStyles.emptyDescription}>
               Channel announcements and shared media will appear here.
             </Text>
           </View>
@@ -495,8 +499,8 @@ export default function ChannelScreen() {
 
 
       {canPost ? (
-        <View style={styles.composer}>
-          <View style={styles.composerRow}>
+        <View style={lumoStyles.composer}>
+          <View style={lumoStyles.composerRow}>
             {channel && me ? (
               <ChannelMediaUpload
                 channelId={channel.id}
@@ -506,9 +510,9 @@ export default function ChannelScreen() {
               />
             ) : null}
 
-            <View style={styles.inputShell}>
+            <View style={lumoStyles.inputShell}>
               <TextInput
-                style={styles.composerInput}
+                style={lumoStyles.composerInput}
                 placeholder="Write something real..."
                 placeholderTextColor={colors.dim}
                 value={draft}
@@ -522,8 +526,8 @@ export default function ChannelScreen() {
 
             <Pressable
               style={[
-                styles.sendButton,
-                (!draft.trim() || sending) && styles.sendButtonDisabled,
+                lumoStyles.sendButton,
+                (!draft.trim() || sending) && lumoStyles.sendButtonDisabled,
               ]}
               onPress={() => void handlePublish()}
               disabled={!draft.trim() || sending}
@@ -538,19 +542,19 @@ export default function ChannelScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.composerFooter}>
+          <View style={lumoStyles.composerFooter}>
             <Ionicons name="sparkles" size={11} color={colors.lime} />
-            <Text style={styles.footerText}>CHANNEL BROADCAST</Text>
+            <Text style={lumoStyles.footerText}>CHANNEL BROADCAST</Text>
           </View>
         </View>
       ) : (
-        <View style={styles.readOnlyComposer}>
-          <View style={styles.readOnlyIcon}>
+        <View style={lumoStyles.readOnlyComposer}>
+          <View style={lumoStyles.readOnlyIcon}>
             <Ionicons name="megaphone-outline" size={18} color={colors.lime} />
           </View>
-          <View style={styles.readOnlyCopy}>
-            <Text style={styles.readOnlyTitle}>Channel updates</Text>
-            <Text style={styles.readOnlyText}>
+          <View style={lumoStyles.readOnlyCopy}>
+            <Text style={lumoStyles.readOnlyTitle}>Channel updates</Text>
+            <Text style={lumoStyles.readOnlyText}>
               Only channel admins can publish updates.
             </Text>
           </View>
@@ -577,16 +581,16 @@ export default function ChannelScreen() {
         statusBarTranslucent
         onRequestClose={closePostActions}
       >
-        <View style={styles.postActionOverlay}>
+        <View style={lumoStyles.postActionOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={closePostActions}
           />
 
-          <View style={styles.postActionSheet}>
-            <View style={styles.postActionHandle} />
+          <View style={lumoStyles.postActionSheet}>
+            <View style={lumoStyles.postActionHandle} />
 
-            <Text style={styles.postActionTitle}>
+            <Text style={lumoStyles.postActionTitle}>
               {confirmingPostDelete
                 ? 'Delete this post for everyone?'
                 : editingSelectedPost
@@ -595,7 +599,7 @@ export default function ChannelScreen() {
             </Text>
 
             {!editingSelectedPost && (
-              <Text style={styles.postActionPreview} numberOfLines={3}>
+              <Text style={lumoStyles.postActionPreview} numberOfLines={3}>
                 {selectedPost?.body?.trim() ||
                   selectedPost?.media_file_name ||
                   'Attachment'}
@@ -603,33 +607,33 @@ export default function ChannelScreen() {
             )}
 
             {!!postActionError && (
-              <Text style={styles.postActionError}>{postActionError}</Text>
+              <Text style={lumoStyles.postActionError}>{postActionError}</Text>
             )}
 
             {confirmingPostDelete ? (
-              <View style={styles.postActionButtons}>
+              <View style={lumoStyles.postActionButtons}>
                 <Pressable
-                  style={styles.postActionButton}
+                  style={lumoStyles.postActionButton}
                   disabled={postActionLoading}
                   onPress={() => setConfirmingPostDelete(false)}
                 >
-                  <Text style={styles.postActionButtonText}>Cancel</Text>
+                  <Text style={lumoStyles.postActionButtonText}>Cancel</Text>
                 </Pressable>
 
                 <Pressable
-                  style={styles.postActionDanger}
+                  style={lumoStyles.postActionDanger}
                   disabled={postActionLoading}
                   onPress={() => void deleteSelectedPost()}
                 >
                   {postActionLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.postActionDangerText}>Delete for everyone</Text>}
+                    ? <ActivityIndicator color={colors.text} size="small" />
+                    : <Text style={lumoStyles.postActionDangerText}>Delete for everyone</Text>}
                 </Pressable>
               </View>
             ) : editingSelectedPost ? (
               <>
                 <TextInput
-                  style={styles.postActionEditor}
+                  style={lumoStyles.postActionEditor}
                   value={postEditDraft}
                   onChangeText={setPostEditDraft}
                   multiline
@@ -639,45 +643,45 @@ export default function ChannelScreen() {
                   editable={!postActionLoading}
                 />
 
-                <View style={styles.postActionButtons}>
+                <View style={lumoStyles.postActionButtons}>
                   <Pressable
-                    style={styles.postActionButton}
+                    style={lumoStyles.postActionButton}
                     disabled={postActionLoading}
                     onPress={() => {
                       setEditingSelectedPost(false);
                       setPostActionError('');
                     }}
                   >
-                    <Text style={styles.postActionButtonText}>Cancel</Text>
+                    <Text style={lumoStyles.postActionButtonText}>Cancel</Text>
                   </Pressable>
 
                   <Pressable
-                    style={styles.postActionButton}
+                    style={lumoStyles.postActionButton}
                     disabled={postActionLoading || !postEditDraft.trim()}
                     onPress={() => void saveSelectedPostEdit()}
                   >
                     {postActionLoading
                       ? <ActivityIndicator color={colors.lime} size="small" />
-                      : <Text style={styles.postActionButtonText}>Save changes</Text>}
+                      : <Text style={lumoStyles.postActionButtonText}>Save changes</Text>}
                   </Pressable>
                 </View>
               </>
             ) : (
-              <View style={styles.postActionButtons}>
+              <View style={lumoStyles.postActionButtons}>
                 <Pressable
                   style={[
-                    styles.postActionButton,
-                    !selectedPost?.body?.trim() && styles.postActionDisabled,
+                    lumoStyles.postActionButton,
+                    !selectedPost?.body?.trim() && lumoStyles.postActionDisabled,
                   ]}
                   disabled={!selectedPost?.body?.trim() || postActionLoading}
                   onPress={() => void copySelectedPost()}
                 >
                   <Ionicons name="copy-outline" size={17} color={colors.text} />
-                  <Text style={styles.postActionButtonText}>Copy</Text>
+                  <Text style={lumoStyles.postActionButtonText}>Copy</Text>
                 </Pressable>
 
                 <Pressable
-                  style={styles.postActionButton}
+                  style={lumoStyles.postActionButton}
                   disabled={postActionLoading}
                   onPress={() => {
                     if (!selectedPost) return;
@@ -701,15 +705,15 @@ export default function ChannelScreen() {
                   }}
                 >
                   <Ionicons name="arrow-redo-outline" size={17} color={colors.text} />
-                  <Text style={styles.postActionButtonText}>Forward</Text>
+                  <Text style={lumoStyles.postActionButtonText}>Forward</Text>
                 </Pressable>
 
                 <Pressable
                   style={[
-                    styles.postActionButton,
+                    lumoStyles.postActionButton,
                     (selectedPost?.sender_id !== me ||
                       selectedPost?.message_type !== 'text' ||
-                      !canPost) && styles.postActionDisabled,
+                      !canPost) && lumoStyles.postActionDisabled,
                   ]}
                   disabled={
                     selectedPost?.sender_id !== me ||
@@ -724,12 +728,12 @@ export default function ChannelScreen() {
                   }}
                 >
                   <Ionicons name="create-outline" size={17} color={colors.text} />
-                  <Text style={styles.postActionButtonText}>Edit</Text>
+                  <Text style={lumoStyles.postActionButtonText}>Edit</Text>
                 </Pressable>
 
                 {(canPost || isDeveloper) && (
                   <Pressable
-                    style={styles.postActionButton}
+                    style={lumoStyles.postActionButton}
                     disabled={postActionLoading}
                     onPress={() => void toggleSelectedPostPin()}
                   >
@@ -738,32 +742,32 @@ export default function ChannelScreen() {
                       size={17}
                       color={colors.text}
                     />
-                    <Text style={styles.postActionButtonText}>
+                    <Text style={lumoStyles.postActionButtonText}>
                       {(selectedPost as any)?.is_pinned ? 'Unpin' : 'Pin'}
                     </Text>
                   </Pressable>
                 )}
 
                 <Pressable
-                  style={styles.postActionButton}
+                  style={lumoStyles.postActionButton}
                   disabled={postActionLoading}
                   onPress={() => void hideSelectedPost()}
                 >
                   <Ionicons name="eye-off-outline" size={17} color={colors.text} />
-                  <Text style={styles.postActionButtonText}>Delete for me</Text>
+                  <Text style={lumoStyles.postActionButtonText}>Delete for me</Text>
                 </Pressable>
 
                 {canPost && (
                   <Pressable
-                    style={styles.postActionDeleteRow}
+                    style={lumoStyles.postActionDeleteRow}
                     disabled={postActionLoading}
                     onPress={() => {
                       setConfirmingPostDelete(true);
                       setPostActionError('');
                     }}
                   >
-                    <Ionicons name="trash-outline" size={17} color="#FF9CAC" />
-                    <Text style={styles.postActionDeleteText}>
+                    <Ionicons name="trash-outline" size={17} color={resolveThemeColor("#FF9CAC", "color")} />
+                    <Text style={lumoStyles.postActionDeleteText}>
                       Delete for everyone
                     </Text>
                   </Pressable>
@@ -774,7 +778,7 @@ export default function ChannelScreen() {
         </View>
       </Modal>
       </KeyboardAvoidingView>
-      <SafeAreaView edges={['bottom']} style={styles.bottomSafe} />
+      <SafeAreaView edges={['bottom']} style={lumoStyles.bottomSafe} />
     </SafeAreaView>
   );
 }

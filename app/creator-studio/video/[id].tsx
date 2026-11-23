@@ -9,6 +9,7 @@ import LumoVideoPlayer from '../../../components/LumoVideoPlayer';
 import { useAuth } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 type Period = '7d' | '30d' | '90d' | 'all';
 type VideoPost = { id: string; user_id: string; caption: string | null; media_type: string; video_url: string | null; image_url: string | null; created_at: string };
@@ -54,6 +55,7 @@ function getSince(period: Period) {
 }
 
 export default function StudioVideoAnalyticsScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
@@ -159,106 +161,106 @@ export default function StudioVideoAnalyticsScreen() {
 
   return (
     <StudioFrame title="Video analytics" subtitle="Individual content performance" icon="play-circle-outline" wide>
-      <View style={styles.headerRow}>
-        <Pressable onPress={() => router.push('/creator-studio/content')} style={styles.backButton}>
+      <View style={lumoStyles.headerRow}>
+        <Pressable onPress={() => router.push('/creator-studio/content')} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={16} color={colors.text} />
-          <Text style={styles.backText}>Content library</Text>
+          <Text style={lumoStyles.backText}>Content library</Text>
         </Pressable>
-        <View style={styles.periods}>
+        <View style={lumoStyles.periods}>
           {periods.map((item) => (
-            <Pressable key={item.key} onPress={() => setPeriod(item.key)} style={[styles.periodButton, period === item.key && styles.periodButtonActive]}>
-              <Text style={[styles.periodText, period === item.key && styles.periodTextActive]}>{item.label}</Text>
+            <Pressable key={item.key} onPress={() => setPeriod(item.key)} style={[lumoStyles.periodButton, period === item.key && lumoStyles.periodButtonActive]}>
+              <Text style={[lumoStyles.periodText, period === item.key && lumoStyles.periodTextActive]}>{item.label}</Text>
             </Pressable>
           ))}
         </View>
       </View>
-      {error ? <StudioPanel style={styles.errorPanel}><Text style={styles.errorText}>{error}</Text></StudioPanel> : null}
-      {loading ? <View style={styles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
+      {error ? <StudioPanel style={lumoStyles.errorPanel}><Text style={lumoStyles.errorText}>{error}</Text></StudioPanel> : null}
+      {loading ? <View style={lumoStyles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
       {post ? (
         <>
-          <StudioPanel style={styles.videoPanel}>
-            <View style={styles.videoPreview}>
-              {post.video_url ? <LumoVideoPlayer uri={post.video_url} style={styles.player} bottomInset={8} /> : (
-                <View style={styles.noPreview}><Ionicons name="videocam-off-outline" size={28} color={colors.muted} /><Text style={styles.noPreviewText}>Video preview unavailable</Text></View>
+          <StudioPanel style={lumoStyles.videoPanel}>
+            <View style={lumoStyles.videoPreview}>
+              {post.video_url ? <LumoVideoPlayer uri={post.video_url} style={lumoStyles.player} bottomInset={8} /> : (
+                <View style={lumoStyles.noPreview}><Ionicons name="videocam-off-outline" size={28} color={colors.muted} /><Text style={lumoStyles.noPreviewText}>Video preview unavailable</Text></View>
               )}
             </View>
-            <View style={styles.videoInfo}>
-              <View style={styles.videoTitleRow}>
-                <View style={styles.videoTitleCopy}>
-                  <Text style={styles.videoTitle} numberOfLines={2}>{post.caption?.trim() || 'Video post'}</Text>
-                  <Text style={styles.videoMeta}>PUBLISHED {new Date(post.created_at).toLocaleDateString()}</Text>
+            <View style={lumoStyles.videoInfo}>
+              <View style={lumoStyles.videoTitleRow}>
+                <View style={lumoStyles.videoTitleCopy}>
+                  <Text style={lumoStyles.videoTitle} numberOfLines={2}>{post.caption?.trim() || 'Video post'}</Text>
+                  <Text style={lumoStyles.videoMeta}>PUBLISHED {new Date(post.created_at).toLocaleDateString()}</Text>
                 </View>
-                <View style={styles.videoBadge}><Ionicons name="videocam-outline" size={14} color={colors.accentStrong} /><Text style={styles.videoBadgeText}>VIDEO</Text></View>
+                <View style={lumoStyles.videoBadge}><Ionicons name="videocam-outline" size={14} color={colors.accentStrong} /><Text style={lumoStyles.videoBadgeText}>VIDEO</Text></View>
               </View>
             </View>
           </StudioPanel>
 
-          <View style={styles.metricGrid}>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>VIEWS</Text>
-              <Text style={styles.metricValue}>{formatNumber(viewCount)}</Text>
-              <Text style={styles.metricNote}>{formatNumber(metrics.uniqueViewers)} unique viewers</Text>
+          <View style={lumoStyles.metricGrid}>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>VIEWS</Text>
+              <Text style={lumoStyles.metricValue}>{formatNumber(viewCount)}</Text>
+              <Text style={lumoStyles.metricNote}>{formatNumber(metrics.uniqueViewers)} unique viewers</Text>
             </StudioPanel>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>WATCH TIME</Text>
-              <Text style={styles.metricValue}>{formatTime(metrics.totalWatchMs)}</Text>
-              <Text style={styles.metricNote}>Total recorded playback</Text>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>WATCH TIME</Text>
+              <Text style={lumoStyles.metricValue}>{formatTime(metrics.totalWatchMs)}</Text>
+              <Text style={lumoStyles.metricNote}>Total recorded playback</Text>
             </StudioPanel>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>AVG. VIEW DURATION</Text>
-              <Text style={styles.metricValue}>{formatTime(metrics.avgWatchMs)}</Text>
-              <Text style={styles.metricNote}>Per view with playback</Text>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>AVG. VIEW DURATION</Text>
+              <Text style={lumoStyles.metricValue}>{formatTime(metrics.avgWatchMs)}</Text>
+              <Text style={lumoStyles.metricNote}>Per view with playback</Text>
             </StudioPanel>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>COMPLETION RATE</Text>
-              <Text style={styles.metricValue}>{viewCount ? metrics.completionRate.toFixed(1) + '%' : '—'}</Text>
-              <Text style={styles.metricNote}>{formatNumber(metrics.completed)} completed views</Text>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>COMPLETION RATE</Text>
+              <Text style={lumoStyles.metricValue}>{viewCount ? metrics.completionRate.toFixed(1) + '%' : '—'}</Text>
+              <Text style={lumoStyles.metricNote}>{formatNumber(metrics.completed)} completed views</Text>
             </StudioPanel>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>AVG. VIEWED</Text>
-              <Text style={styles.metricValue}>{metrics.avgRetention == null ? '—' : metrics.avgRetention.toFixed(1) + '%'}</Text>
-              <Text style={styles.metricNote}>Only sessions with duration data</Text>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>AVG. VIEWED</Text>
+              <Text style={lumoStyles.metricValue}>{metrics.avgRetention == null ? '—' : metrics.avgRetention.toFixed(1) + '%'}</Text>
+              <Text style={lumoStyles.metricNote}>Only sessions with duration data</Text>
             </StudioPanel>
-            <StudioPanel style={styles.metricCard}>
-              <Text style={styles.metricLabel}>ENGAGEMENT</Text>
-              <Text style={styles.metricValue}>{formatNumber(likes + commentCount)}</Text>
-              <Text style={styles.metricNote}>{formatNumber(likes)} likes · {formatNumber(commentCount)} comments</Text>
+            <StudioPanel style={lumoStyles.metricCard}>
+              <Text style={lumoStyles.metricLabel}>ENGAGEMENT</Text>
+              <Text style={lumoStyles.metricValue}>{formatNumber(likes + commentCount)}</Text>
+              <Text style={lumoStyles.metricNote}>{formatNumber(likes)} likes · {formatNumber(commentCount)} comments</Text>
             </StudioPanel>
           </View>
 
-          <StudioPanel style={styles.chartPanel}>
-            <View style={styles.sectionHeader}>
+          <StudioPanel style={lumoStyles.chartPanel}>
+            <View style={lumoStyles.sectionHeader}>
               <StudioSection title="Views over time" />
-              <Text style={styles.sectionTotal}>{formatNumber(viewCount)} views</Text>
+              <Text style={lumoStyles.sectionTotal}>{formatNumber(viewCount)} views</Text>
             </View>
-            <View style={styles.chartBars}>
+            <View style={lumoStyles.chartBars}>
               {chart.map((value, index) => (
-                <View key={index} style={styles.chartColumn}>
-                  <View style={styles.chartTrack}>
-                    <View style={[styles.chartFill, { height: Math.max(3, (value / maxBar) * 148) }]} />
+                <View key={index} style={lumoStyles.chartColumn}>
+                  <View style={lumoStyles.chartTrack}>
+                    <View style={[lumoStyles.chartFill, { height: Math.max(3, (value / maxBar) * 148) }]} />
                   </View>
                 </View>
               ))}
             </View>
-            <View style={styles.chartAxis}>
-              <Text style={styles.axisText}>{period === 'all' ? 'Recent activity' : period.toUpperCase()}</Text>
-              <Text style={styles.axisText}>Latest</Text>
+            <View style={lumoStyles.chartAxis}>
+              <Text style={lumoStyles.axisText}>{period === 'all' ? 'Recent activity' : period.toUpperCase()}</Text>
+              <Text style={lumoStyles.axisText}>Latest</Text>
             </View>
-            {!viewCount ? <Text style={styles.emptyNote}>Views will be recorded when another account opens this post or starts playing the video. Your own views are excluded.</Text> : null}
+            {!viewCount ? <Text style={lumoStyles.emptyNote}>Views will be recorded when another account opens this post or starts playing the video. Your own views are excluded.</Text> : null}
           </StudioPanel>
 
-          <StudioPanel style={styles.engagementPanel}>
+          <StudioPanel style={lumoStyles.engagementPanel}>
             <StudioSection title="Latest comments" />
             {comments.length ? comments.map((comment) => (
-              <Pressable key={comment.id} onPress={() => router.push('/post/' + post.id)} style={styles.commentRow}>
-                {comment.person?.avatar_url ? <Image source={{ uri: comment.person.avatar_url }} style={styles.avatar} contentFit="cover" /> : <View style={styles.avatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>}
-                <View style={styles.commentCopy}>
-                  <Text style={styles.commentUser}>@{comment.person?.username ?? 'user'}</Text>
-                  <Text style={styles.commentBody} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
+              <Pressable key={comment.id} onPress={() => router.push('/post/' + post.id)} style={lumoStyles.commentRow}>
+                {comment.person?.avatar_url ? <Image source={{ uri: comment.person.avatar_url }} style={lumoStyles.avatar} contentFit="cover" /> : <View style={lumoStyles.avatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>}
+                <View style={lumoStyles.commentCopy}>
+                  <Text style={lumoStyles.commentUser}>@{comment.person?.username ?? 'user'}</Text>
+                  <Text style={lumoStyles.commentBody} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
                 </View>
-                <Text style={styles.commentDate}>{new Date(comment.created_at).toLocaleDateString()}</Text>
+                <Text style={lumoStyles.commentDate}>{new Date(comment.created_at).toLocaleDateString()}</Text>
               </Pressable>
-            )) : <Text style={styles.emptyNote}>No comments on this video yet.</Text>}
+            )) : <Text style={lumoStyles.emptyNote}>No comments on this video yet.</Text>}
           </StudioPanel>
         </>
       ) : null}

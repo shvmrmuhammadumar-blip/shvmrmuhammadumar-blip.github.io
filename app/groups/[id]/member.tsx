@@ -29,6 +29,8 @@ import {
   type GroupRole,
 } from '../../../lib/groups';
 import type { Database } from '../../../lib/database.types';
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+
 
 type Person = Pick<
   Database['public']['Tables']['profiles']['Row'],
@@ -36,6 +38,7 @@ type Person = Pick<
 >;
 
 export default function GroupMembersScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -220,45 +223,45 @@ export default function GroupMembersScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
 
-        <View style={styles.headerCopy}>
-          <Text style={styles.title}>Group members</Text>
-          <Text style={styles.subtitle}>
+        <View style={lumoStyles.headerCopy}>
+          <Text style={lumoStyles.title}>Group members</Text>
+          <Text style={lumoStyles.subtitle}>
             {group?.name ?? 'Group'} · {members.length} members
           </Text>
         </View>
 
-        <View style={styles.headerSpacer} />
+        <View style={lumoStyles.headerSpacer} />
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <ActivityIndicator color={colors.lime} size="large" />
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={lumoStyles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {canManage && (
-            <View style={styles.searchCard}>
-              <Text style={styles.sectionTitle}>Add people</Text>
-              <Text style={styles.sectionHint}>
+            <View style={lumoStyles.searchCard}>
+              <Text style={lumoStyles.sectionTitle}>Add people</Text>
+              <Text style={lumoStyles.sectionHint}>
                 Find Lumo users by username.
               </Text>
 
-              <View style={styles.searchRow}>
+              <View style={lumoStyles.searchRow}>
                 <Ionicons name="search-outline" size={17} color={colors.muted} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={lumoStyles.searchInput}
                   value={query}
                   onChangeText={(value) => {
                     setQuery(value);
@@ -273,7 +276,7 @@ export default function GroupMembersScreen() {
                   returnKeyType="search"
                 />
                 <Pressable
-                  style={styles.searchButton}
+                  style={lumoStyles.searchButton}
                   onPress={() => void searchPeople()}
                   disabled={searching}
                 >
@@ -286,16 +289,16 @@ export default function GroupMembersScreen() {
               </View>
 
               {people.map((person) => (
-                <View key={person.id} style={styles.personRow}>
+                <View key={person.id} style={lumoStyles.personRow}>
                   <Avatar uri={person.avatar_url} name={person.username} size={38} />
-                  <View style={styles.personCopy}>
-                    <Text style={styles.personName}>@{person.username}</Text>
+                  <View style={lumoStyles.personCopy}>
+                    <Text style={lumoStyles.personName}>@{person.username}</Text>
                     {!!person.full_name && (
-                      <Text style={styles.personHint}>{person.full_name}</Text>
+                      <Text style={lumoStyles.personHint}>{person.full_name}</Text>
                     )}
                   </View>
                   <Pressable
-                    style={styles.addButton}
+                    style={lumoStyles.addButton}
                     onPress={() => void addPerson(person)}
                     disabled={!!busyId}
                   >
@@ -309,22 +312,22 @@ export default function GroupMembersScreen() {
               ))}
 
               {query.trim().length >= 2 && !searching && people.length === 0 && (
-                <Text style={styles.noResults}>
+                <Text style={lumoStyles.noResults}>
                   No new users found. Try another username.
                 </Text>
               )}
             </View>
           )}
 
-          <View style={styles.membersHeading}>
+          <View style={lumoStyles.membersHeading}>
             <View>
-              <Text style={styles.sectionTitle}>All members</Text>
-              <Text style={styles.sectionHint}>
+              <Text style={lumoStyles.sectionTitle}>All members</Text>
+              <Text style={lumoStyles.sectionHint}>
                 {members.length} people in this group
               </Text>
             </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{members.length}</Text>
+            <View style={lumoStyles.countBadge}>
+              <Text style={lumoStyles.countText}>{members.length}</Text>
             </View>
           </View>
 
@@ -339,8 +342,8 @@ export default function GroupMembersScreen() {
               (myRole === 'owner' || member.role !== 'admin');
 
             return (
-              <View key={member.user_id} style={styles.memberCard}>
-                <View style={styles.memberInfo}>
+              <View key={member.user_id} style={lumoStyles.memberCard}>
+                <View style={lumoStyles.memberInfo}>
                   <GroupMemberRow
                     member={member}
                     currentUserId={me}
@@ -349,7 +352,7 @@ export default function GroupMembersScreen() {
 
                 {canChangeRole && (
                   <Pressable
-                    style={styles.actionButton}
+                    style={lumoStyles.actionButton}
                     onPress={() => void changeRole(member)}
                     disabled={!!busyId}
                   >
@@ -364,16 +367,16 @@ export default function GroupMembersScreen() {
                 {canRemove && (
                   <Pressable
                     style={[
-                      styles.removeButton,
-                      confirmAction === `remove:${member.user_id}` && styles.confirmButton,
+                      lumoStyles.removeButton,
+                      confirmAction === `remove:${member.user_id}` && lumoStyles.confirmButton,
                     ]}
                     onPress={() => void removeMember(member)}
                     disabled={!!busyId}
                   >
                     {busyId === member.user_id ? (
-                      <ActivityIndicator color="#FF6478" size="small" />
+                      <ActivityIndicator color={resolveThemeColor("#FF6478", "color")} size="small" />
                     ) : (
-                      <Ionicons name="person-remove-outline" size={15} color="#FF6478" />
+                      <Ionicons name="person-remove-outline" size={15} color={resolveThemeColor("#FF6478", "color")} />
                     )}
                   </Pressable>
                 )}
@@ -381,13 +384,13 @@ export default function GroupMembersScreen() {
                 {myRole === 'owner' && !isSelf && member.role !== 'owner' && (
                   <Pressable
                     style={[
-                      styles.ownerButton,
-                      confirmAction === `owner:${member.user_id}` && styles.confirmOwnerButton,
+                      lumoStyles.ownerButton,
+                      confirmAction === `owner:${member.user_id}` && lumoStyles.confirmOwnerButton,
                     ]}
                     onPress={() => void transferOwnership(member)}
                     disabled={!!busyId}
                   >
-                    <Text style={styles.ownerButtonText}>
+                    <Text style={lumoStyles.ownerButtonText}>
                       {confirmAction === `owner:${member.user_id}` ? 'Confirm' : 'Make owner'}
                     </Text>
                   </Pressable>
@@ -397,18 +400,18 @@ export default function GroupMembersScreen() {
           })}
 
           {members.length === 0 && (
-            <View style={styles.empty}>
+            <View style={lumoStyles.empty}>
               <Ionicons name="people-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyText}>No members found.</Text>
+              <Text style={lumoStyles.emptyText}>No members found.</Text>
             </View>
           )}
 
           {confirmAction !== '' && (
             <Pressable
-              style={styles.cancelAction}
+              style={lumoStyles.cancelAction}
               onPress={() => setConfirmAction('')}
             >
-              <Text style={styles.cancelText}>Cancel pending action</Text>
+              <Text style={lumoStyles.cancelText}>Cancel pending action</Text>
             </Pressable>
           )}
         </ScrollView>

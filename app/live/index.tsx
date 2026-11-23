@@ -7,10 +7,13 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
 import { LIVE_CATEGORIES, listLiveSessions, type LiveCategory, type LiveSession } from '../../lib/live';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 type LiveCardData = LiveSession & { participant_count: number };
 
 export default function LiveScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -75,11 +78,11 @@ export default function LiveScreen() {
   const categoryLabel = (category: string) => LIVE_CATEGORIES.find(item => item.key === category)?.label ?? 'Live';
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View style={styles.brandRow}>
+    <ScrollView style={lumoStyles.screen} contentContainerStyle={lumoStyles.content} showsVerticalScrollIndicator={false}>
+      <View style={lumoStyles.header}>
+        <View style={lumoStyles.brandRow}>
           <Pressable
-            style={styles.backButton}
+            style={lumoStyles.backButton}
             onPress={() => router.canGoBack() ? router.back() : router.replace('/' as never)}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -87,152 +90,152 @@ export default function LiveScreen() {
           >
             <Ionicons name="chevron-back" size={19} color={colors.text} />
           </Pressable>
-          <View style={styles.brandMark}><Ionicons name="radio" size={19} color="#0D1117" /></View>
-          <Text style={styles.brand}>LUMO <Text style={styles.brandLive}>LIVE</Text></Text>
+          <View style={lumoStyles.brandMark}><Ionicons name="radio" size={19} color={resolveThemeColor("#0D1117", "color")} /></View>
+          <Text style={lumoStyles.brand}>LUMO <Text style={lumoStyles.brandLive}>LIVE</Text></Text>
         </View>
-        <View style={styles.headerActions}>
-          <Pressable style={styles.homeButton} onPress={() => router.replace('/' as never)} accessibilityRole="button" accessibilityLabel="Go to Home">
+        <View style={lumoStyles.headerActions}>
+          <Pressable style={lumoStyles.homeButton} onPress={() => router.replace('/' as never)} accessibilityRole="button" accessibilityLabel="Go to Home">
             <Ionicons name="home-outline" size={15} color={colors.text} />
-            <Text style={styles.homeButtonText}>Home</Text>
+            <Text style={lumoStyles.homeButtonText}>Home</Text>
           </Pressable>
-          <Pressable style={styles.refreshButton} onPress={() => void load(true)} accessibilityLabel="Refresh live sessions">
+          <Pressable style={lumoStyles.refreshButton} onPress={() => void load(true)} accessibilityLabel="Refresh live sessions">
             {refreshing ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="refresh" size={18} color={colors.text} />}
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.hero}>
-        <View style={styles.heroGlow} />
-        <View style={styles.heroTop}>
-          <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.livePillText}>HAPPENING NOW</Text></View>
-          <Text style={styles.heroEyebrow}>YOUR WORLD, LIVE</Text>
+      <View style={lumoStyles.hero}>
+        <View style={lumoStyles.heroGlow} />
+        <View style={lumoStyles.heroTop}>
+          <View style={lumoStyles.livePill}><View style={lumoStyles.liveDot} /><Text style={lumoStyles.livePillText}>HAPPENING NOW</Text></View>
+          <Text style={lumoStyles.heroEyebrow}>YOUR WORLD, LIVE</Text>
         </View>
-        <Text style={styles.heroTitle}>Be here when it happens.</Text>
-        <Text style={styles.heroCopy}>Real voices. Real moments. Your people on one stage.</Text>
-        <View style={styles.heroBottom}>
-          <View style={styles.heroPeople}>
-            <View style={[styles.avatarDot, styles.avatarOne]}><Ionicons name="person" size={13} color="#11161C" /></View>
-            <View style={[styles.avatarDot, styles.avatarTwo]}><Ionicons name="person" size={13} color="#11161C" /></View>
-            <View style={[styles.avatarDot, styles.avatarThree]}><Ionicons name="person" size={13} color="#11161C" /></View>
-            <Text style={styles.heroPeopleText}>{sessions.length ? `${sessions.length} live rooms` : 'Your circle is waiting'}</Text>
+        <Text style={lumoStyles.heroTitle}>Be here when it happens.</Text>
+        <Text style={lumoStyles.heroCopy}>Real voices. Real moments. Your people on one stage.</Text>
+        <View style={lumoStyles.heroBottom}>
+          <View style={lumoStyles.heroPeople}>
+            <View style={[lumoStyles.avatarDot, lumoStyles.avatarOne]}><Ionicons name="person" size={13} color={resolveThemeColor("#11161C", "color")} /></View>
+            <View style={[lumoStyles.avatarDot, lumoStyles.avatarTwo]}><Ionicons name="person" size={13} color={resolveThemeColor("#11161C", "color")} /></View>
+            <View style={[lumoStyles.avatarDot, lumoStyles.avatarThree]}><Ionicons name="person" size={13} color={resolveThemeColor("#11161C", "color")} /></View>
+            <Text style={lumoStyles.heroPeopleText}>{sessions.length ? `${sessions.length} live rooms` : 'Your circle is waiting'}</Text>
           </View>
-          <Pressable style={styles.goLiveButton} onPress={() => router.push('/live/create' as never)}>
-            <Ionicons name="videocam" size={16} color="#11161C" />
-            <Text style={styles.goLiveText}>Go live</Text>
+          <Pressable style={lumoStyles.goLiveButton} onPress={() => router.push('/live/create' as never)}>
+            <Ionicons name="videocam" size={16} color={resolveThemeColor("#11161C", "color")} />
+            <Text style={lumoStyles.goLiveText}>Go live</Text>
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.joinByIdCard}>
-        <View style={styles.joinByIdHeading}>
-          <View style={styles.joinByIdIcon}><Ionicons name="key-outline" size={17} color="#D6E3B4" /></View>
-          <View style={styles.joinByIdCopy}>
-            <Text style={styles.joinByIdTitle}>Have a LIVE ID?</Text>
-            <Text style={styles.joinByIdSubtitle}>Open a shared room by ID. Followers-only rooms still require access.</Text>
+      <View style={lumoStyles.joinByIdCard}>
+        <View style={lumoStyles.joinByIdHeading}>
+          <View style={lumoStyles.joinByIdIcon}><Ionicons name="key-outline" size={17} color={resolveThemeColor("#D6E3B4", "color")} /></View>
+          <View style={lumoStyles.joinByIdCopy}>
+            <Text style={lumoStyles.joinByIdTitle}>Have a LIVE ID?</Text>
+            <Text style={lumoStyles.joinByIdSubtitle}>Open a shared room by ID. Followers-only rooms still require access.</Text>
           </View>
         </View>
-        <View style={styles.joinByIdRow}>
+        <View style={lumoStyles.joinByIdRow}>
           <TextInput
             value={liveIdInput}
             onChangeText={value => { setLiveIdInput(value); setJoinError(null); }}
             placeholder="Paste live ID or link"
-            placeholderTextColor="#74808D"
+            placeholderTextColor={resolveThemeColor("#74808D", "placeholderTextColor")}
             autoCapitalize="none"
             autoCorrect={false}
-            style={styles.joinByIdInput}
+            style={lumoStyles.joinByIdInput}
             onSubmitEditing={joinById}
             returnKeyType="go"
           />
-          <Pressable style={styles.joinByIdButton} onPress={joinById}>
-            <Text style={styles.joinByIdButtonText}>Join</Text>
-            <Ionicons name="arrow-forward" size={15} color="#11161C" />
+          <Pressable style={lumoStyles.joinByIdButton} onPress={joinById}>
+            <Text style={lumoStyles.joinByIdButtonText}>Join</Text>
+            <Ionicons name="arrow-forward" size={15} color={resolveThemeColor("#11161C", "color")} />
           </Pressable>
         </View>
-        {joinError ? <Text style={styles.joinByIdError}>{joinError}</Text> : null}
+        {joinError ? <Text style={lumoStyles.joinByIdError}>{joinError}</Text> : null}
       </View>
 
-      <View style={styles.sectionHeader}>
+      <View style={lumoStyles.sectionHeader}>
         <View>
-          <Text style={styles.sectionEyebrow}>THE LIVE STAGE</Text>
-          <Text style={styles.sectionTitle}>Find your room</Text>
+          <Text style={lumoStyles.sectionEyebrow}>THE LIVE STAGE</Text>
+          <Text style={lumoStyles.sectionTitle}>Find your room</Text>
         </View>
-        <View style={styles.liveCount}><View style={styles.liveCountDot} /><Text style={styles.liveCountText}>{sessions.length} LIVE</Text></View>
+        <View style={lumoStyles.liveCount}><View style={lumoStyles.liveCountDot} /><Text style={lumoStyles.liveCountText}>{sessions.length} LIVE</Text></View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-        <Pressable onPress={() => setActiveCategory('all')} style={[styles.filter, activeCategory === 'all' && styles.filterActive]}>
-          <Text style={[styles.filterText, activeCategory === 'all' && styles.filterTextActive]}>For you</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.filters}>
+        <Pressable onPress={() => setActiveCategory('all')} style={[lumoStyles.filter, activeCategory === 'all' && lumoStyles.filterActive]}>
+          <Text style={[lumoStyles.filterText, activeCategory === 'all' && lumoStyles.filterTextActive]}>For you</Text>
         </Pressable>
         {LIVE_CATEGORIES.map(category => (
-          <Pressable key={category.key} onPress={() => setActiveCategory(category.key)} style={[styles.filter, activeCategory === category.key && styles.filterActive]}>
-            <Text style={[styles.filterText, activeCategory === category.key && styles.filterTextActive]}>{category.label}</Text>
+          <Pressable key={category.key} onPress={() => setActiveCategory(category.key)} style={[lumoStyles.filter, activeCategory === category.key && lumoStyles.filterActive]}>
+            <Text style={[lumoStyles.filterText, activeCategory === category.key && lumoStyles.filterTextActive]}>{category.label}</Text>
           </Pressable>
         ))}
       </ScrollView>
 
       {error ? (
-        <View style={styles.errorCard}>
-          <Ionicons name="alert-circle-outline" size={18} color="#D8B879" />
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={lumoStyles.errorCard}>
+          <Ionicons name="alert-circle-outline" size={18} color={resolveThemeColor("#D8B879", "color")} />
+          <Text style={lumoStyles.errorText}>{error}</Text>
         </View>
       ) : null}
 
       {loading ? (
-        <View style={styles.loading}><ActivityIndicator size="large" color="#C9D9A4" /><Text style={styles.loadingText}>Finding live rooms</Text></View>
+        <View style={lumoStyles.loading}><ActivityIndicator size="large" color={resolveThemeColor("#C9D9A4", "color")} /><Text style={lumoStyles.loadingText}>Finding live rooms</Text></View>
       ) : sessions.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyIcon}><Ionicons name="radio-outline" size={28} color="#D6E3B4" /></View>
-          <Text style={styles.emptyTitle}>It is quiet on stage.</Text>
-          <Text style={styles.emptyCopy}>Start the first LUMO LIVE and bring your circle together.</Text>
-          <Pressable style={styles.emptyAction} onPress={() => router.push('/live/create' as never)}>
-            <Text style={styles.emptyActionText}>Create your first live</Text>
-            <Ionicons name="arrow-forward" size={16} color="#11161C" />
+        <View style={lumoStyles.emptyCard}>
+          <View style={lumoStyles.emptyIcon}><Ionicons name="radio-outline" size={28} color={resolveThemeColor("#D6E3B4", "color")} /></View>
+          <Text style={lumoStyles.emptyTitle}>It is quiet on stage.</Text>
+          <Text style={lumoStyles.emptyCopy}>Start the first LUMO LIVE and bring your circle together.</Text>
+          <Pressable style={lumoStyles.emptyAction} onPress={() => router.push('/live/create' as never)}>
+            <Text style={lumoStyles.emptyActionText}>Create your first live</Text>
+            <Ionicons name="arrow-forward" size={16} color={resolveThemeColor("#11161C", "color")} />
           </Pressable>
         </View>
       ) : (
         <>
           {featured ? (
-            <Pressable style={styles.featuredCard} onPress={() => openSession(featured.live_code)}>
+            <Pressable style={lumoStyles.featuredCard} onPress={() => openSession(featured.live_code)}>
               {featured.cover_url ? (
-                <Image source={{ uri: featured.cover_url }} style={styles.featuredImage} contentFit="cover" />
+                <Image source={{ uri: featured.cover_url }} style={lumoStyles.featuredImage} contentFit="cover" />
               ) : (
-                <View style={styles.featuredBackdrop}>
-                  <View style={styles.featuredOrbit} />
-                  <Ionicons name="radio" size={54} color="rgba(220,230,200,0.28)" />
+                <View style={lumoStyles.featuredBackdrop}>
+                  <View style={lumoStyles.featuredOrbit} />
+                  <Ionicons name="radio" size={54} color={resolveThemeColor("rgba(220,230,200,0.28)", "color")} />
                 </View>
               )}
-              <View style={styles.featuredShade} />
-              <View style={styles.featuredTop}>
-                <View style={styles.livePill}><View style={styles.liveDot} /><Text style={styles.livePillText}>LIVE NOW</Text></View>
-                <View style={styles.viewerPill}><Ionicons name="people-outline" size={12} color="#F2F5F7" /><Text style={styles.viewerText}>{featured.participant_count.toLocaleString()}</Text></View>
+              <View style={lumoStyles.featuredShade} />
+              <View style={lumoStyles.featuredTop}>
+                <View style={lumoStyles.livePill}><View style={lumoStyles.liveDot} /><Text style={lumoStyles.livePillText}>LIVE NOW</Text></View>
+                <View style={lumoStyles.viewerPill}><Ionicons name="people-outline" size={12} color={resolveThemeColor("#F2F5F7", "color")} /><Text style={lumoStyles.viewerText}>{featured.participant_count.toLocaleString()}</Text></View>
               </View>
-              <View style={styles.featuredInfo}>
-                <Text style={styles.featuredCategory}>{categoryLabel(featured.category).toUpperCase()}</Text>
-                <Text style={styles.featuredTitle} numberOfLines={2}>{featured.title}</Text>
-                <View style={styles.hostLine}>
-                  <View style={styles.hostAvatar}><Ionicons name="person" size={13} color="#11161C" /></View>
-                  <Text style={styles.hostName}>@{featured.host?.username ?? 'lumo_creator'}</Text>
-                  <View style={styles.featuredPlay}><Ionicons name="play" size={14} color="#11161C" /></View>
+              <View style={lumoStyles.featuredInfo}>
+                <Text style={lumoStyles.featuredCategory}>{categoryLabel(featured.category).toUpperCase()}</Text>
+                <Text style={lumoStyles.featuredTitle} numberOfLines={2}>{featured.title}</Text>
+                <View style={lumoStyles.hostLine}>
+                  <View style={lumoStyles.hostAvatar}><Ionicons name="person" size={13} color={resolveThemeColor("#11161C", "color")} /></View>
+                  <Text style={lumoStyles.hostName}>@{featured.host?.username ?? 'lumo_creator'}</Text>
+                  <View style={lumoStyles.featuredPlay}><Ionicons name="play" size={14} color={resolveThemeColor("#11161C", "color")} /></View>
                 </View>
               </View>
             </Pressable>
           ) : null}
 
-          <View style={styles.cardGrid}>
+          <View style={lumoStyles.cardGrid}>
             {otherSessions.map(item => (
-              <Pressable key={item.id} style={styles.liveCard} onPress={() => openSession(item.live_code)}>
-                <View style={styles.cardMedia}>
-                  {item.cover_url ? <Image source={{ uri: item.cover_url }} style={styles.cardImage} contentFit="cover" /> : (
-                    <View style={styles.cardFallback}><Ionicons name="radio" size={27} color="rgba(220,230,200,0.38)" /></View>
+              <Pressable key={item.id} style={lumoStyles.liveCard} onPress={() => openSession(item.live_code)}>
+                <View style={lumoStyles.cardMedia}>
+                  {item.cover_url ? <Image source={{ uri: item.cover_url }} style={lumoStyles.cardImage} contentFit="cover" /> : (
+                    <View style={lumoStyles.cardFallback}><Ionicons name="radio" size={27} color={resolveThemeColor("rgba(220,230,200,0.38)", "color")} /></View>
                   )}
-                  <View style={styles.cardMediaShade} />
-                  <View style={styles.cardLiveTag}><View style={styles.liveDot} /><Text style={styles.livePillText}>LIVE</Text></View>
-                  <View style={styles.cardViewerTag}><Ionicons name="people-outline" size={11} color="#F2F5F7" /><Text style={styles.viewerText}>{item.participant_count}</Text></View>
+                  <View style={lumoStyles.cardMediaShade} />
+                  <View style={lumoStyles.cardLiveTag}><View style={lumoStyles.liveDot} /><Text style={lumoStyles.livePillText}>LIVE</Text></View>
+                  <View style={lumoStyles.cardViewerTag}><Ionicons name="people-outline" size={11} color={resolveThemeColor("#F2F5F7", "color")} /><Text style={lumoStyles.viewerText}>{item.participant_count}</Text></View>
                 </View>
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardCategory}>{categoryLabel(item.category).toUpperCase()}</Text>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-                  <Text style={styles.cardHost}>@{item.host?.username ?? 'lumo_creator'}</Text>
+                <View style={lumoStyles.cardInfo}>
+                  <Text style={lumoStyles.cardCategory}>{categoryLabel(item.category).toUpperCase()}</Text>
+                  <Text style={lumoStyles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={lumoStyles.cardHost}>@{item.host?.username ?? 'lumo_creator'}</Text>
                 </View>
               </Pressable>
             ))}
@@ -240,9 +243,9 @@ export default function LiveScreen() {
         </>
       )}
 
-      <View style={styles.footerNote}>
-        <Ionicons name="shield-checkmark-outline" size={15} color="#778392" />
-        <Text style={styles.footerText}>Every stage has a host. Every guest is approved before joining.</Text>
+      <View style={lumoStyles.footerNote}>
+        <Ionicons name="shield-checkmark-outline" size={15} color={resolveThemeColor("#778392", "color")} />
+        <Text style={lumoStyles.footerText}>Every stage has a host. Every guest is approved before joining.</Text>
       </View>
     </ScrollView>
   );
@@ -312,10 +315,10 @@ const styles = StyleSheet.create({
   emptyAction: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#C9D9A4', paddingHorizontal: 15, paddingVertical: 11, borderRadius: 12, marginTop: 4 },
   emptyActionText: { color: '#10151A', fontSize: 10, fontWeight: '900' },
   featuredCard: { minHeight: 265, borderRadius: 21, overflow: 'hidden', backgroundColor: '#1B2526', borderWidth: 1, borderColor: '#34413B', justifyContent: 'space-between' },
-  featuredImage: { ...StyleSheet.absoluteFillObject },
-  featuredBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: '#202E2B', alignItems: 'center', justifyContent: 'center' },
+  featuredImage: { ...StyleSheet.absoluteFill },
+  featuredBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: '#202E2B', alignItems: 'center', justifyContent: 'center' },
   featuredOrbit: { position: 'absolute', width: 230, height: 230, borderRadius: 115, borderWidth: 1, borderColor: 'rgba(210,224,186,0.18)' },
-  featuredShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5,9,12,0.45)' },
+  featuredShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,9,12,0.45)' },
   featuredTop: { flexDirection: 'row', justifyContent: 'space-between', padding: 14 },
   viewerPill: { flexDirection: 'row', gap: 5, alignItems: 'center', backgroundColor: 'rgba(8,12,16,0.62)', borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6 },
   viewerText: { color: '#F2F5F7', fontSize: 9, fontWeight: '800' },
@@ -329,9 +332,9 @@ const styles = StyleSheet.create({
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 11 },
   liveCard: { flexBasis: '48%', flexGrow: 1, maxWidth: '49%', borderRadius: 17, overflow: 'hidden', backgroundColor: '#121820', borderWidth: 1, borderColor: '#28313A' },
   cardMedia: { height: 112, backgroundColor: '#1C2725', position: 'relative' },
-  cardImage: { ...StyleSheet.absoluteFillObject },
-  cardFallback: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#202E2B' },
-  cardMediaShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(5,9,12,0.35)' },
+  cardImage: { ...StyleSheet.absoluteFill },
+  cardFallback: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: '#202E2B' },
+  cardMediaShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,9,12,0.35)' },
   cardLiveTag: { position: 'absolute', left: 8, top: 8, flexDirection: 'row', gap: 5, alignItems: 'center', backgroundColor: 'rgba(241,109,115,0.18)', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 99 },
   cardViewerTag: { position: 'absolute', right: 8, top: 8, flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: 'rgba(8,12,16,0.62)', paddingHorizontal: 7, paddingVertical: 5, borderRadius: 99 },
   cardInfo: { padding: 11, gap: 4 },

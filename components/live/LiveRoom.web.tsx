@@ -9,6 +9,8 @@ import {
   type RemoteTrack,
 } from 'livekit-client';
 import { getLiveConnectionToken, type LiveRole } from '../../lib/live';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 type TrackEntry = {
   id: string;
@@ -24,6 +26,7 @@ type Props = {
 };
 
 function TrackTile({ entry, single = false }: { entry: TrackEntry; single?: boolean }) {
+  const lumoStyles = useThemedStyles(styles);
   const container = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -50,19 +53,20 @@ function TrackTile({ entry, single = false }: { entry: TrackEntry; single?: bool
   }, [entry.track]);
 
   return (
-    <View style={[styles.tile, single && styles.singleTile]}>
+    <View style={[lumoStyles.tile, single && lumoStyles.singleTile]}>
       <div ref={container} className="lumo-live-track" />
-      <View style={styles.tileLabel}>
-        <Text style={styles.tileName} numberOfLines={1}>
+      <View style={lumoStyles.tileLabel}>
+        <Text style={lumoStyles.tileName} numberOfLines={1}>
           {entry.local ? 'You' : entry.name || entry.identity}
         </Text>
-        {entry.local ? <Text style={styles.localTag}>YOU</Text> : null}
+        {entry.local ? <Text style={lumoStyles.localTag}>YOU</Text> : null}
       </View>
     </View>
   );
 }
 
 export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const roomRef = useRef<Room | null>(null);
   const audioContainerRef = useRef<HTMLDivElement | null>(null);
   const audioElementsRef = useRef<Map<string, { track: RemoteTrack; element: HTMLAudioElement }>>(new Map());
@@ -246,9 +250,9 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
 
   const renderTracks = (isFullscreen = false) => (
     <View style={[
-      styles.trackGrid,
-      tracks.length === 1 && styles.singleTrackGrid,
-      isFullscreen && styles.fullscreenTrackGrid,
+      lumoStyles.trackGrid,
+      tracks.length === 1 && lumoStyles.singleTrackGrid,
+      isFullscreen && lumoStyles.fullscreenTrackGrid,
     ]}>
       {tracks.map(entry => (
         <TrackTile key={entry.id} entry={entry} single={tracks.length === 1} />
@@ -257,66 +261,66 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
   );
 
   const renderStageContent = (isFullscreen = false) => connecting ? (
-    <View style={styles.placeholder}>
-      <ActivityIndicator color="#C9D9A4" size="large" />
-      <Text style={styles.placeholderTitle}>Entering the live room</Text>
-      <Text style={styles.placeholderCopy}>Securely connecting your session</Text>
+    <View style={lumoStyles.placeholder}>
+      <ActivityIndicator color={resolveThemeColor("#C9D9A4", "color")} size="large" />
+      <Text style={lumoStyles.placeholderTitle}>Entering the live room</Text>
+      <Text style={lumoStyles.placeholderCopy}>Securely connecting your session</Text>
     </View>
   ) : error ? (
-    <View style={styles.placeholder}>
-      <Ionicons name="videocam-off-outline" size={34} color="#D8B879" />
-      <Text style={styles.placeholderTitle}>Video is not connected</Text>
-      <Text style={styles.placeholderCopy}>{error}</Text>
+    <View style={lumoStyles.placeholder}>
+      <Ionicons name="videocam-off-outline" size={34} color={resolveThemeColor("#D8B879", "color")} />
+      <Text style={lumoStyles.placeholderTitle}>Video is not connected</Text>
+      <Text style={lumoStyles.placeholderCopy}>{error}</Text>
     </View>
   ) : tracks.length ? renderTracks(isFullscreen) : (
-    <View style={styles.placeholder}>
-      <Ionicons name="people-outline" size={34} color="#9AA5B2" />
-      <Text style={styles.placeholderTitle}>The stage is ready</Text>
-      <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+    <View style={lumoStyles.placeholder}>
+      <Ionicons name="people-outline" size={34} color={resolveThemeColor("#9AA5B2", "color")} />
+      <Text style={lumoStyles.placeholderTitle}>The stage is ready</Text>
+      <Text style={lumoStyles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
     </View>
   );
 
   const renderControls = () => (
-    <View style={styles.controls}>
+    <View style={lumoStyles.controls}>
       {publishable ? (
         <>
-          <Pressable onPress={() => void toggleMic()} style={[styles.controlButton, !micEnabled && styles.controlDisabled]}>
-            <Ionicons name={micEnabled ? 'mic' : 'mic-off'} size={18} color="#F2F5F7" />
-            <Text style={styles.controlText}>{micEnabled ? 'Mute' : 'Unmute'}</Text>
+          <Pressable onPress={() => void toggleMic()} style={[lumoStyles.controlButton, !micEnabled && lumoStyles.controlDisabled]}>
+            <Ionicons name={micEnabled ? 'mic' : 'mic-off'} size={18} color={resolveThemeColor("#F2F5F7", "color")} />
+            <Text style={lumoStyles.controlText}>{micEnabled ? 'Mute' : 'Unmute'}</Text>
           </Pressable>
-          <Pressable onPress={() => void toggleCamera()} style={[styles.controlButton, !cameraEnabled && styles.controlDisabled]}>
-            <Ionicons name={cameraEnabled ? 'videocam' : 'videocam-off'} size={18} color="#F2F5F7" />
-            <Text style={styles.controlText}>{cameraEnabled ? 'Camera' : 'Camera off'}</Text>
+          <Pressable onPress={() => void toggleCamera()} style={[lumoStyles.controlButton, !cameraEnabled && lumoStyles.controlDisabled]}>
+            <Ionicons name={cameraEnabled ? 'videocam' : 'videocam-off'} size={18} color={resolveThemeColor("#F2F5F7", "color")} />
+            <Text style={lumoStyles.controlText}>{cameraEnabled ? 'Camera' : 'Camera off'}</Text>
           </Pressable>
         </>
       ) : (
-        <Text style={styles.viewerNote}>Your microphone and camera stay off while watching.</Text>
+        <Text style={lumoStyles.viewerNote}>Your microphone and camera stay off while watching.</Text>
       )}
     </View>
   );
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={lumoStyles.container}>
         <div ref={audioContainerRef} aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }} />
-        <View style={styles.stageHeader}>
-          <View style={styles.stageStatus}>
-            <View style={styles.liveDot} />
-            <Text style={styles.stageStatusText}>{connected ? 'CONNECTED' : connecting ? 'CONNECTING' : 'OFFLINE'}</Text>
+        <View style={lumoStyles.stageHeader}>
+          <View style={lumoStyles.stageStatus}>
+            <View style={lumoStyles.liveDot} />
+            <Text style={lumoStyles.stageStatusText}>{connected ? 'CONNECTED' : connecting ? 'CONNECTING' : 'OFFLINE'}</Text>
           </View>
           {audioBlocked ? (
-            <Pressable onPress={() => void enableRemoteAudio()} style={styles.audioEnableButton} accessibilityRole="button" accessibilityLabel="Enable live audio">
-              <Ionicons name="volume-high-outline" size={15} color="#11161C" />
-              <Text style={styles.audioEnableText}>Enable sound</Text>
+            <Pressable onPress={() => void enableRemoteAudio()} style={lumoStyles.audioEnableButton} accessibilityRole="button" accessibilityLabel="Enable live audio">
+              <Ionicons name="volume-high-outline" size={15} color={resolveThemeColor("#11161C", "color")} />
+              <Text style={lumoStyles.audioEnableText}>Enable sound</Text>
             </Pressable>
           ) : null}
           <Pressable
             onPress={() => setFullscreen(true)}
-            style={styles.fullscreenButton}
+            style={lumoStyles.fullscreenButton}
             accessibilityRole="button"
             accessibilityLabel="Open full screen live"
           >
-            <Ionicons name="expand-outline" size={18} color="#F2F5F7" />
+            <Ionicons name="expand-outline" size={18} color={resolveThemeColor("#F2F5F7", "color")} />
           </Pressable>
         </View>
 
@@ -326,23 +330,23 @@ export default function LiveRoomWeb({ sessionId, onConnectionChange }: Props) {
 
       {fullscreen ? (
         <Modal visible animationType="fade" onRequestClose={() => setFullscreen(false)} statusBarTranslucent>
-          <View style={styles.fullscreenContainer}>
-            <View style={styles.fullscreenHeader}>
-              <View style={styles.stageStatus}>
-                <View style={styles.liveDot} />
-                <Text style={styles.stageStatusText}>LUMO LIVE</Text>
+          <View style={lumoStyles.fullscreenContainer}>
+            <View style={lumoStyles.fullscreenHeader}>
+              <View style={lumoStyles.stageStatus}>
+                <View style={lumoStyles.liveDot} />
+                <Text style={lumoStyles.stageStatusText}>LUMO LIVE</Text>
               </View>
               <Pressable
                 onPress={() => setFullscreen(false)}
-                style={styles.fullscreenButton}
+                style={lumoStyles.fullscreenButton}
                 accessibilityRole="button"
                 accessibilityLabel="Exit full screen live"
               >
-                <Ionicons name="contract-outline" size={19} color="#F2F5F7" />
+                <Ionicons name="contract-outline" size={19} color={resolveThemeColor("#F2F5F7", "color")} />
               </Pressable>
             </View>
 
-            <View style={styles.fullscreenStage}>{renderStageContent(true)}</View>
+            <View style={lumoStyles.fullscreenStage}>{renderStageContent(true)}</View>
             {renderControls()}
           </View>
         </Modal>
@@ -364,7 +368,7 @@ const styles = StyleSheet.create({
   trackGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', justifyContent: 'center' },
   singleTrackGrid: { alignItems: 'center' },
   fullscreenTrackGrid: { flex: 1, alignItems: 'center', justifyContent: 'center', alignContent: 'center' },
-  tile: { width: '48%', minWidth: 130, aspectRatio: 1, borderRadius: 17, overflow: 'hidden', backgroundColor: '#171D24', position: 'relative' },
+  tile: { width: '48%', minWidth: 0, maxWidth: '100%', aspectRatio: 1, borderRadius: 17, overflow: 'hidden', backgroundColor: '#171D24', position: 'relative' },
   singleTile: { width: '100%', maxWidth: 560 },
   fullscreenContainer: { flex: 1, backgroundColor: '#05070B', paddingHorizontal: 14, paddingTop: 34, paddingBottom: 26 },
   fullscreenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

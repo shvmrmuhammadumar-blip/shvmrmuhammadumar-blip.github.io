@@ -4,20 +4,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors, radii } from '../../lib/theme';
 import { StudioPanel } from './StudioFrame';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export function StudioMetric({ label, value, icon, note }: {
   label: string; value: string | number; icon: IconName; note?: string;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <StudioPanel style={styles.metric}>
-      <View style={styles.metricTop}>
-        <View style={styles.metricIcon}><Ionicons name={icon} size={17} color={colors.muted} /></View>
-        <Text style={styles.metricLabel}>{label}</Text>
+    <StudioPanel style={lumoStyles.metric}>
+      <View style={lumoStyles.metricTop}>
+        <View style={lumoStyles.metricIcon}><Ionicons name={icon} size={17} color={colors.muted} /></View>
+        <Text style={lumoStyles.metricLabel}>{label}</Text>
       </View>
-      <Text style={styles.metricValue}>{value}</Text>
-      {note ? <Text style={styles.metricNote}>{note}</Text> : null}
+      <Text style={lumoStyles.metricValue}>{value}</Text>
+      {note ? <Text style={lumoStyles.metricNote}>{note}</Text> : null}
     </StudioPanel>
   );
 }
@@ -25,12 +27,13 @@ export function StudioMetric({ label, value, icon, note }: {
 export function StudioSection({ title, action, onAction }: {
   title: string; action?: string; onAction?: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.sectionRow}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={lumoStyles.sectionRow}>
+      <Text style={lumoStyles.sectionTitle}>{title}</Text>
       {action && onAction ? (
-        <Pressable onPress={onAction} style={styles.sectionAction} accessibilityRole="button">
-          <Text style={styles.sectionActionText}>{action}</Text>
+        <Pressable onPress={onAction} style={lumoStyles.sectionAction} accessibilityRole="button">
+          <Text style={lumoStyles.sectionActionText}>{action}</Text>
           <Ionicons name="chevron-forward" size={13} color={colors.accentStrong} />
         </Pressable>
       ) : null}
@@ -41,15 +44,16 @@ export function StudioSection({ title, action, onAction }: {
 export function StudioLink({ title, description, icon, href, badge }: {
   title: string; description?: string; icon: IconName; href: string; badge?: string;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   return (
-    <Pressable onPress={() => router.push(href as never)} style={styles.linkRow} accessibilityRole="button">
-      <View style={styles.linkIcon}><Ionicons name={icon} size={19} color={colors.accentStrong} /></View>
-      <View style={styles.linkCopy}>
-        <Text style={styles.linkTitle}>{title}</Text>
-        {description ? <Text style={styles.linkDescription} numberOfLines={1}>{description}</Text> : null}
+    <Pressable onPress={() => router.push(href as never)} style={lumoStyles.linkRow} accessibilityRole="button">
+      <View style={lumoStyles.linkIcon}><Ionicons name={icon} size={19} color={colors.accentStrong} /></View>
+      <View style={lumoStyles.linkCopy}>
+        <Text style={lumoStyles.linkTitle}>{title}</Text>
+        {description ? <Text style={lumoStyles.linkDescription} numberOfLines={1}>{description}</Text> : null}
       </View>
-      {badge ? <Text style={styles.linkBadge}>{badge}</Text> : null}
+      {badge ? <Text style={lumoStyles.linkBadge}>{badge}</Text> : null}
       <Ionicons name="chevron-forward" size={17} color={colors.dim} />
     </Pressable>
   );
@@ -58,9 +62,10 @@ export function StudioLink({ title, description, icon, href, badge }: {
 export function StudioChip({ label, active, onPress }: {
   label: string; active: boolean; onPress: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]} accessibilityRole="button" accessibilityState={{ selected: active }}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    <Pressable onPress={onPress} style={[lumoStyles.chip, active && lumoStyles.chipActive]} accessibilityRole="button" accessibilityState={{ selected: active }}>
+      <Text style={[lumoStyles.chipText, active && lumoStyles.chipTextActive]}>{label}</Text>
     </Pressable>
   );
 }
@@ -68,13 +73,14 @@ export function StudioChip({ label, active, onPress }: {
 export function StudioEmpty({ icon, title, action, onAction }: {
   icon: IconName; title: string; action?: string; onAction?: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.empty}>
-      <View style={styles.emptyIcon}><Ionicons name={icon} size={22} color={colors.muted} /></View>
-      <Text style={styles.emptyTitle}>{title}</Text>
+    <View style={lumoStyles.empty}>
+      <View style={lumoStyles.emptyIcon}><Ionicons name={icon} size={22} color={colors.muted} /></View>
+      <Text style={lumoStyles.emptyTitle}>{title}</Text>
       {action && onAction ? (
-        <Pressable onPress={onAction} style={styles.emptyAction} accessibilityRole="button">
-          <Text style={styles.emptyActionText}>{action}</Text>
+        <Pressable onPress={onAction} style={lumoStyles.emptyAction} accessibilityRole="button">
+          <Text style={lumoStyles.emptyActionText}>{action}</Text>
         </Pressable>
       ) : null}
     </View>

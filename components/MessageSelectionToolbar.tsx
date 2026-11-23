@@ -7,6 +7,9 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../lib/theme';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 type Props = {
   count: number;
@@ -29,6 +32,7 @@ export default function MessageSelectionToolbar({
   forwardDisabled = false,
   deleteDisabled = false,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   if (count < 1) return null;
@@ -39,17 +43,17 @@ export default function MessageSelectionToolbar({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.countIcon}>
-          <Ionicons name="checkmark-done" size={19} color="#10150B" />
+    <View style={lumoStyles.container}>
+      <View style={lumoStyles.header}>
+        <View style={lumoStyles.countIcon}>
+          <Ionicons name="checkmark-done" size={19} color={resolveThemeColor("#10150B", "color")} />
         </View>
 
-        <View style={styles.headerCopy}>
-          <Text style={styles.countText}>
+        <View style={lumoStyles.headerCopy}>
+          <Text style={lumoStyles.countText}>
             {count} {count === 1 ? 'MESSAGE' : 'MESSAGES'} SELECTED
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={lumoStyles.subtitle}>
             Choose an action for selected messages
           </Text>
         </View>
@@ -57,19 +61,19 @@ export default function MessageSelectionToolbar({
         <Pressable
           onPress={handleCancel}
           disabled={sending}
-          style={styles.closeButton}
+          style={lumoStyles.closeButton}
           accessibilityRole="button"
           accessibilityLabel="Cancel selection"
         >
-          <Ionicons name="close" size={20} color="#F2F5F7" />
+          <Ionicons name="close" size={20} color={resolveThemeColor("#F2F5F7", "color")} />
         </Pressable>
       </View>
 
       {confirmingDelete ? (
-        <View style={styles.confirmRow}>
-          <View style={styles.confirmCopy}>
-            <Text style={styles.confirmTitle}>Delete {count} messages?</Text>
-            <Text style={styles.confirmSubtitle}>
+        <View style={lumoStyles.confirmRow}>
+          <View style={lumoStyles.confirmCopy}>
+            <Text style={lumoStyles.confirmTitle}>Delete {count} messages?</Text>
+            <Text style={lumoStyles.confirmSubtitle}>
               This action cannot be undone.
             </Text>
           </View>
@@ -77,9 +81,9 @@ export default function MessageSelectionToolbar({
           <Pressable
             onPress={() => setConfirmingDelete(false)}
             disabled={sending}
-            style={styles.cancelDelete}
+            style={lumoStyles.cancelDelete}
           >
-            <Text style={styles.cancelDeleteText}>Cancel</Text>
+            <Text style={lumoStyles.cancelDeleteText}>Cancel</Text>
           </Pressable>
 
           <Pressable
@@ -89,77 +93,77 @@ export default function MessageSelectionToolbar({
             }}
             disabled={sending || deleteDisabled}
             style={[
-              styles.confirmDelete,
-              (sending || deleteDisabled) && styles.disabled,
+              lumoStyles.confirmDelete,
+              (sending || deleteDisabled) && lumoStyles.disabled,
             ]}
           >
             {sending ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={colors.text} size="small" />
             ) : (
-              <Text style={styles.confirmDeleteText}>Delete</Text>
+              <Text style={lumoStyles.confirmDeleteText}>Delete</Text>
             )}
           </Pressable>
         </View>
       ) : (
-        <View style={styles.actions}>
+        <View style={lumoStyles.actions}>
           <Pressable
             onPress={onCopy}
             disabled={sending}
             style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
-              sending && styles.disabled,
+              lumoStyles.action,
+              pressed && lumoStyles.actionPressed,
+              sending && lumoStyles.disabled,
             ]}
           >
-            <View style={styles.actionIcon}>
-              <Ionicons name="copy-outline" size={19} color="#B9C7D6" />
+            <View style={lumoStyles.actionIcon}>
+              <Ionicons name="copy-outline" size={19} color={resolveThemeColor("#B9C7D6", "color")} />
             </View>
-            <Text style={styles.actionText}>Copy</Text>
+            <Text style={lumoStyles.actionText}>Copy</Text>
           </Pressable>
 
           <Pressable
             onPress={onForward}
             disabled={sending || forwardDisabled}
             style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
-              (sending || forwardDisabled) && styles.disabled,
+              lumoStyles.action,
+              pressed && lumoStyles.actionPressed,
+              (sending || forwardDisabled) && lumoStyles.disabled,
             ]}
           >
-            <View style={[styles.actionIcon, styles.forwardIcon]}>
-              <Ionicons name="arrow-redo-outline" size={20} color="#10150B" />
+            <View style={[lumoStyles.actionIcon, lumoStyles.forwardIcon]}>
+              <Ionicons name="arrow-redo-outline" size={20} color={resolveThemeColor("#10150B", "color")} />
             </View>
-            <Text style={styles.actionText}>Forward</Text>
+            <Text style={lumoStyles.actionText}>Forward</Text>
           </Pressable>
 
           <Pressable
             onPress={() => setConfirmingDelete(true)}
             disabled={sending || deleteDisabled}
             style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
-              (sending || deleteDisabled) && styles.disabled,
+              lumoStyles.action,
+              pressed && lumoStyles.actionPressed,
+              (sending || deleteDisabled) && lumoStyles.disabled,
             ]}
           >
-            <View style={styles.actionIcon}>
-              <Ionicons name="trash-outline" size={19} color="#FF7182" />
+            <View style={lumoStyles.actionIcon}>
+              <Ionicons name="trash-outline" size={19} color={resolveThemeColor("#FF7182", "color")} />
             </View>
-            <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+            <Text style={[lumoStyles.actionText, lumoStyles.deleteText]}>Delete</Text>
           </Pressable>
 
           <Pressable
             onPress={handleCancel}
             disabled={sending}
             style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
-              sending && styles.disabled,
+              lumoStyles.action,
+              pressed && lumoStyles.actionPressed,
+              sending && lumoStyles.disabled,
             ]}
           >
-            <View style={styles.actionIcon}>
-              <Ionicons name="close-outline" size={20} color="#A3AA9A" />
+            <View style={lumoStyles.actionIcon}>
+              <Ionicons name="close-outline" size={20} color={resolveThemeColor("#A3AA9A", "color")} />
             </View>
-            <Text style={styles.actionText}>Cancel</Text>
+            <Text style={lumoStyles.actionText}>Cancel</Text>
           </Pressable>
         </View>
       )}

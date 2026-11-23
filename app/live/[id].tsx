@@ -29,6 +29,8 @@ import {
   type LiveSession,
 } from '../../lib/live';
 import LiveRoom from '../../components/live/LiveRoom';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 const db = supabase as any;
 
@@ -45,6 +47,7 @@ function avatarInitial(name?: string | null) {
 }
 
 export default function LiveSessionScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const params = useLocalSearchParams<{ id?: string }>();
   const requestedLiveId = String(params.id ?? '');
   const router = useRouter();
@@ -480,27 +483,27 @@ export default function LiveSessionScreen() {
   }, [isHost, live, refreshSession, sessionId, userId]);
 
   if (loading) {
-    return <View style={styles.fullState}><ActivityIndicator color="#C9D9A4" size="large" /><Text style={styles.stateText}>Opening the live room</Text></View>;
+    return <View style={lumoStyles.fullState}><ActivityIndicator color={resolveThemeColor("#C9D9A4", "color")} size="large" /><Text style={lumoStyles.stateText}>Opening the live room</Text></View>;
   }
 
   if (error && !live) {
     return (
-      <View style={styles.fullState}>
-        <Ionicons name="alert-circle-outline" size={34} color="#D8B879" />
-        <Text style={styles.stateTitle}>This live is unavailable</Text>
-        <Text style={styles.stateText}>{error}</Text>
-        <Pressable style={styles.primaryButton} onPress={() => router.replace('/live' as never)}><Text style={styles.primaryButtonText}>Back to Live</Text></Pressable>
+      <View style={lumoStyles.fullState}>
+        <Ionicons name="alert-circle-outline" size={34} color={resolveThemeColor("#D8B879", "color")} />
+        <Text style={lumoStyles.stateTitle}>This live is unavailable</Text>
+        <Text style={lumoStyles.stateText}>{error}</Text>
+        <Pressable style={lumoStyles.primaryButton} onPress={() => router.replace('/live' as never)}><Text style={lumoStyles.primaryButtonText}>Back to Live</Text></Pressable>
       </View>
     );
   }
 
   if (!live || ended) {
     return (
-      <View style={styles.fullState}>
-        <Ionicons name="radio-outline" size={34} color="#C9D9A4" />
-        <Text style={styles.stateTitle}>This live has ended</Text>
-        <Text style={styles.stateText}>The stage is closed. Find another room or start your own.</Text>
-        <Pressable style={styles.primaryButton} onPress={() => router.replace('/live' as never)}><Text style={styles.primaryButtonText}>Explore Live</Text></Pressable>
+      <View style={lumoStyles.fullState}>
+        <Ionicons name="radio-outline" size={34} color={resolveThemeColor("#C9D9A4", "color")} />
+        <Text style={lumoStyles.stateTitle}>This live has ended</Text>
+        <Text style={lumoStyles.stateText}>The stage is closed. Find another room or start your own.</Text>
+        <Pressable style={lumoStyles.primaryButton} onPress={() => router.replace('/live' as never)}><Text style={lumoStyles.primaryButtonText}>Explore Live</Text></Pressable>
       </View>
     );
   }
@@ -517,213 +520,213 @@ export default function LiveSessionScreen() {
   const canJoinAcceptedStage = role === 'viewer' && myRequest?.status === 'accepted';
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <View style={styles.topBar}>
-        <Pressable style={styles.homeButton} onPress={confirmLeaveLive} disabled={working} accessibilityRole="button" accessibilityLabel="Leave LIVE and go Home">
-          {working ? <ActivityIndicator size="small" color="#F2F5F7" /> : <><Ionicons name="home-outline" size={16} color="#F2F5F7" /><Text style={styles.homeButtonText}>Home</Text></>}
+    <ScrollView style={lumoStyles.screen} contentContainerStyle={lumoStyles.content} keyboardShouldPersistTaps="handled">
+      <View style={lumoStyles.topBar}>
+        <Pressable style={lumoStyles.homeButton} onPress={confirmLeaveLive} disabled={working} accessibilityRole="button" accessibilityLabel="Leave LIVE and go Home">
+          {working ? <ActivityIndicator size="small" color={resolveThemeColor("#F2F5F7", "color")} /> : <><Ionicons name="home-outline" size={16} color={resolveThemeColor("#F2F5F7", "color")} /><Text style={lumoStyles.homeButtonText}>Home</Text></>}
         </Pressable>
-        <View style={styles.topTitle}>
-          <View style={styles.livePill}><View style={[styles.liveDot, live.status === 'starting' && styles.liveDotStarting]} /><Text style={styles.livePillText}>{live.status === 'starting' ? 'PREPARING' : 'LIVE'}</Text></View>
-          <Text style={styles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
+        <View style={lumoStyles.topTitle}>
+          <View style={lumoStyles.livePill}><View style={[lumoStyles.liveDot, live.status === 'starting' && lumoStyles.liveDotStarting]} /><Text style={lumoStyles.livePillText}>{live.status === 'starting' ? 'PREPARING' : 'LIVE'}</Text></View>
+          <Text style={lumoStyles.topLiveTitle} numberOfLines={1}>{live.title}</Text>
         </View>
-        <View style={styles.viewerBadge}><Ionicons name="people-outline" size={13} color="#F2F5F7" /><Text style={styles.viewerBadgeText}>{participants.length.toLocaleString()}</Text></View>
-        <Pressable style={styles.shareButton} onPress={() => void shareLive()} accessibilityRole="button" accessibilityLabel="Share live room">
-          <Ionicons name="share-social-outline" size={17} color="#F2F5F7" />
+        <View style={lumoStyles.viewerBadge}><Ionicons name="people-outline" size={13} color={resolveThemeColor("#F2F5F7", "color")} /><Text style={lumoStyles.viewerBadgeText}>{participants.length.toLocaleString()}</Text></View>
+        <Pressable style={lumoStyles.shareButton} onPress={() => void shareLive()} accessibilityRole="button" accessibilityLabel="Share live room">
+          <Ionicons name="share-social-outline" size={17} color={resolveThemeColor("#F2F5F7", "color")} />
         </Pressable>
       </View>
 
-      <View style={styles.liveIdCard}>
-        <View style={styles.liveIdCopy}>
-          <Text style={styles.liveIdLabel}>LUMO LIVE ID</Text>
-          <Text style={styles.liveIdValue} selectable>{live.live_code}</Text>
+      <View style={lumoStyles.liveIdCard}>
+        <View style={lumoStyles.liveIdCopy}>
+          <Text style={lumoStyles.liveIdLabel}>LUMO LIVE ID</Text>
+          <Text style={lumoStyles.liveIdValue} selectable>{live.live_code}</Text>
         </View>
-        <Text style={styles.liveIdHint}>8-DIGIT CODE</Text>
+        <Text style={lumoStyles.liveIdHint}>8-DIGIT CODE</Text>
       </View>
 
-      <View style={styles.roomHeading}>
-        <View style={styles.hostIdentity}>
-          <View style={styles.hostAvatar}>
-            {live.host?.avatar_url ? <Image source={{ uri: live.host.avatar_url }} style={styles.hostAvatarImage} contentFit="cover" /> : <Text style={styles.hostAvatarInitial}>{avatarInitial(displayName)}</Text>}
+      <View style={lumoStyles.roomHeading}>
+        <View style={lumoStyles.hostIdentity}>
+          <View style={lumoStyles.hostAvatar}>
+            {live.host?.avatar_url ? <Image source={{ uri: live.host.avatar_url }} style={lumoStyles.hostAvatarImage} contentFit="cover" /> : <Text style={lumoStyles.hostAvatarInitial}>{avatarInitial(displayName)}</Text>}
           </View>
-          <View style={styles.hostCopy}>
-            <Text style={styles.hostName}>@{displayName}</Text>
-            <Text style={styles.hostCaption}>{isHost ? 'You are hosting this live' : 'Hosting this live'} · {guests.length}/3 guests</Text>
+          <View style={lumoStyles.hostCopy}>
+            <Text style={lumoStyles.hostName}>@{displayName}</Text>
+            <Text style={lumoStyles.hostCaption}>{isHost ? 'You are hosting this live' : 'Hosting this live'} · {guests.length}/3 guests</Text>
           </View>
         </View>
-        <View style={styles.roomAudience}><Ionicons name={live.audience === 'public' ? 'globe-outline' : 'people-outline'} size={13} color="#AAB6C1" /><Text style={styles.roomAudienceText}>{live.audience === 'public' ? 'PUBLIC' : 'FOLLOWERS'}</Text></View>
+        <View style={lumoStyles.roomAudience}><Ionicons name={live.audience === 'public' ? 'globe-outline' : 'people-outline'} size={13} color={resolveThemeColor("#AAB6C1", "color")} /><Text style={lumoStyles.roomAudienceText}>{live.audience === 'public' ? 'PUBLIC' : 'FOLLOWERS'}</Text></View>
       </View>
 
-      {error ? <View style={styles.inlineError}><Ionicons name="alert-circle-outline" size={16} color="#D8B879" /><Text style={styles.inlineErrorText}>{error}</Text></View> : null}
+      {error ? <View style={lumoStyles.inlineError}><Ionicons name="alert-circle-outline" size={16} color={resolveThemeColor("#D8B879", "color")} /><Text style={lumoStyles.inlineErrorText}>{error}</Text></View> : null}
 
-      <View style={[styles.roomColumns, wideLayout && styles.roomColumnsWide]}>
-        <View style={styles.stageColumn}>
-          <View style={styles.videoCard}>
+      <View style={[lumoStyles.roomColumns, wideLayout && lumoStyles.roomColumnsWide]}>
+        <View style={lumoStyles.stageColumn}>
+          <View style={lumoStyles.videoCard}>
         <LiveRoom key={`${sessionId}-${role}`} sessionId={sessionId} onConnectionChange={handleConnectionChange} />
       </View>
 
-      <View style={styles.sessionMeta}>
-        <Text style={styles.sessionCategory}>{live.category.toUpperCase()}</Text>
-        <Text style={styles.sessionDescription}>{live.description || 'Come into the conversation and be part of the moment.'}</Text>
+      <View style={lumoStyles.sessionMeta}>
+        <Text style={lumoStyles.sessionCategory}>{live.category.toUpperCase()}</Text>
+        <Text style={lumoStyles.sessionDescription}>{live.description || 'Come into the conversation and be part of the moment.'}</Text>
       </View>
 
       {isDeveloper ? (
-        <View style={styles.developerPanel}>
-          <View style={styles.panelHeader}>
-            <View><Text style={styles.panelEyebrow}>DEVELOPER TOOLS</Text><Text style={styles.panelTitle}>LIVE moderation</Text></View>
-            <View style={styles.developerBadge}><Text style={styles.developerBadgeText}>DEVELOPER</Text></View>
+        <View style={lumoStyles.developerPanel}>
+          <View style={lumoStyles.panelHeader}>
+            <View><Text style={lumoStyles.panelEyebrow}>DEVELOPER TOOLS</Text><Text style={lumoStyles.panelTitle}>LIVE moderation</Text></View>
+            <View style={lumoStyles.developerBadge}><Text style={lumoStyles.developerBadgeText}>DEVELOPER</Text></View>
           </View>
-          <Text style={styles.developerDescription}>Qoidani buzgan yoki 18+ efir qilgan foydalanuvchiga LIVE cheklovi bering.</Text>
+          <Text style={lumoStyles.developerDescription}>Qoidani buzgan yoki 18+ efir qilgan foydalanuvchiga LIVE cheklovi bering.</Text>
           {participants.map(target => (
-            <View key={target.user_id} style={styles.developerUserRow}>
-              <View style={styles.developerUserCopy}>
-                <Text style={styles.developerUserName}>@{target.host?.username ?? 'lumo_member'}</Text>
-                <Text style={styles.developerUserRole}>{target.role.toUpperCase()}</Text>
+            <View key={target.user_id} style={lumoStyles.developerUserRow}>
+              <View style={lumoStyles.developerUserCopy}>
+                <Text style={lumoStyles.developerUserName}>@{target.host?.username ?? 'lumo_member'}</Text>
+                <Text style={lumoStyles.developerUserRole}>{target.role.toUpperCase()}</Text>
               </View>
-              {target.user_id === userId ? <Text style={styles.developerSelf}>YOU</Text> : (
-                <Pressable style={styles.developerBanButton} onPress={() => openLiveBanOptions(target)} disabled={working}>
-                  <Ionicons name="ban-outline" size={14} color="#FFE0E0" /><Text style={styles.developerBanText}>BAN</Text>
+              {target.user_id === userId ? <Text style={lumoStyles.developerSelf}>YOU</Text> : (
+                <Pressable style={lumoStyles.developerBanButton} onPress={() => openLiveBanOptions(target)} disabled={working}>
+                  <Ionicons name="ban-outline" size={14} color={resolveThemeColor("#FFE0E0", "color")} /><Text style={lumoStyles.developerBanText}>BAN</Text>
                 </Pressable>
               )}
             </View>
           ))}
-          {!participants.length ? <Text style={styles.developerDescription}>Hozircha qatnashchilar yoq.</Text> : null}
+          {!participants.length ? <Text style={lumoStyles.developerDescription}>Hozircha qatnashchilar yoq.</Text> : null}
         </View>
       ) : null}
 
       {isHost ? (
-        <View style={styles.hostPanel}>
-          <View style={styles.panelHeader}>
-            <View><Text style={styles.panelEyebrow}>YOUR STAGE</Text><Text style={styles.panelTitle}>Guest requests <Text style={styles.panelCount}>{pendingRequestCount}</Text></Text></View>
-            <View style={styles.slotsBadge}><Text style={styles.slotsText}>{guestSlots} SEATS LEFT</Text></View>
+        <View style={lumoStyles.hostPanel}>
+          <View style={lumoStyles.panelHeader}>
+            <View><Text style={lumoStyles.panelEyebrow}>YOUR STAGE</Text><Text style={lumoStyles.panelTitle}>Guest requests <Text style={lumoStyles.panelCount}>{pendingRequestCount}</Text></Text></View>
+            <View style={lumoStyles.slotsBadge}><Text style={lumoStyles.slotsText}>{guestSlots} SEATS LEFT</Text></View>
           </View>
 
           {hostRequestRows.length ? hostRequestRows.map(item => (
-            <View key={item.id} style={styles.requestRow}>
-              <View style={styles.requestAvatar}><Text style={styles.requestInitial}>{avatarInitial(item.requester?.username)}</Text></View>
-              <View style={styles.requestCopy}>
-                <Text style={styles.requestName}>@{item.requester?.username ?? 'lumo_member'}</Text>
-                <Text style={styles.requestCaption}>{item.status === 'accepted' ? 'Approved · waiting to join' : 'Wants to join your stage · ' + ago(item.created_at)}</Text>
+            <View key={item.id} style={lumoStyles.requestRow}>
+              <View style={lumoStyles.requestAvatar}><Text style={lumoStyles.requestInitial}>{avatarInitial(item.requester?.username)}</Text></View>
+              <View style={lumoStyles.requestCopy}>
+                <Text style={lumoStyles.requestName}>@{item.requester?.username ?? 'lumo_member'}</Text>
+                <Text style={lumoStyles.requestCaption}>{item.status === 'accepted' ? 'Approved · waiting to join' : 'Wants to join your stage · ' + ago(item.created_at)}</Text>
               </View>
               {item.status === 'pending' ? (
                 <>
-                  <Pressable style={styles.declineButton} onPress={() => void reviewRequest(item.id, 'declined')} disabled={working}><Ionicons name="close" size={17} color="#E6A1A1" /></Pressable>
-                  <Pressable style={styles.acceptButton} onPress={() => void reviewRequest(item.id, 'accepted')} disabled={working || guestSlots <= 0}>
-                    <Ionicons name="checkmark" size={17} color="#11161C" />
+                  <Pressable style={lumoStyles.declineButton} onPress={() => void reviewRequest(item.id, 'declined')} disabled={working}><Ionicons name="close" size={17} color={resolveThemeColor("#E6A1A1", "color")} /></Pressable>
+                  <Pressable style={lumoStyles.acceptButton} onPress={() => void reviewRequest(item.id, 'accepted')} disabled={working || guestSlots <= 0}>
+                    <Ionicons name="checkmark" size={17} color={resolveThemeColor("#11161C", "color")} />
                   </Pressable>
                 </>
               ) : (
-                <Pressable style={styles.removeGuestButton} onPress={() => void releaseRequest(item.id)} disabled={working} accessibilityRole="button" accessibilityLabel="Release reserved guest seat">
-                  <Ionicons name="close-circle-outline" size={18} color="#E9A1A1" />
+                <Pressable style={lumoStyles.removeGuestButton} onPress={() => void releaseRequest(item.id)} disabled={working} accessibilityRole="button" accessibilityLabel="Release reserved guest seat">
+                  <Ionicons name="close-circle-outline" size={18} color={resolveThemeColor("#E9A1A1", "color")} />
                 </Pressable>
               )}
             </View>
           )) : (
-            <View style={styles.noRequests}><Ionicons name="hand-left-outline" size={20} color="#8C9A8A" /><Text style={styles.noRequestsText}>Your audience can request a seat. You decide who joins.</Text></View>
+            <View style={lumoStyles.noRequests}><Ionicons name="hand-left-outline" size={20} color={resolveThemeColor("#8C9A8A", "color")} /><Text style={lumoStyles.noRequestsText}>Your audience can request a seat. You decide who joins.</Text></View>
           )}
 
-          <View style={styles.panelDivider} />
-          <Text style={styles.panelEyebrow}>ON YOUR STAGE</Text>
+          <View style={lumoStyles.panelDivider} />
+          <Text style={lumoStyles.panelEyebrow}>ON YOUR STAGE</Text>
           {guests.length ? guests.map(item => (
-            <View key={item.user_id} style={styles.guestRow}>
-              <View style={styles.guestAvatar}><Text style={styles.requestInitial}>{avatarInitial(item.host?.username)}</Text></View>
-              <View style={styles.requestCopy}>
-                <Text style={styles.requestName}>@{item.host?.username ?? 'guest'}</Text>
-                <Text style={styles.requestCaption}>Guest · connected</Text>
+            <View key={item.user_id} style={lumoStyles.guestRow}>
+              <View style={lumoStyles.guestAvatar}><Text style={lumoStyles.requestInitial}>{avatarInitial(item.host?.username)}</Text></View>
+              <View style={lumoStyles.requestCopy}>
+                <Text style={lumoStyles.requestName}>@{item.host?.username ?? 'guest'}</Text>
+                <Text style={lumoStyles.requestCaption}>Guest · connected</Text>
               </View>
-              <Pressable style={styles.guestAction} onPress={() => void moderateGuest(item.user_id, mutedGuestIds.includes(item.user_id) ? 'unmute' : 'mute')} disabled={working}>
-                <Ionicons name={mutedGuestIds.includes(item.user_id) ? 'mic-off' : 'mic'} size={15} color="#D6E3B4" />
-                <Text style={styles.guestActionText}>{mutedGuestIds.includes(item.user_id) ? 'Unmute' : 'Mute'}</Text>
+              <Pressable style={lumoStyles.guestAction} onPress={() => void moderateGuest(item.user_id, mutedGuestIds.includes(item.user_id) ? 'unmute' : 'mute')} disabled={working}>
+                <Ionicons name={mutedGuestIds.includes(item.user_id) ? 'mic-off' : 'mic'} size={15} color={resolveThemeColor("#D6E3B4", "color")} />
+                <Text style={lumoStyles.guestActionText}>{mutedGuestIds.includes(item.user_id) ? 'Unmute' : 'Mute'}</Text>
               </Pressable>
-              <Pressable style={styles.removeGuestButton} onPress={() => void moderateGuest(item.user_id, 'remove')} disabled={working}>
-                <Ionicons name="remove-circle-outline" size={17} color="#E9A1A1" />
+              <Pressable style={lumoStyles.removeGuestButton} onPress={() => void moderateGuest(item.user_id, 'remove')} disabled={working}>
+                <Ionicons name="remove-circle-outline" size={17} color={resolveThemeColor("#E9A1A1", "color")} />
               </Pressable>
             </View>
-          )) : <Text style={styles.emptyGuestText}>No guests on stage yet.</Text>}
+          )) : <Text style={lumoStyles.emptyGuestText}>No guests on stage yet.</Text>}
 
-          <Pressable style={styles.endButton} onPress={() => void finishLive()} disabled={working}>
-            {working ? <ActivityIndicator size="small" color="#FFE0E0" /> : <Ionicons name="stop-circle-outline" size={17} color="#FFE0E0" />}
-            <Text style={styles.endButtonText}>End live</Text>
+          <Pressable style={lumoStyles.endButton} onPress={() => void finishLive()} disabled={working}>
+            {working ? <ActivityIndicator size="small" color={resolveThemeColor("#FFE0E0", "color")} /> : <Ionicons name="stop-circle-outline" size={17} color={resolveThemeColor("#FFE0E0", "color")} />}
+            <Text style={lumoStyles.endButtonText}>End live</Text>
           </Pressable>
         </View>
       ) : role === 'guest' ? (
-        <View style={styles.guestOnStageCard}>
-          <View style={styles.stageDot}><Ionicons name="mic" size={17} color="#C9D9A4" /></View>
-          <View style={styles.stageCopy}><Text style={styles.stageTitle}>You are on stage</Text><Text style={styles.stageSubtitle}>Your camera and microphone are shared with the audience.</Text></View>
-          <Pressable style={styles.leaveStageButton} onPress={() => void leaveStage()} disabled={working}><Text style={styles.leaveStageText}>Leave stage</Text></Pressable>
+        <View style={lumoStyles.guestOnStageCard}>
+          <View style={lumoStyles.stageDot}><Ionicons name="mic" size={17} color={resolveThemeColor("#C9D9A4", "color")} /></View>
+          <View style={lumoStyles.stageCopy}><Text style={lumoStyles.stageTitle}>You are on stage</Text><Text style={lumoStyles.stageSubtitle}>Your camera and microphone are shared with the audience.</Text></View>
+          <Pressable style={lumoStyles.leaveStageButton} onPress={() => void leaveStage()} disabled={working}><Text style={lumoStyles.leaveStageText}>Leave stage</Text></Pressable>
         </View>
       ) : (
-        <View style={styles.viewerStageCard}>
-          <View style={styles.viewerStageTop}>
-            <View style={styles.stageDot}><Ionicons name="people" size={17} color="#C9D9A4" /></View>
-            <View style={styles.stageCopy}><Text style={styles.stageTitle}>Join the conversation</Text><Text style={styles.stageSubtitle}>Ask the host to bring you on stage.</Text></View>
-            <Text style={styles.slotCount}>{guests.length}/3</Text>
+        <View style={lumoStyles.viewerStageCard}>
+          <View style={lumoStyles.viewerStageTop}>
+            <View style={lumoStyles.stageDot}><Ionicons name="people" size={17} color={resolveThemeColor("#C9D9A4", "color")} /></View>
+            <View style={lumoStyles.stageCopy}><Text style={lumoStyles.stageTitle}>Join the conversation</Text><Text style={lumoStyles.stageSubtitle}>Ask the host to bring you on stage.</Text></View>
+            <Text style={lumoStyles.slotCount}>{guests.length}/3</Text>
           </View>
           {canJoinAcceptedStage ? (
             <>
-              <Pressable style={styles.requestStageButton} onPress={() => void joinStage()} disabled={working}>
-                {working ? <ActivityIndicator color="#11161C" /> : <Ionicons name="mic" size={17} color="#11161C" />}
-                <Text style={styles.requestStageButtonText}>Your request was accepted — join stage</Text>
+              <Pressable style={lumoStyles.requestStageButton} onPress={() => void joinStage()} disabled={working}>
+                {working ? <ActivityIndicator color={resolveThemeColor("#11161C", "color")} /> : <Ionicons name="mic" size={17} color={resolveThemeColor("#11161C", "color")} />}
+                <Text style={lumoStyles.requestStageButtonText}>Your request was accepted — join stage</Text>
               </Pressable>
-              <View style={styles.waitingRow}>
-                <Text style={styles.waitingText}>Your spot is approved.</Text>
-                <Pressable onPress={() => void cancelRequest()} disabled={working}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+              <View style={lumoStyles.waitingRow}>
+                <Text style={lumoStyles.waitingText}>Your spot is approved.</Text>
+                <Pressable onPress={() => void cancelRequest()} disabled={working}><Text style={lumoStyles.cancelText}>Cancel</Text></Pressable>
               </View>
             </>
           ) : myRequest?.status === 'pending' ? (
-            <View style={styles.waitingRow}>
-              <View style={styles.waitingIndicator}><ActivityIndicator color="#C9D9A4" size="small" /></View>
-              <Text style={styles.waitingText}>Request sent. Waiting for the host.</Text>
-              <Pressable onPress={() => void cancelRequest()} disabled={working}><Text style={styles.cancelText}>Cancel</Text></Pressable>
+            <View style={lumoStyles.waitingRow}>
+              <View style={lumoStyles.waitingIndicator}><ActivityIndicator color={resolveThemeColor("#C9D9A4", "color")} size="small" /></View>
+              <Text style={lumoStyles.waitingText}>Request sent. Waiting for the host.</Text>
+              <Pressable onPress={() => void cancelRequest()} disabled={working}><Text style={lumoStyles.cancelText}>Cancel</Text></Pressable>
             </View>
           ) : (
-            <Pressable style={styles.requestStageButton} onPress={() => void requestStage()} disabled={working || guests.length >= 3}>
-              {working ? <ActivityIndicator color="#11161C" /> : <Ionicons name="hand-left" size={17} color="#11161C" />}
-              <Text style={styles.requestStageButtonText}>{guests.length >= 3 ? 'Stage is full' : myRequest?.status === 'declined' ? 'Request again' : 'Request to join stage'}</Text>
+            <Pressable style={lumoStyles.requestStageButton} onPress={() => void requestStage()} disabled={working || guests.length >= 3}>
+              {working ? <ActivityIndicator color={resolveThemeColor("#11161C", "color")} /> : <Ionicons name="hand-left" size={17} color={resolveThemeColor("#11161C", "color")} />}
+              <Text style={lumoStyles.requestStageButtonText}>{guests.length >= 3 ? 'Stage is full' : myRequest?.status === 'declined' ? 'Request again' : 'Request to join stage'}</Text>
             </Pressable>
           )}
         </View>
       )}
         </View>
 
-        <View style={[styles.chatColumn, wideLayout && styles.chatColumnWide]}>
-      <View style={styles.chatCard}>
-        <View style={styles.panelHeader}>
-          <View><Text style={styles.panelEyebrow}>THE ROOM</Text><Text style={styles.panelTitle}>Live chat <Text style={styles.panelCount}>{messages.length}</Text></Text></View>
-          <View style={styles.chatOnline}><View style={styles.onlineDot} /><Text style={styles.chatOnlineText}>LIVE</Text></View>
+        <View style={[lumoStyles.chatColumn, wideLayout && lumoStyles.chatColumnWide]}>
+      <View style={lumoStyles.chatCard}>
+        <View style={lumoStyles.panelHeader}>
+          <View><Text style={lumoStyles.panelEyebrow}>THE ROOM</Text><Text style={lumoStyles.panelTitle}>Live chat <Text style={lumoStyles.panelCount}>{messages.length}</Text></Text></View>
+          <View style={lumoStyles.chatOnline}><View style={lumoStyles.onlineDot} /><Text style={lumoStyles.chatOnlineText}>LIVE</Text></View>
         </View>
-        <View style={styles.chatMessages}>
+        <View style={lumoStyles.chatMessages}>
           {messages.length ? messages.slice(-30).map(item => (
-            <View key={item.id} style={styles.messageRow}>
-              <View style={styles.messageAvatar}><Text style={styles.messageInitial}>{avatarInitial(item.profile?.username)}</Text></View>
-              <View style={styles.messageCopy}>
-                <View style={styles.messageHeading}><Text style={styles.messageName}>@{item.profile?.username ?? 'member'}</Text><Text style={styles.messageTime}>{ago(item.created_at)}</Text></View>
-                <Text style={styles.messageBody}>{item.body}</Text>
+            <View key={item.id} style={lumoStyles.messageRow}>
+              <View style={lumoStyles.messageAvatar}><Text style={lumoStyles.messageInitial}>{avatarInitial(item.profile?.username)}</Text></View>
+              <View style={lumoStyles.messageCopy}>
+                <View style={lumoStyles.messageHeading}><Text style={lumoStyles.messageName}>@{item.profile?.username ?? 'member'}</Text><Text style={lumoStyles.messageTime}>{ago(item.created_at)}</Text></View>
+                <Text style={lumoStyles.messageBody}>{item.body}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyChatText}>The conversation starts here. Say hello.</Text>}
+          )) : <Text style={lumoStyles.emptyChatText}>The conversation starts here. Say hello.</Text>}
         </View>
-        <View style={styles.chatComposer}>
+        <View style={lumoStyles.chatComposer}>
           <TextInput
             value={messageText}
             onChangeText={setMessageText}
             placeholder="Write a message…"
-            placeholderTextColor="#6E7A89"
-            style={styles.chatInput}
+            placeholderTextColor={resolveThemeColor("#6E7A89", "placeholderTextColor")}
+            style={lumoStyles.chatInput}
             maxLength={500}
             returnKeyType="send"
             onSubmitEditing={() => void sendMessageNow()}
           />
-          <Pressable style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]} onPress={() => void sendMessageNow()} disabled={!messageText.trim() || working}>
-            <Ionicons name="arrow-up" size={18} color="#11161C" />
+          <Pressable style={[lumoStyles.sendButton, !messageText.trim() && lumoStyles.sendButtonDisabled]} onPress={() => void sendMessageNow()} disabled={!messageText.trim() || working}>
+            <Ionicons name="arrow-up" size={18} color={resolveThemeColor("#11161C", "color")} />
           </Pressable>
         </View>
       </View>
         </View>
       </View>
 
-      <View style={styles.connectionFooter}>
-        <View style={[styles.connectionDot, connected && styles.connectionDotActive]} />
-        <Text style={styles.connectionText}>{connected ? (live.status === 'starting' ? 'Preparing your live stage' : 'Secure video connection active') : 'Connecting to the live video room'}</Text>
+      <View style={lumoStyles.connectionFooter}>
+        <View style={[lumoStyles.connectionDot, connected && lumoStyles.connectionDotActive]} />
+        <Text style={lumoStyles.connectionText}>{connected ? (live.status === 'starting' ? 'Preparing your live stage' : 'Secure video connection active') : 'Connecting to the live video room'}</Text>
       </View>
     </ScrollView>
   );

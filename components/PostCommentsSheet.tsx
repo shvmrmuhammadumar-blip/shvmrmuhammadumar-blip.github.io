@@ -18,9 +18,14 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSegments } from "expo-router";
+import { getAppContentWidth } from "../lib/responsive";
 import Avatar from "./Avatar";
 import { supabase } from "../lib/supabase";
 import { Alert } from "../lib/alert";
+import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 type ReactionSummary = { reaction: string; count: number; mine: boolean };
 type CommentRecord = {
@@ -97,9 +102,12 @@ export default function PostCommentsSheet({
   onCountChange,
   embedded = false,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktopEmbedded = embedded && windowWidth >= 1100;
+  const segments = useSegments();
+  const availableWidth = getAppContentWidth(windowWidth, segments[0] === '(tabs)');
+  const isDesktopEmbedded = embedded && availableWidth >= 1100;
   const halfHeight = isDesktopEmbedded ? Math.min(windowHeight * 0.88, 900) : Math.min(292, windowHeight * 0.36);
   const expandedHeight = isDesktopEmbedded ? halfHeight : windowHeight * 0.88;
   const sheetHeight = useRef(new Animated.Value(halfHeight)).current;
@@ -476,78 +484,78 @@ export default function PostCommentsSheet({
     const repliesExpanded = expandedReplyGroups.has(item.id);
 
     return (
-      <View key={item.id} style={[styles.commentBlock, depth > 0 && styles.replyBlock]}>
-        <View style={styles.commentRow}>
+      <View key={item.id} style={[lumoStyles.commentBlock, depth > 0 && lumoStyles.replyBlock]}>
+        <View style={lumoStyles.commentRow}>
           <Avatar uri={item.profiles?.avatar_url} name={username} size={34} />
-          <View style={styles.commentContent}>
-            <View style={styles.commentBubble}>
-              <Text style={styles.username}>@{username}</Text>
-              {item.edited_at ? <Text style={styles.editedLabel}>EDITED</Text> : null}
+          <View style={lumoStyles.commentContent}>
+            <View style={lumoStyles.commentBubble}>
+              <Text style={lumoStyles.username}>@{username}</Text>
+              {item.edited_at ? <Text style={lumoStyles.editedLabel}>EDITED</Text> : null}
               {item.comment_type === "image" && imageUrl ? (
-                <Image source={{ uri: imageUrl }} style={styles.commentImage} contentFit="cover" />
+                <Image source={{ uri: imageUrl }} style={lumoStyles.commentImage} contentFit="cover" />
               ) : null}
               {item.comment_type === "sticker" ? (
-                <Text style={styles.commentSticker}>{item.body}</Text>
+                <Text style={lumoStyles.commentSticker}>{item.body}</Text>
               ) : item.body?.trim() ? (
-                <Text style={styles.commentBody}>{item.body}</Text>
+                <Text style={lumoStyles.commentBody}>{item.body}</Text>
               ) : null}
             </View>
-            <View style={styles.commentMeta}>
-              <Text style={styles.time}>{relativeTime(item.created_at)}</Text>
+            <View style={lumoStyles.commentMeta}>
+              <Text style={lumoStyles.time}>{relativeTime(item.created_at)}</Text>
               <Pressable onPress={() => { setEditingComment(null); setReplyTo(item); }} hitSlop={8}>
-                <Text style={styles.replyAction}>Reply</Text>
+                <Text style={lumoStyles.replyAction}>Reply</Text>
               </Pressable>
               {item.user_id === userId && (
                 <Pressable onPress={() => startEdit(item)} hitSlop={8}>
-                  <Text style={styles.replyAction}>Edit</Text>
+                  <Text style={lumoStyles.replyAction}>Edit</Text>
                 </Pressable>
               )}
               {canDelete && (
                 <Pressable onPress={() => deleteComment(item)} hitSlop={8}>
-                  <Ionicons name="trash-outline" size={14} color="#858D80" />
+                  <Ionicons name="trash-outline" size={14} color={resolveThemeColor("#858D80", "color")} />
                 </Pressable>
               )}
               {item.user_id !== userId && (
                 <Pressable onPress={() => startReport(item)} hitSlop={8}>
-                  <Ionicons name="flag-outline" size={14} color="#858D80" />
+                  <Ionicons name="flag-outline" size={14} color={resolveThemeColor("#858D80", "color")} />
                 </Pressable>
               )}
             </View>
 
-            <View style={styles.reactionRow}>
+            <View style={lumoStyles.reactionRow}>
               {item.reactions.map((value) => (
                 <Pressable
                   key={value.reaction}
                   onPress={() => void toggleReaction(item, value.reaction)}
-                  style={[styles.reactionChip, value.mine && styles.reactionChipActive]}
+                  style={[lumoStyles.reactionChip, value.mine && lumoStyles.reactionChipActive]}
                 >
-                  <Text style={styles.reactionChipText}>{value.reaction} {value.count}</Text>
+                  <Text style={lumoStyles.reactionChipText}>{value.reaction} {value.count}</Text>
                 </Pressable>
               ))}
               <Pressable
                 onPress={() => setReactionPickerFor((current) => current === item.id ? null : item.id)}
                 hitSlop={6}
-                style={styles.addReactionButton}
+                style={lumoStyles.addReactionButton}
               >
-                <Ionicons name="happy-outline" size={15} color="#AAB39F" />
+                <Ionicons name="happy-outline" size={15} color={resolveThemeColor("#AAB39F", "color")} />
               </Pressable>
             </View>
 
             {reactionPickerFor === item.id && (
-              <View style={styles.reactionPicker}>
+              <View style={lumoStyles.reactionPicker}>
                 {REACTIONS.map((reaction) => (
                   <Pressable
                     key={reaction}
                     onPress={() => void toggleReaction(item, reaction)}
-                    style={styles.reactionChoice}
+                    style={lumoStyles.reactionChoice}
                   >
-                    <Text style={styles.reactionChoiceText}>{reaction}</Text>
+                    <Text style={lumoStyles.reactionChoiceText}>{reaction}</Text>
                   </Pressable>
                 ))}
               </View>
             )}
             {item.replies.length > 0 && (
-              <View style={styles.replyGroup}>
+              <View style={lumoStyles.replyGroup}>
                 <Pressable
                   onPress={() =>
                     setExpandedReplyGroups((current) => {
@@ -557,17 +565,17 @@ export default function PostCommentsSheet({
                       return next;
                     })
                   }
-                  style={styles.replyToggle}
+                  style={lumoStyles.replyToggle}
                   accessibilityRole="button"
                   accessibilityLabel={repliesExpanded ? "Hide replies" : `Show ${item.replies.length} replies`}
                 >
-                  <Ionicons name={repliesExpanded ? "chevron-up" : "chevron-down"} size={13} color="#B9C7D6" />
-                  <Text style={styles.replyAction}>
+                  <Ionicons name={repliesExpanded ? "chevron-up" : "chevron-down"} size={13} color={resolveThemeColor("#B9C7D6", "color")} />
+                  <Text style={lumoStyles.replyAction}>
                     {repliesExpanded ? "Hide replies" : `Replies (${item.replies.length})`}
                   </Text>
                 </Pressable>
                 {repliesExpanded && (
-                  <View style={styles.replies}>
+                  <View style={lumoStyles.replies}>
                     {item.replies.map((reply) => renderComment(reply, depth + 1))}
                   </View>
                 )}
@@ -580,29 +588,29 @@ export default function PostCommentsSheet({
   };
 
   const sheetContent = (
-      <View style={[styles.modalRoot, embedded && styles.embeddedRoot, isDesktopEmbedded && styles.desktopEmbeddedRoot]}>
+      <View style={[lumoStyles.modalRoot, embedded && lumoStyles.embeddedRoot, isDesktopEmbedded && lumoStyles.desktopEmbeddedRoot]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
-          style={[styles.keyboardDock, isDesktopEmbedded && styles.desktopKeyboardDock]}
+          style={[lumoStyles.keyboardDock, isDesktopEmbedded && lumoStyles.desktopKeyboardDock]}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <Animated.View style={[styles.sheet, isDesktopEmbedded && styles.desktopSheet, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 12) }]}>
-            <View {...panResponder.panHandlers} style={styles.dragZone}>
-              <View style={styles.dragHandle} />
+          <Animated.View style={[lumoStyles.sheet, isDesktopEmbedded && lumoStyles.desktopSheet, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 12) }]}>
+            <View {...panResponder.panHandlers} style={lumoStyles.dragZone}>
+              <View style={lumoStyles.dragHandle} />
             </View>
-            <View style={styles.header}>
+            <View style={lumoStyles.header}>
               <View>
-                <Text style={styles.title}>Comments</Text>
-                <Text style={styles.count}>{comments.length} comments</Text>
+                <Text style={lumoStyles.title}>Comments</Text>
+                <Text style={lumoStyles.count}>{comments.length} comments</Text>
               </View>
-              <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
-                <Ionicons name="close" size={20} color="#F2F5F7" />
+              <Pressable onPress={onClose} style={lumoStyles.closeButton} hitSlop={8}>
+                <Ionicons name="close" size={20} color={resolveThemeColor("#F2F5F7", "color")} />
               </Pressable>
             </View>
-            <View style={styles.divider} />
+            <View style={lumoStyles.divider} />
 
             {loading ? (
-              <View style={styles.centerState}><ActivityIndicator color="#B9C7D6" /></View>
+              <View style={lumoStyles.centerState}><ActivityIndicator color={resolveThemeColor("#B9C7D6", "color")} /></View>
             ) : (
               <FlatList
                 data={tree}
@@ -610,57 +618,57 @@ export default function PostCommentsSheet({
                 renderItem={({ item }) => renderComment(item)}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={lumoStyles.listContent}
                 ListEmptyComponent={(
-                  <View style={styles.emptyState}>
-                    <Ionicons name="chatbubble-ellipses-outline" size={26} color="#697263" />
-                    <Text style={styles.emptyTitle}>No comments yet</Text>
-                    <Text style={styles.emptyText}>Start the conversation.</Text>
+                  <View style={lumoStyles.emptyState}>
+                    <Ionicons name="chatbubble-ellipses-outline" size={26} color={resolveThemeColor("#697263", "color")} />
+                    <Text style={lumoStyles.emptyTitle}>No comments yet</Text>
+                    <Text style={lumoStyles.emptyText}>Start the conversation.</Text>
                   </View>
                 )}
               />
             )}
 
-            {!!errorText && <Text style={styles.errorText}>{errorText}</Text>}
+            {!!errorText && <Text style={lumoStyles.errorText}>{errorText}</Text>}
 
             {pendingImage && (
-              <View style={styles.imagePreviewRow}>
-                <Image source={{ uri: pendingImage.uri }} style={styles.imagePreview} contentFit="cover" />
-                <Text style={styles.imagePreviewName} numberOfLines={1}>Image ready</Text>
+              <View style={lumoStyles.imagePreviewRow}>
+                <Image source={{ uri: pendingImage.uri }} style={lumoStyles.imagePreview} contentFit="cover" />
+                <Text style={lumoStyles.imagePreviewName} numberOfLines={1}>Image ready</Text>
                 <Pressable onPress={() => setPendingImage(null)} hitSlop={8}>
-                  <Ionicons name="close-circle" size={20} color="#A8B09F" />
+                  <Ionicons name="close-circle" size={20} color={resolveThemeColor("#A8B09F", "color")} />
                 </Pressable>
               </View>
             )}
 
             {editingComment && (
-              <View style={styles.replyingBar}>
-                <Text style={styles.replyingText}>Editing your comment</Text>
+              <View style={lumoStyles.replyingBar}>
+                <Text style={lumoStyles.replyingText}>Editing your comment</Text>
                 <Pressable onPress={() => { setEditingComment(null); setText(""); }} hitSlop={8}>
-                  <Ionicons name="close" size={16} color="#A8B09F" />
+                  <Ionicons name="close" size={16} color={resolveThemeColor("#A8B09F", "color")} />
                 </Pressable>
               </View>
             )}
 
             {replyTo && (
-              <View style={styles.replyingBar}>
-                <Text style={styles.replyingText}>Replying to @{replyTo.profiles?.username ?? "user"}</Text>
+              <View style={lumoStyles.replyingBar}>
+                <Text style={lumoStyles.replyingText}>Replying to @{replyTo.profiles?.username ?? "user"}</Text>
                 <Pressable onPress={() => setReplyTo(null)} hitSlop={8}>
-                  <Ionicons name="close" size={16} color="#A8B09F" />
+                  <Ionicons name="close" size={16} color={resolveThemeColor("#A8B09F", "color")} />
                 </Pressable>
               </View>
             )}
 
-            <View style={styles.composer}>
-              <Pressable onPress={() => void chooseImage()} disabled={sending} style={styles.toolButton}>
-                <Ionicons name="image-outline" size={21} color="#B9C7D6" />
+            <View style={lumoStyles.composer}>
+              <Pressable onPress={() => void chooseImage()} disabled={sending} style={lumoStyles.toolButton}>
+                <Ionicons name="image-outline" size={21} color={resolveThemeColor("#B9C7D6", "color")} />
               </Pressable>
               <TextInput
                 value={text}
                 onChangeText={setText}
                 placeholder={editingComment ? "Edit your comment..." : replyTo ? "Write a reply..." : "Add a comment..."}
-                placeholderTextColor="#747D6E"
-                style={styles.input}
+                placeholderTextColor={resolveThemeColor("#747D6E", "placeholderTextColor")}
+                style={lumoStyles.input}
                 maxLength={1000}
                 multiline
                 editable={!sending}
@@ -669,46 +677,46 @@ export default function PostCommentsSheet({
               <Pressable
                 onPress={() => pendingImage ? void sendImage() : void sendText()}
                 disabled={sending || (!text.trim() && !pendingImage)}
-                style={[styles.sendButton, (sending || (!text.trim() && !pendingImage)) && styles.sendButtonDisabled]}
+                style={[lumoStyles.sendButton, (sending || (!text.trim() && !pendingImage)) && lumoStyles.sendButtonDisabled]}
               >
-                {sending ? <ActivityIndicator size="small" color="#0B0E09" /> : <Ionicons name="arrow-up" size={19} color="#0B0E09" />}
+                {sending ? <ActivityIndicator size="small" color={resolveThemeColor("#0B0E09", "color")} /> : <Ionicons name="arrow-up" size={19} color={resolveThemeColor("#0B0E09", "color")} />}
               </Pressable>
             </View>
 
             {reportTarget && (
-              <View style={styles.deleteOverlay}>
-                <View style={styles.reportDialog}>
-                  <Text style={styles.deleteTitle}>Report comment</Text>
-                  <Text style={styles.deleteDescription}>Choose a reason for reporting this comment.</Text>
+              <View style={lumoStyles.deleteOverlay}>
+                <View style={lumoStyles.reportDialog}>
+                  <Text style={lumoStyles.deleteTitle}>Report comment</Text>
+                  <Text style={lumoStyles.deleteDescription}>Choose a reason for reporting this comment.</Text>
                   {REPORT_REASONS.map((reason) => (
                     <Pressable
                       key={reason.value}
                       onPress={() => setReportReason(reason.value)}
-                      style={[styles.reportOption, reportReason === reason.value && styles.reportOptionSelected]}
+                      style={[lumoStyles.reportOption, reportReason === reason.value && lumoStyles.reportOptionSelected]}
                     >
                       <Ionicons
                         name={reportReason === reason.value ? "radio-button-on" : "radio-button-off"}
                         size={17}
-                        color={reportReason === reason.value ? "#B9C7D6" : "#8F9987"}
+                        color={reportReason === reason.value ? resolveThemeColor("#B9C7D6", "color") : resolveThemeColor("#8F9987", "color")}
                       />
-                      <Text style={styles.reportOptionText}>{reason.label}</Text>
+                      <Text style={lumoStyles.reportOptionText}>{reason.label}</Text>
                     </Pressable>
                   ))}
                   <TextInput
                     value={reportDetails}
                     onChangeText={setReportDetails}
                     placeholder="Additional details (optional)"
-                    placeholderTextColor="#747D6E"
-                    style={styles.reportInput}
+                    placeholderTextColor={resolveThemeColor("#747D6E", "placeholderTextColor")}
+                    style={lumoStyles.reportInput}
                     maxLength={500}
                     multiline
                   />
-                  <View style={styles.deleteActions}>
-                    <Pressable onPress={() => setReportTarget(null)} disabled={reporting} style={styles.deleteCancel}>
-                      <Text style={styles.deleteCancelText}>Cancel</Text>
+                  <View style={lumoStyles.deleteActions}>
+                    <Pressable onPress={() => setReportTarget(null)} disabled={reporting} style={lumoStyles.deleteCancel}>
+                      <Text style={lumoStyles.deleteCancelText}>Cancel</Text>
                     </Pressable>
-                    <Pressable onPress={() => void submitReport()} disabled={reporting} style={styles.deleteConfirm}>
-                      {reporting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.deleteConfirmText}>Submit report</Text>}
+                    <Pressable onPress={() => void submitReport()} disabled={reporting} style={lumoStyles.deleteConfirm}>
+                      {reporting ? <ActivityIndicator size="small" color={colors.text} /> : <Text style={lumoStyles.deleteConfirmText}>Submit report</Text>}
                     </Pressable>
                   </View>
                 </View>
@@ -716,29 +724,29 @@ export default function PostCommentsSheet({
             )}
 
             {commentToDelete && (
-              <View style={styles.deleteOverlay}>
-                <View style={styles.deleteDialog}>
-                  <Text style={styles.deleteTitle}>Delete comment?</Text>
-                  <Text style={styles.deleteDescription}>
+              <View style={lumoStyles.deleteOverlay}>
+                <View style={lumoStyles.deleteDialog}>
+                  <Text style={lumoStyles.deleteTitle}>Delete comment?</Text>
+                  <Text style={lumoStyles.deleteDescription}>
                     This comment and its replies will be permanently removed.
                   </Text>
-                  <View style={styles.deleteActions}>
+                  <View style={lumoStyles.deleteActions}>
                     <Pressable
                       onPress={() => setCommentToDelete(null)}
                       disabled={!!deletingCommentId}
-                      style={styles.deleteCancel}
+                      style={lumoStyles.deleteCancel}
                     >
-                      <Text style={styles.deleteCancelText}>Cancel</Text>
+                      <Text style={lumoStyles.deleteCancelText}>Cancel</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => void confirmDeleteComment()}
                       disabled={!!deletingCommentId}
-                      style={styles.deleteConfirm}
+                      style={lumoStyles.deleteConfirm}
                     >
                       {deletingCommentId ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
+                        <ActivityIndicator size="small" color={colors.text} />
                       ) : (
-                        <Text style={styles.deleteConfirmText}>Delete</Text>
+                        <Text style={lumoStyles.deleteConfirmText}>Delete</Text>
                       )}
                     </Pressable>
                   </View>
@@ -767,7 +775,7 @@ export default function PostCommentsSheet({
 
 const styles = StyleSheet.create({
   modalRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.42)" },
-  embeddedRoot: { ...StyleSheet.absoluteFillObject, zIndex: 90, elevation: 90 },
+  embeddedRoot: { ...StyleSheet.absoluteFill, zIndex: 90, elevation: 90 },
   keyboardDock: { flex: 1, justifyContent: "flex-end" },
   sheet: { width: "100%", backgroundColor: "#10130F", borderTopLeftRadius: 25, borderTopRightRadius: 25, borderTopWidth: 1, borderColor: "#2A3026", overflow: "hidden" },
   desktopEmbeddedRoot: { justifyContent: "center", alignItems: "flex-end", paddingHorizontal: 28, paddingVertical: 24 },
@@ -811,7 +819,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, minHeight: 35, maxHeight: 88, paddingHorizontal: 5, paddingVertical: 7, color: "#F2F5F7", fontSize: 13 },
   sendButton: { width: 34, height: 34, borderRadius: 12, backgroundColor: "#B9C7D6", alignItems: "center", justifyContent: "center" },
   sendButtonDisabled: { opacity: 0.4 },
-  deleteOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 50, elevation: 50, backgroundColor: "rgba(0,0,0,0.68)", alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
+  deleteOverlay: { ...StyleSheet.absoluteFill, zIndex: 50, elevation: 50, backgroundColor: "rgba(0,0,0,0.68)", alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
   deleteDialog: { width: "100%", maxWidth: 360, padding: 20, borderRadius: 18, borderWidth: 1, borderColor: "#36402F", backgroundColor: "#171C15", gap: 10 },
   deleteTitle: { color: "#F2F5F7", fontSize: 17, fontWeight: "800" },
   deleteDescription: { color: "#A8B09F", fontSize: 13, lineHeight: 19 },

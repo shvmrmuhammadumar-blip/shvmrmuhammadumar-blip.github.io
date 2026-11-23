@@ -8,8 +8,10 @@ import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/theme';
 import { getMyGroups, type GroupSummary } from '../../lib/groups';
 import { getMyChannels, getPublicChannels, type Channel, type ChannelSummary } from '../../lib/channels';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 export default function SpacesScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session?.user?.id ?? '';
   const router = useRouter();
@@ -55,53 +57,54 @@ export default function SpacesScreen() {
       description="Your groups and channels, together. Continue a conversation or discover public channels."
       iconName="people-circle-outline"
     >
-      <View style={styles.actions}>
-        <Pressable style={styles.actionButton} onPress={() => router.push('/groups/create')} accessibilityRole="button">
+      <View style={lumoStyles.actions}>
+        <Pressable style={lumoStyles.actionButton} onPress={() => router.push('/groups/create')} accessibilityRole="button">
           <Ionicons name="people-outline" size={18} color={colors.accentStrong} />
-          <Text style={styles.actionText}>Create group</Text>
+          <Text style={lumoStyles.actionText}>Create group</Text>
         </Pressable>
-        <Pressable style={styles.actionButton} onPress={() => router.push('/channels/create')} accessibilityRole="button">
+        <Pressable style={lumoStyles.actionButton} onPress={() => router.push('/channels/create')} accessibilityRole="button">
           <Ionicons name="megaphone-outline" size={18} color={colors.accentStrong} />
-          <Text style={styles.actionText}>Create channel</Text>
+          <Text style={lumoStyles.actionText}>Create channel</Text>
         </Pressable>
       </View>
 
-      {loading ? <View style={styles.loading}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>Loading your spaces…</Text></View> : null}
-      {errorText ? <Text style={styles.error}>{errorText}</Text> : null}
+      {loading ? <View style={lumoStyles.loading}><ActivityIndicator color={colors.accent} /><Text style={lumoStyles.muted}>Loading your spaces…</Text></View> : null}
+      {errorText ? <Text style={lumoStyles.error}>{errorText}</Text> : null}
 
-      <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Your groups</Text><Text style={styles.count}>{groups.length}</Text></View>
+      <View style={lumoStyles.sectionHeader}><Text style={lumoStyles.sectionTitle}>Your groups</Text><Text style={lumoStyles.count}>{groups.length}</Text></View>
       {groups.length ? groups.map((group) => (
-        <Pressable key={group.id} style={styles.spaceRow} onPress={() => router.push(`/groups/${group.id}`)} accessibilityRole="button" accessibilityLabel={`Open group ${group.name}`}>
+        <Pressable key={group.id} style={lumoStyles.spaceRow} onPress={() => router.push(`/groups/${group.id}`)} accessibilityRole="button" accessibilityLabel={`Open group ${group.name}`}>
           <Avatar uri={group.avatar_url} name={group.name} size={46} />
-          <View style={styles.rowCopy}><Text style={styles.name} numberOfLines={1}>{group.name}</Text><Text style={styles.muted}>{group.member_count} members · {group.my_role}</Text></View>
+          <View style={lumoStyles.rowCopy}><Text style={lumoStyles.name} numberOfLines={1}>{group.name}</Text><Text style={lumoStyles.muted}>{group.member_count} members · {group.my_role}</Text></View>
           <Ionicons name="chevron-forward" size={18} color={colors.dim} />
         </Pressable>
       )) : !loading ? <EmptyLine text="You have not joined any groups yet." /> : null}
 
-      <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Your channels</Text><Text style={styles.count}>{channels.length}</Text></View>
+      <View style={lumoStyles.sectionHeader}><Text style={lumoStyles.sectionTitle}>Your channels</Text><Text style={lumoStyles.count}>{channels.length}</Text></View>
       {channels.length ? channels.map((channel) => (
-        <Pressable key={channel.id} style={styles.spaceRow} onPress={() => router.push(`/channels/${channel.id}`)} accessibilityRole="button" accessibilityLabel={`Open channel ${channel.name}`}>
+        <Pressable key={channel.id} style={lumoStyles.spaceRow} onPress={() => router.push(`/channels/${channel.id}`)} accessibilityRole="button" accessibilityLabel={`Open channel ${channel.name}`}>
           <Avatar uri={channel.avatar_url} name={channel.name} size={46} />
-          <View style={styles.rowCopy}><Text style={styles.name} numberOfLines={1}>{channel.name}</Text><Text style={styles.muted}>{channel.member_count} members · {channel.my_role}</Text></View>
+          <View style={lumoStyles.rowCopy}><Text style={lumoStyles.name} numberOfLines={1}>{channel.name}</Text><Text style={lumoStyles.muted}>{channel.member_count} members · {channel.my_role}</Text></View>
           <Ionicons name="chevron-forward" size={18} color={colors.dim} />
         </Pressable>
       )) : !loading ? <EmptyLine text="You have not subscribed to any channels yet." /> : null}
 
-      <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Discover public channels</Text></View>
-      <TextInput value={query} onChangeText={setQuery} placeholder="Search channels" placeholderTextColor={colors.muted} style={styles.search} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search public channels" />
+      <View style={lumoStyles.sectionHeader}><Text style={lumoStyles.sectionTitle}>Discover public channels</Text></View>
+      <TextInput value={query} onChangeText={setQuery} placeholder="Search channels" placeholderTextColor={colors.muted} style={lumoStyles.search} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search public channels" />
       {discover.length ? discover.map((channel) => (
-        <Pressable key={channel.id} style={styles.spaceRow} onPress={() => router.push(`/channels/${channel.id}`)} accessibilityRole="button" accessibilityLabel={`View channel ${channel.name}`}>
+        <Pressable key={channel.id} style={lumoStyles.spaceRow} onPress={() => router.push(`/channels/${channel.id}`)} accessibilityRole="button" accessibilityLabel={`View channel ${channel.name}`}>
           <Avatar uri={channel.avatar_url} name={channel.name} size={44} />
-          <View style={styles.rowCopy}><Text style={styles.name} numberOfLines={1}>{channel.name}</Text><Text style={styles.muted}>{channel.username ? `@${channel.username}` : 'Public channel'}</Text></View>
+          <View style={lumoStyles.rowCopy}><Text style={lumoStyles.name} numberOfLines={1}>{channel.name}</Text><Text style={lumoStyles.muted}>{channel.username ? `@${channel.username}` : 'Public channel'}</Text></View>
           <Ionicons name="arrow-forward" size={18} color={colors.accent} />
         </Pressable>
-      )) : <LumoPanel style={styles.discoveryEmpty}><Text style={styles.muted}>No matching public channels.</Text></LumoPanel>}
+      )) : <LumoPanel style={lumoStyles.discoveryEmpty}><Text style={lumoStyles.muted}>No matching public channels.</Text></LumoPanel>}
     </LumoModulePage>
   );
 }
 
 function EmptyLine({ text }: { text: string }) {
-  return <LumoPanel style={styles.empty}><Text style={styles.muted}>{text}</Text></LumoPanel>;
+  const lumoStyles = useThemedStyles(styles);
+  return <LumoPanel style={lumoStyles.empty}><Text style={lumoStyles.muted}>{text}</Text></LumoPanel>;
 }
 
 const styles = StyleSheet.create({

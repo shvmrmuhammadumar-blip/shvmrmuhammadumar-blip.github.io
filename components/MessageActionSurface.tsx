@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet } from 'react-native';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 type Props = {
   children: ReactNode;
@@ -16,6 +18,7 @@ export default function MessageActionSurface({
   enabled = true,
   align = 'flex-start',
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [hovered, setHovered] = useState(false);
 
   const handleContextMenu = (event: any) => {
@@ -29,7 +32,7 @@ export default function MessageActionSurface({
 
   return (
     <Pressable
-      style={[styles.container, { alignSelf: align }]}
+      style={[lumoStyles.container, { alignSelf: align }]}
       onHoverIn={
         Platform.OS === 'web' && enabled
           ? () => setHovered(true)
@@ -53,12 +56,12 @@ export default function MessageActionSurface({
           onPress={onOpenActions}
           onHoverIn={() => setHovered(true)}
           style={({ pressed }) => [
-            styles.moreButton,
+            lumoStyles.moreButton,
             align === 'flex-end'
-              ? styles.moreButtonStart
-              : styles.moreButtonEnd,
-            hovered && styles.moreButtonHovered,
-            pressed && styles.moreButtonPressed,
+              ? lumoStyles.moreButtonStart
+              : lumoStyles.moreButtonEnd,
+            hovered && lumoStyles.moreButtonHovered,
+            pressed && lumoStyles.moreButtonPressed,
           ]}
           accessibilityRole="button"
           accessibilityLabel="Message actions"
@@ -67,7 +70,7 @@ export default function MessageActionSurface({
           <Ionicons
             name="ellipsis-horizontal"
             size={18}
-            color="#F2F5F7"
+            color={resolveThemeColor("#F2F5F7", "color")}
           />
         </Pressable>
       )}

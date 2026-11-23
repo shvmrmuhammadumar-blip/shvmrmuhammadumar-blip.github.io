@@ -4,18 +4,26 @@ import { Tabs, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
+  type ColorValue,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  Keyboard,
   View,
   useWindowDimensions,
 } from 'react-native';
 import { colors } from '../../lib/theme';
+import { usePreferences } from '../../lib/preferences';
+import { t } from '../../lib/localization';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import Avatar from '../../components/Avatar';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -53,28 +61,145 @@ const notificationIcons: Record<ActivityNotification['type'], IconName> = {
 };
 
 function icon(active: IconName, inactive: IconName) {
-  return ({ focused, color }: { focused: boolean; color: string }) => (
-    <Ionicons name={focused ? active : inactive} size={25} color={color} />
+  return ({ focused, color }: { focused: boolean; color: ColorValue | null }) => (
+    <View style={styles.tabIconSlot}>
+      <Ionicons name={focused ? active : inactive} size={25} color={typeof color === 'number' ? colors.text : (color ?? colors.text)} />
+    </View>
   );
 }
 
 function CenterCreateIcon() {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.createButton}>
-      <Ionicons name="add" size={25} color={colors.bg} />
+    <View style={styles.tabIconSlot}>
+      <View style={lumoStyles.createButton}>
+        <Ionicons name="add" size={25} color={colors.bg} />
+      </View>
     </View>
   );
 }
 
 function BrandTitle({ showWord = true }: { showWord?: boolean }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.brandTitle}>
+    <View style={lumoStyles.brandTitle}>
       <Image
         source={require('../../assets/lumo-mark.png')}
-        style={styles.brandMark}
+        style={lumoStyles.brandMark}
         contentFit="contain"
       />
-      {showWord ? <Text style={styles.brandText}>Lumo</Text> : null}
+      {showWord ? <Text style={lumoStyles.brandText}>Lumo</Text> : null}
+    </View>
+  );
+}
+
+type HeaderProfile = {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+};
+
+function HomeHeaderTitle({ showWord }: { showWord: boolean }) {
+  const lumoStyles = useThemedStyles(styles);
+  const router = useRouter();
+  const { session } = useAuth();
+  const me = session?.user?.id ?? '';
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<HeaderProfile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const term = query.trim().replace(/[%,_]/g, '').slice(0, 80);
+    if (!term) {
+      setResults([]);
+      setLoading(false);
+      setError('');
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setError('');
+    const timer = setTimeout(async () => {
+      try {
+        const { data, error: searchError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .neq('id', me)
+          .or('username.ilike.%' + term + '%,full_name.ilike.%' + term + '%')
+          .limit(6);
+        if (searchError) throw searchError;
+        if (active) setResults((data ?? []) as HeaderProfile[]);
+      } catch (searchError) {
+        if (active) {
+          setResults([]);
+          setError(searchError instanceof Error ? searchError.message : 'Search failed.');
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }, 240);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [query, me]);
+
+  return (
+    <View style={lumoStyles.homeHeaderTitle}>
+      <BrandTitle showWord={showWord} />
+      <View style={lumoStyles.headerProfileSearch}>
+        <Ionicons name="search-outline" size={18} color={colors.muted} />
+        <TextInput
+          style={lumoStyles.headerProfileSearchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search profiles"
+          placeholderTextColor={colors.muted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          accessibilityLabel="Search profiles"
+        />
+        {query.length > 0 ? (
+          <Pressable onPress={() => { setQuery(''); Keyboard.dismiss(); }} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear profile search">
+            <Ionicons name="close-circle" size={18} color={colors.muted} />
+          </Pressable>
+        ) : null}
+        {query.trim().length > 0 ? (
+          <View style={lumoStyles.headerProfileSearchResults}>
+            {loading ? (
+              <View style={lumoStyles.headerProfileSearchState}><ActivityIndicator color={colors.accent} /><Text style={lumoStyles.headerProfileSearchHint}>Searching...</Text></View>
+            ) : error ? (
+              <Text style={lumoStyles.headerProfileSearchHint}>{error}</Text>
+            ) : results.length > 0 ? results.map((profile) => (
+              <Pressable
+                key={profile.id}
+                style={lumoStyles.headerProfileSearchResult}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setQuery('');
+                  router.push('/user/' + profile.id);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={'Open ' + (profile.username || profile.full_name || 'profile')}
+              >
+                <Avatar uri={profile.avatar_url} name={profile.username || profile.full_name || 'Lumo member'} size={36} />
+                <View style={lumoStyles.headerProfileSearchCopy}>
+                  <Text style={lumoStyles.headerProfileSearchName} numberOfLines={1}>{profile.username ? '@' + profile.username : profile.full_name || 'Lumo member'}</Text>
+                  {profile.username && profile.full_name ? <Text style={lumoStyles.headerProfileSearchHint} numberOfLines={1}>{profile.full_name}</Text> : null}
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.dim} />
+              </Pressable>
+            )) : (
+              <Text style={lumoStyles.headerProfileSearchHint}>No profiles found.</Text>
+            )}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -163,19 +288,21 @@ const appNavigation: { label: string; path: string; icon: IconName; section: 'ma
   { label: 'Search', path: '/search', icon: 'search-outline', section: 'main' },
   { label: 'Market', path: '/market', icon: 'storefront-outline', section: 'more' },
   { label: 'Map', path: '/map', icon: 'map-outline', section: 'more' },
-  { label: 'Studio', path: '/studio', icon: 'bar-chart-outline', section: 'more' },
+  { label: 'Studio', path: '/creator-studio', icon: 'bar-chart-outline', section: 'more' },
   { label: 'Events', path: '/events', icon: 'calendar-outline', section: 'more' },
   { label: 'Mini Apps', path: '/mini-apps', icon: 'apps-outline', section: 'more' },
   { label: 'Live', path: '/live', icon: 'radio-outline', section: 'more' },
-  { label: 'Wallet', path: '/wallet', icon: 'wallet-outline', section: 'more' },
+  { label: 'Perks', path: '/perks', icon: 'ribbon-outline', section: 'more' },
   { label: 'Create', path: '/create', icon: 'add-circle-outline', section: 'more' },
   { label: 'Profile', path: '/profile', icon: 'person-circle-outline', section: 'more' },
 ];
 
 export default function TabsLayout() {
+  const lumoStyles = useThemedStyles(styles);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktop = windowWidth >= 1040;
-  const isTablet = windowWidth >= 760;
+  const isDesktop = windowWidth >= 1280;
+  const isTablet = windowWidth >= 900;
+  const isCompactPhone = windowWidth < 380;
   const notifSheetMaxHeight = Math.min(
     windowHeight * (isDesktop ? 0.84 : 0.9),
     isDesktop ? 760 : 760,
@@ -184,6 +311,8 @@ export default function TabsLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const { session } = useAuth();
+  const { palette, locale } = usePreferences();
+  const localizedNavigation = appNavigation.map((item) => ({ ...item, translatedLabel: t(locale, item.label) }));
   const me = session?.user?.id;
 
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -386,59 +515,149 @@ export default function TabsLayout() {
 
   const activePath = pathname === '/(tabs)' || pathname === '/(tabs)/index' ? '/' : pathname;
 
+  const moduleMenuContent = (
+    <View style={lumoStyles.moduleOverlay}>
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={() => setModulesVisible(false)}
+        accessibilityRole="button"
+        accessibilityLabel="Close modules"
+      />
+      <View style={lumoStyles.moduleSheet}>
+        <View style={lumoStyles.moduleSheetHeader}>
+          <View>
+            <Text style={lumoStyles.moduleSheetEyebrow}>LUMO ECOSYSTEM</Text>
+            <Text style={lumoStyles.moduleSheetTitle}>Explore modules</Text>
+          </View>
+          <Pressable
+            style={lumoStyles.sheetCloseBtn}
+            onPress={() => setModulesVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close modules"
+          >
+            <Ionicons name="close" size={20} color={colors.text} />
+          </Pressable>
+        </View>
+        <Pressable
+          style={lumoStyles.moduleLiveFeature}
+          onPress={() => navigateTo('/live')}
+          accessibilityRole="button"
+          accessibilityLabel="Open LUMO LIVE"
+        >
+          <View style={lumoStyles.moduleLiveFeatureIcon}>
+            <Ionicons name="radio" size={22} color={resolveThemeColor("#10151A", "color")} />
+          </View>
+          <View style={lumoStyles.moduleLiveFeatureCopy}>
+            <Text style={lumoStyles.moduleLiveFeatureEyebrow}>LIVE BROADCASTS</Text>
+            <Text style={lumoStyles.moduleLiveFeatureTitle}>Open LUMO LIVE</Text>
+            <Text style={lumoStyles.moduleLiveFeatureSubtitle}>Watch a room or start your own stage</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={19} color={resolveThemeColor("#D9E7BC", "color")} />
+        </Pressable>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={lumoStyles.moduleGrid}
+        >
+          {appNavigation
+            .filter((item) => item.path !== '/' && item.path !== '/live')
+            .sort((a, b) => {
+              const aQuickAction = a.path === '/create' || a.path === '/profile';
+              const bQuickAction = b.path === '/create' || b.path === '/profile';
+              return Number(bQuickAction) - Number(aQuickAction);
+            })
+            .map((item) => (
+              <Pressable
+                key={item.path}
+                onPress={() => navigateTo(item.path)}
+                style={lumoStyles.moduleGridItem}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+              >
+                <View style={lumoStyles.moduleGridIcon}>
+                  <Ionicons name={item.icon} size={21} color={colors.accentStrong} />
+                </View>
+                <Text style={lumoStyles.moduleGridLabel}>{item.label}</Text>
+              </Pressable>
+            ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
   return (
     <>
-      <View style={styles.appFrame}>
+      <View style={[lumoStyles.appFrame, { backgroundColor: palette.bg }]}>
         {isTablet ? (
-          <View style={[styles.sidebar, !isDesktop && styles.sidebarCompact]}>
-            <Pressable style={styles.sidebarBrand} onPress={() => navigateTo('/')} accessibilityRole="button" accessibilityLabel="Lumo home">
-              <Image source={require('../../assets/lumo-mark.png')} style={styles.sidebarMark} contentFit="contain" />
-              {isDesktop ? <Text style={styles.sidebarBrandText}>Lumo</Text> : null}
+          <View style={[lumoStyles.sidebar, !isDesktop && lumoStyles.sidebarCompact, { backgroundColor: palette.surface, borderRightColor: palette.border }]}>
+            <Pressable style={lumoStyles.sidebarBrand} onPress={() => navigateTo('/')} accessibilityRole="button" accessibilityLabel="Lumo home">
+              <Image source={require('../../assets/lumo-mark.png')} style={lumoStyles.sidebarMark} contentFit="contain" />
+              {isDesktop ? <Text style={lumoStyles.sidebarBrandText}>Lumo</Text> : null}
             </Pressable>
-            <ScrollView contentContainerStyle={styles.sidebarScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.sidebarSection}>{isDesktop ? 'YOUR SPACE' : ''}</Text>
-              {appNavigation.filter((item) => item.section === 'main').map((item) => {
+            <ScrollView contentContainerStyle={lumoStyles.sidebarScroll} showsVerticalScrollIndicator={false}>
+              <Text style={lumoStyles.sidebarSection}>{isDesktop ? t(locale, 'Your space').toUpperCase() : ''}</Text>
+              {localizedNavigation.filter((item) => item.section === 'main').map((item) => {
                 const selected = activePath === item.path || (item.path === '/' && activePath === '/');
                 return (
-                  <Pressable key={item.label} onPress={() => navigateTo(item.path)} style={[styles.sidebarItem, selected && styles.sidebarItemSelected]} accessibilityRole="button" accessibilityLabel={item.label} accessibilityState={{ selected }}>
-                    <Ionicons name={item.icon} size={20} color={selected ? colors.accentStrong : colors.muted} />
-                    {isDesktop ? <Text style={[styles.sidebarLabel, selected && styles.sidebarLabelSelected]}>{item.label}</Text> : null}
+                  <Pressable key={item.label} onPress={() => navigateTo(item.path)} style={[lumoStyles.sidebarItem, selected && lumoStyles.sidebarItemSelected]} accessibilityRole="button" accessibilityLabel={item.translatedLabel} accessibilityState={{ selected }}>
+                    <Ionicons name={item.icon} size={20} color={selected ? palette.accentStrong : palette.muted} />
+                    {isDesktop ? <Text style={[lumoStyles.sidebarLabel, selected && lumoStyles.sidebarLabelSelected]}>{item.translatedLabel}</Text> : null}
                   </Pressable>
                 );
               })}
-              <Text style={styles.sidebarSection}>{isDesktop ? 'MORE FROM LUMO' : ''}</Text>
-              {appNavigation.filter((item) => item.section === 'more').map((item) => {
+              <Text style={lumoStyles.sidebarSection}>{isDesktop ? t(locale, 'More from Lumo').toUpperCase() : ''}</Text>
+              {localizedNavigation.filter((item) => item.section === 'more').map((item) => {
                 const selected = activePath === item.path;
                 return (
-                  <Pressable key={item.label} onPress={() => navigateTo(item.path)} style={[styles.sidebarItem, selected && styles.sidebarItemSelected]} accessibilityRole="button" accessibilityLabel={item.label} accessibilityState={{ selected }}>
-                    <Ionicons name={item.icon} size={20} color={selected ? colors.accentStrong : colors.muted} />
-                    {isDesktop ? <Text style={[styles.sidebarLabel, selected && styles.sidebarLabelSelected]}>{item.label}</Text> : null}
+                  <Pressable key={item.label} onPress={() => navigateTo(item.path)} style={[lumoStyles.sidebarItem, selected && lumoStyles.sidebarItemSelected]} accessibilityRole="button" accessibilityLabel={item.translatedLabel} accessibilityState={{ selected }}>
+                    <Ionicons name={item.icon} size={20} color={selected ? palette.accentStrong : palette.muted} />
+                    {isDesktop ? <Text style={[lumoStyles.sidebarLabel, selected && lumoStyles.sidebarLabelSelected]}>{item.translatedLabel}</Text> : null}
                   </Pressable>
                 );
               })}
             </ScrollView>
           </View>
         ) : null}
-        <View style={styles.tabsColumn}>
+        <View style={lumoStyles.tabsColumn}>
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
-          tabBarActiveTintColor: colors.accentStrong,
-          tabBarInactiveTintColor: colors.muted,
+          tabBarActiveTintColor: palette.accentStrong,
+          tabBarInactiveTintColor: palette.muted,
           tabBarStyle: {
             display: isTablet ? 'none' : 'flex',
-            backgroundColor: colors.bg,
-            borderTopColor: colors.border,
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'stretch',
+            backgroundColor: palette.bg,
+            borderTopColor: palette.border,
             borderTopWidth: 1,
-            height: 64,
+            height: 62,
             paddingBottom: 8,
-            paddingTop: 8,
+            paddingTop: 6,
+            paddingHorizontal: 6,
+          },
+          tabBarItemStyle: {
+            width: '20%',
+            maxWidth: '20%',
+            flexBasis: '20%',
+            flexGrow: 0,
+            flexShrink: 0,
+            minWidth: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 0,
+          },
+          tabBarIconStyle: {
+            width: '100%',
+            height: 44,
+            marginTop: 1,
           },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.bg },
+          headerStyle: { backgroundColor: palette.bg },
           headerTitleStyle: {
             fontWeight: '900',
-            color: colors.text,
+            color: palette.text,
             fontSize: 24,
           },
         }}
@@ -447,13 +666,16 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Lumo',
-            headerTitle: () => <BrandTitle showWord={isTablet} />,
+            headerTitle: () => <HomeHeaderTitle showWord={isTablet} />,
+            headerTitleAlign: 'left',
+            headerTitleContainerStyle: { flex: 1, minWidth: 0, marginRight: 4 },
+            headerRightContainerStyle: { paddingRight: 10, paddingLeft: 4 },
             headerRight: () => (
-              <View style={styles.headerRight}>
+              <View style={[lumoStyles.headerRight, isCompactPhone && lumoStyles.headerRightCompact]}>
                 {!isTablet ? (
                   <Pressable
                     onPress={() => setModulesVisible(true)}
-                    style={styles.headerIconBtn}
+                    style={lumoStyles.headerIconBtn}
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Open Lumo modules"
@@ -462,35 +684,16 @@ export default function TabsLayout() {
                   </Pressable>
                 ) : null}
                 <Pressable
-                  onPress={() => router.push('/search')}
-                  style={styles.headerIconBtn}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Search profiles"
-                >
-                  <Ionicons name="search-outline" size={23} color={colors.text} />
-                </Pressable>
-                <Pressable
-                  onPress={() => router.push('/create')}
-                  style={styles.headerIconBtn}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Create post"
-                >
-                  <Ionicons name="add-circle-outline" size={26} color={colors.text} />
-                </Pressable>
-
-                <Pressable
                   onPress={() => void openNotifications()}
-                  style={styles.headerIconBtn}
+                  style={lumoStyles.headerIconBtn}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Notifications"
                 >
                   <Ionicons name="notifications-outline" size={24} color={colors.text} />
                   {unreadNotifications > 0 && (
-                    <View style={styles.notificationBadge}>
-                      <Text style={styles.notificationBadgeText}>
+                    <View style={lumoStyles.notificationBadge}>
+                      <Text style={lumoStyles.notificationBadgeText}>
                         {unreadNotifications > 99 ? '99+' : unreadNotifications}
                       </Text>
                     </View>
@@ -507,6 +710,15 @@ export default function TabsLayout() {
           options={{
             title: 'Discover',
             tabBarIcon: icon('search', 'search-outline'),
+          }}
+        />
+
+        <Tabs.Screen
+          name="create"
+          options={{
+            title: '',
+            tabBarLabel: () => null,
+            tabBarIcon: () => <CenterCreateIcon />,
           }}
         />
 
@@ -529,79 +741,47 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-          name="wallet"
-          options={{
-            title: 'Wallet',
-            headerShown: false,
-            tabBarIcon: icon('wallet', 'wallet-outline'),
-          }}
-        />
-
-        <Tabs.Screen
-          name="create"
-          options={{
-            title: '',
-            tabBarLabel: () => null,
-            tabBarIcon: () => <CenterCreateIcon />,
-          }}
-        />
-
-        <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
             tabBarIcon: icon('person', 'person-outline'),
           }}
         />
-        <Tabs.Screen name="video" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="spaces" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="market" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="map" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="studio" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="events" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="mini-apps" options={{ href: null, headerShown: false }} />
+
+        <Tabs.Screen name="perks" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="wallet" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="video" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="spaces" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="market" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="map" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="studio" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="events" options={{ tabBarButton: () => null, headerShown: false }} />
+        <Tabs.Screen name="mini-apps" options={{ tabBarButton: () => null, headerShown: false }} />
       </Tabs>
         </View>
       </View>
 
-      <Modal
-        visible={modulesVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModulesVisible(false)}
-      >
-        <View style={styles.moduleOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setModulesVisible(false)} accessibilityRole="button" accessibilityLabel="Close modules" />
-          <View style={styles.moduleSheet}>
-            <View style={styles.moduleSheetHeader}>
-              <View><Text style={styles.moduleSheetEyebrow}>LUMO ECOSYSTEM</Text><Text style={styles.moduleSheetTitle}>Explore modules</Text></View>
-              <Pressable style={styles.sheetCloseBtn} onPress={() => setModulesVisible(false)} accessibilityRole="button" accessibilityLabel="Close modules"><Ionicons name="close" size={20} color={colors.text} /></Pressable>
-            </View>
-            <Pressable
-              style={styles.moduleLiveFeature}
-              onPress={() => navigateTo('/live')}
-              accessibilityRole="button"
-              accessibilityLabel="Open LUMO LIVE"
-            >
-              <View style={styles.moduleLiveFeatureIcon}><Ionicons name="radio" size={22} color="#10151A" /></View>
-              <View style={styles.moduleLiveFeatureCopy}>
-                <Text style={styles.moduleLiveFeatureEyebrow}>LIVE BROADCASTS</Text>
-                <Text style={styles.moduleLiveFeatureTitle}>Open LUMO LIVE</Text>
-                <Text style={styles.moduleLiveFeatureSubtitle}>Watch a room or start your own stage</Text>
-              </View>
-              <Ionicons name="arrow-forward" size={19} color="#D9E7BC" />
-            </Pressable>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.moduleGrid}>
-              {appNavigation.filter((item) => item.path !== '/' && item.path !== '/live').map((item) => (
-                <Pressable key={item.path} onPress={() => navigateTo(item.path)} style={styles.moduleGridItem} accessibilityRole="button">
-                  <View style={styles.moduleGridIcon}><Ionicons name={item.icon} size={21} color={colors.accentStrong} /></View>
-                  <Text style={styles.moduleGridLabel}>{item.label}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+      {Platform.OS === 'web' ? (
+        modulesVisible ? (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { zIndex: 10000, elevation: 10000 },
+            ]}
+          >
+            {moduleMenuContent}
           </View>
-        </View>
-      </Modal>
+        ) : null
+      ) : (
+        <Modal
+          visible={modulesVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModulesVisible(false)}
+        >
+          {moduleMenuContent}
+        </Modal>
+      )}
 
       <Modal
         visible={notificationsVisible}
@@ -611,8 +791,8 @@ export default function TabsLayout() {
       >
         <View
           style={[
-            styles.notifOverlay,
-            isDesktop && styles.notifOverlayDesktop,
+            lumoStyles.notifOverlay,
+            isDesktop && lumoStyles.notifOverlayDesktop,
           ]}
         >
           <Pressable
@@ -624,22 +804,22 @@ export default function TabsLayout() {
 
           <View
             style={[
-              styles.notifSheet,
-              isDesktop && styles.notifSheetDesktop,
+              lumoStyles.notifSheet,
+              isDesktop && lumoStyles.notifSheetDesktop,
               { maxHeight: notifSheetMaxHeight },
             ]}
           >
-            {!isDesktop && <View style={styles.sheetHandle} />}
+            {!isDesktop && <View style={lumoStyles.sheetHandle} />}
 
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Activity</Text>
-              <View style={styles.sheetHeaderActions}>
+            <View style={lumoStyles.sheetHeader}>
+              <Text style={lumoStyles.sheetTitle}>Activity</Text>
+              <View style={lumoStyles.sheetHeaderActions}>
                 {unreadNotifications > 0 && (
                   <Pressable
                     onPress={() => void markAllNotificationsRead()}
                     disabled={markingAllRead}
                     hitSlop={8}
-                    style={styles.markAllReadButton}
+                    style={lumoStyles.markAllReadButton}
                     accessibilityRole="button"
                     accessibilityLabel="Mark all notifications as read"
                   >
@@ -652,7 +832,7 @@ export default function TabsLayout() {
                           size={14}
                           color={colors.lime}
                         />
-                        <Text style={styles.markAllReadText}>Mark all read</Text>
+                        <Text style={lumoStyles.markAllReadText}>Mark all read</Text>
                       </>
                     )}
                   </Pressable>
@@ -660,7 +840,7 @@ export default function TabsLayout() {
                 <Pressable
                   onPress={() => setNotificationsVisible(false)}
                   hitSlop={10}
-                  style={styles.sheetCloseBtn}
+                  style={lumoStyles.sheetCloseBtn}
                   accessibilityRole="button"
                   accessibilityLabel="Close Activity"
                 >
@@ -669,7 +849,7 @@ export default function TabsLayout() {
               </View>
             </View>
 
-            <View style={styles.filterTabs} accessibilityLabel="Notification categories">
+            <View style={lumoStyles.filterTabs} accessibilityLabel="Notification categories">
               {notificationFilters.map((filter) => {
                 const selected = activeNotificationFilter === filter.key;
 
@@ -677,37 +857,37 @@ export default function TabsLayout() {
                   <Pressable
                     key={filter.key}
                     onPress={() => setActiveNotificationFilter(filter.key)}
-                    style={styles.filterTab}
+                    style={lumoStyles.filterTab}
                     accessibilityRole="tab"
                     accessibilityState={{ selected }}
                   >
                     <Text
                       style={[
-                        styles.filterTabText,
-                        selected && styles.filterTabTextActive,
+                        lumoStyles.filterTabText,
+                        selected && lumoStyles.filterTabTextActive,
                       ]}
                     >
                       {filter.label}
                     </Text>
-                    {selected && <View style={styles.filterTabIndicator} />}
+                    {selected && <View style={lumoStyles.filterTabIndicator} />}
                   </Pressable>
                 );
               })}
             </View>
 
             <ScrollView
-              style={styles.notifScroll}
-              contentContainerStyle={styles.notifList}
+              style={lumoStyles.notifScroll}
+              contentContainerStyle={lumoStyles.notifList}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
               {notificationsLoading ? (
-                <View style={styles.notifEmpty}>
+                <View style={lumoStyles.notifEmpty}>
                   <ActivityIndicator color={colors.lime} size="small" />
                 </View>
               ) : visibleNotifications.length === 0 ? (
-                <View style={styles.notifEmpty}>
-                  <Text style={styles.notifEmptyText}>
+                <View style={lumoStyles.notifEmpty}>
+                  <Text style={lumoStyles.notifEmptyText}>
                     {emptyFilterLabels[activeNotificationFilter]}
                   </Text>
                 </View>
@@ -721,10 +901,10 @@ export default function TabsLayout() {
                     if (items.length === 0) return null;
 
                     return (
-                      <View key={group} style={styles.notifGroup}>
-                        <View style={styles.notifDateHeader}>
-                          <Text style={styles.notifSectionTitle}>{group}</Text>
-                          <View style={styles.notifDateLine} />
+                      <View key={group} style={lumoStyles.notifGroup}>
+                        <View style={lumoStyles.notifDateHeader}>
+                          <Text style={lumoStyles.notifSectionTitle}>{group}</Text>
+                          <View style={lumoStyles.notifDateLine} />
                         </View>
 
                         {items.map((item) => {
@@ -739,21 +919,21 @@ export default function TabsLayout() {
                               accessibilityRole="button"
                               accessibilityLabel={`${actorName}${getNotificationAction(item)}, ${getRelativeTime(item.created_at)}`}
                               style={({ pressed }) => [
-                                styles.notifRow,
-                                pressed && styles.notifRowPressed,
+                                lumoStyles.notifRow,
+                                pressed && lumoStyles.notifRowPressed,
                               ]}
                             >
-                              <View style={styles.notifAvatarWrap}>
+                              <View style={lumoStyles.notifAvatarWrap}>
                                 <Avatar
                                   uri={item.actor?.avatar_url}
                                   name={actorName}
                                   size={40}
                                 />
 
-                                {!item.is_read && <View style={styles.notifUnreadDot} />}
+                                {!item.is_read && <View style={lumoStyles.notifUnreadDot} />}
 
                                 {!postImage && (
-                                  <View style={styles.notifTypeBadge}>
+                                  <View style={lumoStyles.notifTypeBadge}>
                                     <Ionicons
                                       name={iconName}
                                       size={10}
@@ -763,13 +943,13 @@ export default function TabsLayout() {
                                 )}
                               </View>
 
-                              <View style={styles.notifMessage}>
-                                <Text style={styles.notifText} numberOfLines={2}>
-                                  <Text style={styles.notifBold}>{actorName}</Text>
+                              <View style={lumoStyles.notifMessage}>
+                                <Text style={lumoStyles.notifText} numberOfLines={2}>
+                                  <Text style={lumoStyles.notifBold}>{actorName}</Text>
                                   <Text
                                     style={[
-                                      styles.notifAction,
-                                      !item.is_read && styles.notifActionUnread,
+                                      lumoStyles.notifAction,
+                                      !item.is_read && lumoStyles.notifActionUnread,
                                     ]}
                                   >
                                     {getNotificationAction(item)}
@@ -777,12 +957,12 @@ export default function TabsLayout() {
                                 </Text>
 
                                 {item.type === 'mention' && item.comment?.body?.trim() ? (
-                                  <Text style={styles.notifContext} numberOfLines={1}>
+                                  <Text style={lumoStyles.notifContext} numberOfLines={1}>
                                     {item.comment.body.trim()}
                                   </Text>
                                 ) : null}
 
-                                <Text style={styles.notifTime}>
+                                <Text style={lumoStyles.notifTime}>
                                   {getRelativeTime(item.created_at)}
                                 </Text>
                               </View>
@@ -790,7 +970,7 @@ export default function TabsLayout() {
                               {postImage ? (
                                 <Image
                                   source={{ uri: postImage }}
-                                  style={styles.notifThumbnail}
+                                  style={lumoStyles.notifThumbnail}
                                   contentFit="cover"
                                   transition={120}
                                 />
@@ -805,7 +985,7 @@ export default function TabsLayout() {
               )}
 
               {notificationsError ? (
-                <Text style={styles.notifError}>{notificationsError}</Text>
+                <Text style={lumoStyles.notifError}>{notificationsError}</Text>
               ) : null}
             </ScrollView>
           </View>
@@ -849,9 +1029,19 @@ const styles = StyleSheet.create({
   moduleLiveFeatureTitle: { color: '#F2F5F7', fontSize: 13, fontWeight: '900' },
   moduleLiveFeatureSubtitle: { color: '#A3B0A1', fontSize: 9 },
   moduleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  moduleGridItem: { width: '31%', minWidth: 86, minHeight: 84, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 8 },
+  moduleGridItem: { flexBasis: '30%', flexGrow: 1, flexShrink: 1, minWidth: 0, minHeight: 84, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 8 },
   moduleGridIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.surfaceSoft, alignItems: 'center', justifyContent: 'center' },
   moduleGridLabel: { color: colors.text, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  tabIconSlot: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  homeHeaderTitle: { flex: 1, minWidth: 0, width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerProfileSearch: { flex: 1, minWidth: 0, maxWidth: 440, height: 36, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, position: 'relative', zIndex: 50 },
+  headerProfileSearchInput: { flex: 1, minWidth: 0, color: colors.text, paddingVertical: 8, fontSize: 13 },
+  headerProfileSearchResults: { position: 'absolute', top: 45, left: 0, right: 0, zIndex: 1000, elevation: 16, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, overflow: 'hidden' },
+  headerProfileSearchState: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  headerProfileSearchHint: { color: colors.muted, fontSize: 12, paddingHorizontal: 12, paddingVertical: 12 },
+  headerProfileSearchResult: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 11, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+  headerProfileSearchCopy: { flex: 1, minWidth: 0, gap: 2 },
+  headerProfileSearchName: { color: colors.text, fontSize: 13, fontWeight: '700' },
   brandTitle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -870,11 +1060,18 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginRight: 16,
+    gap: 8,
+    marginRight: 0,
+  },
+  headerRightCompact: {
+    gap: 5,
   },
   headerIconBtn: {
-    padding: 2,
+    width: 34,
+    height: 38,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   notificationBadge: {

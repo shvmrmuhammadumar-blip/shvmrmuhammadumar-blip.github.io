@@ -22,8 +22,12 @@ import { POST_SELECT, setLike, toggleLikeLocally } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 import { createContentSessionKey, trackContentOpen, trackContentPlayback } from "../../lib/studio-analytics";
 import type { Post } from "../../lib/types";
+import { colors } from "../../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 function ReelVideo({ uri, topInset, ownerId, viewerId, contentId }: { uri: string; topInset: number; ownerId: string; viewerId: string; contentId: string }) {
+  const lumoStyles = useThemedStyles(styles);
   const player = useVideoPlayer(uri, (instance) => {
     instance.loop = true;
     instance.muted = true;
@@ -154,11 +158,10 @@ function ReelVideo({ uri, topInset, ownerId, viewerId, contentId }: { uri: strin
   const toggleSound = () => { player.volume = 1; player.muted = !player.muted; };
 
   return (
-    <View style={styles.videoStage}>
-      <VideoView player={player} surfaceType="textureView" style={styles.videoFrame}
+    <View style={lumoStyles.videoStage}>
+      <VideoView player={player} surfaceType="textureView" style={lumoStyles.videoFrame}
         contentFit="contain"
         nativeControls={false}
-        allowsFullscreen={false}
         allowsPictureInPicture={false}
       />
       <Pressable
@@ -168,23 +171,23 @@ function ReelVideo({ uri, topInset, ownerId, viewerId, contentId }: { uri: strin
         accessibilityLabel={isPlaying ? "Pause video" : "Play video"}
       />
       {!isPlaying && (
-        <View pointerEvents="none" style={styles.pausedMark}>
-          <Ionicons name="play" size={31} color="#FFFFFF" />
+        <View pointerEvents="none" style={lumoStyles.pausedMark}>
+          <Ionicons name="play" size={31} color={resolveThemeColor(colors.mediaText, "color")} />
         </View>
       )}
       {status === "loading" && (
-        <View pointerEvents="none" style={styles.videoLoading}>
-          <ActivityIndicator color="#FFFFFF" />
+        <View pointerEvents="none" style={lumoStyles.videoLoading}>
+          <ActivityIndicator color={resolveThemeColor(colors.mediaText, "color")} />
         </View>
       )}
       {status === "error" && (
-        <View pointerEvents="none" style={styles.videoLoading}>
-          <Ionicons name="alert-circle-outline" size={28} color="#FFFFFF" />
+        <View pointerEvents="none" style={lumoStyles.videoLoading}>
+          <Ionicons name="alert-circle-outline" size={28} color={resolveThemeColor(colors.mediaText, "color")} />
         </View>
       )}
       <Pressable
         onPress={toggleSound}
-        style={[styles.soundButton, { top: topInset + 12 }]}
+        style={[lumoStyles.soundButton, { top: topInset + 12 }]}
         accessibilityRole="button"
         accessibilityLabel={muted ? "Turn sound on" : "Mute video"}
         hitSlop={8}
@@ -192,7 +195,7 @@ function ReelVideo({ uri, topInset, ownerId, viewerId, contentId }: { uri: strin
         <Ionicons
           name={muted ? "volume-mute" : "volume-high"}
           size={19}
-          color="#FFFFFF"
+          color={resolveThemeColor(colors.mediaText, "color")}
         />
       </Pressable>
     </View>
@@ -200,6 +203,7 @@ function ReelVideo({ uri, topInset, ownerId, viewerId, contentId }: { uri: strin
 }
 
 export default function PostViewerScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -335,28 +339,28 @@ export default function PostViewerScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingScreen}>
+      <View style={lumoStyles.loadingScreen}>
         <StatusBar hidden />
-        <ActivityIndicator color="#B9C7D6" size="small" />
+        <ActivityIndicator color={resolveThemeColor("#B9C7D6", "color")} size="small" />
       </View>
     );
   }
 
   if (!post) {
     return (
-      <View style={styles.unavailableScreen}>
+      <View style={lumoStyles.unavailableScreen}>
         <StatusBar hidden />
         <Pressable
           onPress={goBack}
-          style={[styles.backButton, { top: insets.top + 10 }]}
+          style={[lumoStyles.backButton, { top: insets.top + 10 }]}
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
-          <Ionicons name="arrow-back" size={21} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={21} color={resolveThemeColor(colors.mediaText, "color")} />
         </Pressable>
-        <View style={styles.unavailableContent}>
-          <Ionicons name="eye-off-outline" size={28} color="#9AA5B2" />
-          <Text style={styles.unavailableText}>Post unavailable</Text>
+        <View style={lumoStyles.unavailableContent}>
+          <Ionicons name="eye-off-outline" size={28} color={resolveThemeColor("#9AA5B2", "color")} />
+          <Text style={lumoStyles.unavailableText}>Post unavailable</Text>
         </View>
       </View>
     );
@@ -369,15 +373,15 @@ export default function PostViewerScreen() {
   const username = post.profiles?.username ?? "user";
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <StatusBar hidden />
-      <View style={styles.stage}>
+      <View style={lumoStyles.stage}>
         {isVideo ? (
           post.video_url ? (
             <ReelVideo uri={post.video_url} topInset={insets.top} ownerId={post.user_id} viewerId={me ?? ""} contentId={post.id} />
           ) : (
-            <View style={styles.mediaFallback}>
-              <Ionicons name="videocam-off-outline" size={30} color="#9AA5B2" />
+            <View style={lumoStyles.mediaFallback}>
+              <Ionicons name="videocam-off-outline" size={30} color={resolveThemeColor("#9AA5B2", "color")} />
             </View>
           )
         ) : post.image_url ? (
@@ -388,75 +392,75 @@ export default function PostViewerScreen() {
             transition={180}
           />
         ) : (
-          <View style={styles.mediaFallback}>
-            <Ionicons name="image-outline" size={30} color="#9AA5B2" />
+          <View style={lumoStyles.mediaFallback}>
+            <Ionicons name="image-outline" size={30} color={resolveThemeColor("#9AA5B2", "color")} />
           </View>
         )}
 
 
-        <View pointerEvents="box-none" style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
+        <View pointerEvents="box-none" style={[lumoStyles.topBar, { paddingTop: insets.top + 12 }]}>
           <Pressable
             onPress={goBack}
-            style={styles.backButton}
+            style={lumoStyles.backButton}
             accessibilityRole="button"
             accessibilityLabel="Back"
             hitSlop={8}
           >
-            <Ionicons name="arrow-back" size={21} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={21} color={resolveThemeColor(colors.mediaText, "color")} />
           </Pressable>
         </View>
 
-        <View style={[styles.actionRail, { bottom: insets.bottom + 126 }]}>
+        <View style={[lumoStyles.actionRail, { bottom: insets.bottom + 126 }]}>
           <Pressable
             onPress={() => void onLike()}
             disabled={likeBusy}
-            style={styles.action}
+            style={lumoStyles.action}
             accessibilityRole="button"
             accessibilityLabel={liked ? "Unlike post" : "Like post"}
           >
             <Ionicons
               name={liked ? "heart" : "heart-outline"}
               size={31}
-              color={liked ? "#FF6478" : "#FFFFFF"}
+              color={liked ? resolveThemeColor("#FF6478", "color") : resolveThemeColor(colors.mediaText, "color")}
             />
-            <Text style={styles.actionCount}>{likeCount}</Text>
+            <Text style={lumoStyles.actionCount}>{likeCount}</Text>
           </Pressable>
           <Pressable
             onPress={() => setCommentsVisible(true)}
-            style={styles.action}
+            style={lumoStyles.action}
             accessibilityRole="button"
             accessibilityLabel="Open comments"
           >
-            <Ionicons name="chatbubble-outline" size={27} color="#FFFFFF" />
-            <Text style={styles.actionCount}>{commentCount}</Text>
+            <Ionicons name="chatbubble-outline" size={27} color={resolveThemeColor(colors.mediaText, "color")} />
+            <Text style={lumoStyles.actionCount}>{commentCount}</Text>
           </Pressable>
           <Pressable
             onPress={onForward}
-            style={styles.action}
+            style={lumoStyles.action}
             accessibilityRole="button"
             accessibilityLabel="Forward post"
           >
-            <Ionicons name="arrow-redo-outline" size={27} color="#FFFFFF" />
+            <Ionicons name="arrow-redo-outline" size={27} color={resolveThemeColor(colors.mediaText, "color")} />
           </Pressable>
           <Pressable
             onPress={() => void onSave()}
             disabled={saveBusy}
-            style={styles.action}
+            style={lumoStyles.action}
             accessibilityRole="button"
             accessibilityLabel={isSaved ? "Remove saved post" : "Save post"}
           >
             <Ionicons
               name={isSaved ? "bookmark" : "bookmark-outline"}
               size={27}
-              color={isSaved ? "#B9C7D6" : "#FFFFFF"}
+              color={isSaved ? resolveThemeColor("#B9C7D6", "color") : resolveThemeColor(colors.mediaText, "color")}
             />
           </Pressable>
         </View>
 
-        <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={[lumoStyles.bottomInfo, { paddingBottom: insets.bottom + 20 }]}>
           <Pressable
             onPress={() => router.push(`/user/${post.user_id}` as any)}
-            style={styles.authorRow}
+            style={lumoStyles.authorRow}
             accessibilityRole="button"
             accessibilityLabel={`Open ${username} profile`}
           >
@@ -465,12 +469,12 @@ export default function PostViewerScreen() {
               name={username}
               size={36}
             />
-            <Text style={styles.authorName} numberOfLines={1}>
+            <Text style={lumoStyles.authorName} numberOfLines={1}>
               @{username}
             </Text>
           </Pressable>
           {!!post.caption?.trim() && (
-            <Text style={styles.caption} numberOfLines={3}>
+            <Text style={lumoStyles.caption} numberOfLines={3}>
               {post.caption.trim()}
             </Text>
           )}
@@ -501,25 +505,25 @@ export default function PostViewerScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#000000" },
-  stage: { flex: 1, position: "relative", overflow: "hidden", backgroundColor: "#000000" },
-  loadingScreen: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000000" },
-  unavailableScreen: { flex: 1, backgroundColor: "#000000" },
+  screen: { flex: 1, backgroundColor: colors.mediaBg },
+  stage: { flex: 1, position: "relative", overflow: "hidden", backgroundColor: colors.mediaBg },
+  loadingScreen: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.mediaBg },
+  unavailableScreen: { flex: 1, backgroundColor: colors.mediaBg },
   unavailableContent: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   unavailableText: { color: "#A5AD9F", fontSize: 13, fontWeight: "600" },
-  mediaFallback: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: "#090C12" },
+  mediaFallback: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", backgroundColor: colors.mediaBg },
   topBar: { position: "absolute", top: 0, left: 0, right: 0, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", zIndex: 4 },
   backButton: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
   soundButton: { position: "absolute", right: 16, zIndex: 20, elevation: 20, width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
   actionRail: { position: "absolute", right: 13, zIndex: 4, alignItems: "center", gap: 22 },
   action: { minWidth: 45, alignItems: "center", justifyContent: "center", gap: 5 },
-  actionCount: { color: "#FFFFFF", fontSize: 11, fontWeight: "800", textShadowColor: "rgba(0,0,0,0.8)", textShadowRadius: 5 },
+  actionCount: { color: colors.mediaText, fontSize: 11, fontWeight: "800", textShadowColor: "rgba(0,0,0,0.8)", textShadowRadius: 5 },
   bottomInfo: { position: "absolute", left: 16, right: 78, bottom: 0, zIndex: 3, paddingTop: 54 },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 9, marginBottom: 9 },
-  authorName: { color: "#FFFFFF", fontSize: 13, fontWeight: "800", textShadowColor: "rgba(0,0,0,0.8)", textShadowRadius: 6 },
-  caption: { color: "#FFFFFF", fontSize: 13, lineHeight: 19, fontWeight: "500", textShadowColor: "rgba(0,0,0,0.88)", textShadowRadius: 6 },
-  videoStage: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
+  authorName: { color: colors.mediaText, fontSize: 13, fontWeight: "800", textShadowColor: "rgba(0,0,0,0.8)", textShadowRadius: 6 },
+  caption: { color: colors.mediaText, fontSize: 13, lineHeight: 19, fontWeight: "500", textShadowColor: "rgba(0,0,0,0.88)", textShadowRadius: 6 },
+  videoStage: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center" },
   videoFrame: { width: "100%", height: "100%" },
-  pausedMark: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", zIndex: 2 },
-  videoLoading: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", zIndex: 2 },
+  pausedMark: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", zIndex: 2 },
+  videoLoading: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", zIndex: 2 },
 });

@@ -14,7 +14,8 @@ import {
 import { Alert } from "../../lib/alert";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
+import { getAppContentWidth } from "../../lib/responsive";
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import {
@@ -23,13 +24,18 @@ import {
   type PickedPostMedia,
 } from "../../lib/api";
 import { colors } from "../../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 export default function CreatePost() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session!.user.id;
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const previewSize = Math.min(width - 32, 340);
+  const segments = useSegments();
+  const contentWidth = getAppContentWidth(width, segments[0] === "(tabs)");
+  const previewSize = Math.max(0, Math.min(contentWidth - 32, 340));
 
   const [media, setMedia] = useState<PickedPostMedia | null>(null);
   const [caption, setCaption] = useState("");
@@ -90,10 +96,10 @@ export default function CreatePost() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView keyboardShouldPersistTaps="handled" style={styles.screen}>
-        <View style={styles.header}>
-          <Text style={styles.title}>New post</Text>
-          <Text style={styles.subtitle}>
+      <ScrollView keyboardShouldPersistTaps="handled" style={lumoStyles.screen}>
+        <View style={lumoStyles.header}>
+          <Text style={lumoStyles.title}>New post</Text>
+          <Text style={lumoStyles.subtitle}>
             Share a photo or a video with your community.
           </Text>
         </View>
@@ -101,47 +107,47 @@ export default function CreatePost() {
         <Pressable
           onPress={choose}
           style={[
-            styles.photoPicker,
+            lumoStyles.photoPicker,
             { width: previewSize, height: previewSize },
           ]}
         >
           {media?.type === "image" ? (
             <Image
               source={{ uri: media.uri }}
-              style={styles.photoPreview}
+              style={lumoStyles.photoPreview}
               contentFit="cover"
             />
           ) : media?.type === "video" ? (
-            <View style={styles.videoPreview}>
-              <View style={styles.videoPreviewIcon}>
+            <View style={lumoStyles.videoPreview}>
+              <View style={lumoStyles.videoPreviewIcon}>
                 <Ionicons name="play" size={30} color={colors.lime} />
               </View>
-              <Text style={styles.videoPreviewTitle}>Video selected</Text>
-              <Text style={styles.videoPreviewName} numberOfLines={2}>
+              <Text style={lumoStyles.videoPreviewTitle}>Video selected</Text>
+              <Text style={lumoStyles.videoPreviewName} numberOfLines={2}>
                 {media.fileName ?? "Selected video"}
               </Text>
-              <Text style={styles.videoPreviewHint}>READY TO PUBLISH</Text>
+              <Text style={lumoStyles.videoPreviewHint}>READY TO PUBLISH</Text>
             </View>
           ) : (
-            <View style={styles.photoPrompt}>
-              <View style={styles.photoIcon}>
+            <View style={lumoStyles.photoPrompt}>
+              <View style={lumoStyles.photoIcon}>
                 <Ionicons name="images-outline" size={30} color={colors.lime} />
               </View>
-              <Text style={styles.photoPromptTitle}>Choose photo or video</Text>
-              <Text style={styles.photoPromptHint}>
+              <Text style={lumoStyles.photoPromptTitle}>Choose photo or video</Text>
+              <Text style={lumoStyles.photoPromptHint}>
                 Browse your media library
               </Text>
             </View>
           )}
         </Pressable>
 
-        <View style={styles.form}>
-          <Text style={styles.mediaHint}>
+        <View style={lumoStyles.form}>
+          <Text style={lumoStyles.mediaHint}>
             Photos and videos · Maximum 50 MB · Videos up to 3 minutes
           </Text>
 
           <TextInput
-            style={styles.caption}
+            style={lumoStyles.caption}
             placeholder="Write a caption…"
             placeholderTextColor={colors.muted}
             multiline
@@ -151,14 +157,14 @@ export default function CreatePost() {
           />
 
           <Pressable
-            style={[styles.button, (!media || busy) && { opacity: 0.5 }]}
+            style={[lumoStyles.button, (!media || busy) && { opacity: 0.5 }]}
             onPress={share}
             disabled={!media || busy}
           >
             {busy ? (
-              <ActivityIndicator color="#090C12" />
+              <ActivityIndicator color={resolveThemeColor("#090C12", "color")} />
             ) : (
-              <Text style={styles.buttonText}>
+              <Text style={lumoStyles.buttonText}>
                 {media?.type === "video" ? "Publish video" : "Share post"}
               </Text>
             )}
@@ -166,7 +172,7 @@ export default function CreatePost() {
 
           {!!media && (
             <Pressable onPress={choose} disabled={busy}>
-              <Text style={styles.change}>Choose different media</Text>
+              <Text style={lumoStyles.change}>Choose different media</Text>
             </Pressable>
           )}
         </View>

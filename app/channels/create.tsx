@@ -23,8 +23,10 @@ import {
   getMyProfile,
   uploadChannelAvatar,
 } from '../../lib/channels';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 export default function CreateChannel() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const me = session?.user.id;
@@ -151,36 +153,36 @@ export default function CreateChannel() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.screen}
+      style={lumoStyles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={lumoStyles.container}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View style={lumoStyles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={styles.backButton}
+            style={lumoStyles.backButton}
             hitSlop={10}
           >
             <Ionicons name="arrow-back" size={21} color={colors.text} />
           </Pressable>
 
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>YOUR BROADCAST SPACE</Text>
-            <Text style={styles.title}>Create channel</Text>
+          <View style={lumoStyles.headerCopy}>
+            <Text style={lumoStyles.eyebrow}>YOUR BROADCAST SPACE</Text>
+            <Text style={lumoStyles.title}>Create channel</Text>
           </View>
 
-          <View style={styles.headerSpacer} />
+          <View style={lumoStyles.headerSpacer} />
         </View>
 
         {/* Avatar picker */}
         <Pressable
-          style={styles.avatarCard}
+          style={lumoStyles.avatarCard}
           onPress={() => void pickAvatar()}
           accessibilityRole="button"
           accessibilityLabel="Kanal rasmini tanlash"
@@ -188,19 +190,19 @@ export default function CreateChannel() {
           {avatarUri ? (
             <Image
               source={{ uri: avatarUri }}
-              style={styles.avatarImage}
+              style={lumoStyles.avatarImage}
               contentFit="cover"
               transition={200}
             />
           ) : (
-            <View style={styles.avatarPlaceholder}>
+            <View style={lumoStyles.avatarPlaceholder}>
               <Ionicons name="camera" size={32} color={colors.lime} />
             </View>
           )}
 
-          <View style={styles.avatarCopy}>
-            <Text style={styles.avatarTitle}>Kanal rasmi</Text>
-            <Text style={styles.avatarHint}>
+          <View style={lumoStyles.avatarCopy}>
+            <Text style={lumoStyles.avatarTitle}>Kanal rasmi</Text>
+            <Text style={lumoStyles.avatarHint}>
               {avatarUri
                 ? "Rasmni o'zgartirish uchun bosing"
                 : 'Rasm tanlash uchun bosing'}
@@ -210,10 +212,10 @@ export default function CreateChannel() {
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </Pressable>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>KANAL NOMI</Text>
+        <View style={lumoStyles.section}>
+          <Text style={lumoStyles.label}>KANAL NOMI</Text>
           <TextInput
-            style={styles.input}
+            style={lumoStyles.input}
             placeholder="Kanal nomini kiriting"
             placeholderTextColor={colors.dim}
             value={name}
@@ -222,17 +224,17 @@ export default function CreateChannel() {
             autoCapitalize="sentences"
             returnKeyType="next"
           />
-          <Text style={styles.counter}>{name.length}/80</Text>
+          <Text style={lumoStyles.counter}>{name.length}/80</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>KANAL SLUG</Text>
-          <View style={styles.slugInput}>
-            <Text style={styles.slugPrefix}>
+        <View style={lumoStyles.section}>
+          <Text style={lumoStyles.label}>KANAL SLUG</Text>
+          <View style={lumoStyles.slugInput}>
+            <Text style={lumoStyles.slugPrefix}>
               @{ownerUsername || '...'}-
             </Text>
             <TextInput
-              style={styles.slugField}
+              style={lumoStyles.slugField}
               placeholder="kanal_nomi"
               placeholderTextColor={colors.dim}
               value={slug}
@@ -246,20 +248,20 @@ export default function CreateChannel() {
             />
           </View>
           {fullUsername ? (
-            <Text style={styles.usernamePreview}>
+            <Text style={lumoStyles.usernamePreview}>
               Kanal linki: @{fullUsername}
             </Text>
           ) : (
-            <Text style={styles.helper}>
+            <Text style={lumoStyles.helper}>
               Faqat kichik harflar, raqamlar va pastki chiziq. 1–30 belgi.
             </Text>
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>TAVSIF</Text>
+        <View style={lumoStyles.section}>
+          <Text style={lumoStyles.label}>TAVSIF</Text>
           <TextInput
-            style={[styles.input, styles.descriptionInput]}
+            style={[lumoStyles.input, lumoStyles.descriptionInput]}
             placeholder="Kanal nima haqida?"
             placeholderTextColor={colors.dim}
             value={description}
@@ -268,11 +270,11 @@ export default function CreateChannel() {
             multiline
             textAlignVertical="top"
           />
-          <Text style={styles.counter}>{description.length}/500</Text>
+          <Text style={lumoStyles.counter}>{description.length}/500</Text>
         </View>
 
-        <View style={styles.visibilityCard}>
-          <View style={styles.visibilityIcon}>
+        <View style={lumoStyles.visibilityCard}>
+          <View style={lumoStyles.visibilityIcon}>
             <Ionicons
               name={isPublic ? 'globe-outline' : 'lock-closed-outline'}
               size={19}
@@ -280,11 +282,11 @@ export default function CreateChannel() {
             />
           </View>
 
-          <View style={styles.visibilityCopy}>
-            <Text style={styles.visibilityTitle}>
+          <View style={lumoStyles.visibilityCopy}>
+            <Text style={lumoStyles.visibilityTitle}>
               {isPublic ? 'Ochiq kanal' : 'Yopiq kanal'}
             </Text>
-            <Text style={styles.visibilityDescription}>
+            <Text style={lumoStyles.visibilityDescription}>
               {isPublic
                 ? "Har kim topishi va obuna bo'lishi mumkin."
                 : "Faqat taklif qilinganlar ko'ra oladi."}
@@ -305,9 +307,9 @@ export default function CreateChannel() {
 
         <Pressable
           style={[
-            styles.createButton,
+            lumoStyles.createButton,
             (busy || !name.trim() || !slug.trim()) &&
-              styles.createButtonDisabled,
+              lumoStyles.createButtonDisabled,
           ]}
           onPress={() => void handleCreate()}
           disabled={busy || !name.trim() || !slug.trim()}
@@ -318,7 +320,7 @@ export default function CreateChannel() {
           ) : (
             <>
               <Ionicons name="megaphone" size={18} color={colors.bg} />
-              <Text style={styles.createButtonText}>Kanal yaratish</Text>
+              <Text style={lumoStyles.createButtonText}>Kanal yaratish</Text>
             </>
           )}
         </Pressable>

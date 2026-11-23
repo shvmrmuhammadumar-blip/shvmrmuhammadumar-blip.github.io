@@ -13,6 +13,8 @@ import {
 import { Track } from 'livekit-client';
 import type { TrackReferenceOrPlaceholder } from '@livekit/react-native';
 import { getLiveConnectionToken, type LiveRole } from '../../lib/live';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 type Props = {
   sessionId: string;
@@ -20,6 +22,7 @@ type Props = {
 };
 
 function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?: () => void }) {
+  const lumoStyles = useThemedStyles(styles);
   const tracks = useTracks([Track.Source.Camera]);
   const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
   const [fullscreen, setFullscreen] = useState(false);
@@ -32,18 +35,18 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
   const renderTrack = ({ item }: { item: TrackReferenceOrPlaceholder }) => {
     if (!isTrackReference(item)) return null;
     return (
-      <View style={[styles.videoTile, tracks.length === 1 && styles.singleVideoTile]}>
+      <View style={[lumoStyles.videoTile, tracks.length === 1 && lumoStyles.singleVideoTile]}>
         <VideoTrack
           trackRef={item}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
           objectFit="cover"
           mirror={false}
         />
-        <View style={styles.videoLabel}>
-          <Text style={styles.videoLabelText} numberOfLines={1}>
+        <View style={lumoStyles.videoLabel}>
+          <Text style={lumoStyles.videoLabelText} numberOfLines={1}>
             {item.participant.isLocal ? 'You' : item.participant.name || item.participant.identity}
           </Text>
-          {item.participant.isLocal ? <Text style={styles.youTag}>YOU</Text> : null}
+          {item.participant.isLocal ? <Text style={lumoStyles.youTag}>YOU</Text> : null}
         </View>
       </View>
     );
@@ -56,60 +59,60 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
       renderItem={renderTrack}
       keyExtractor={(item, index) => isTrackReference(item) ? `${item.participant.identity}:${item.publication.trackSid}` : `empty-${index}`}
       numColumns={tracks.length > 1 ? 2 : 1}
-      columnWrapperStyle={tracks.length > 1 ? styles.videoRow : undefined}
+      columnWrapperStyle={tracks.length > 1 ? lumoStyles.videoRow : undefined}
       contentContainerStyle={[
-        styles.videoGrid,
-        tracks.length === 1 && styles.singleVideoGrid,
-        isFullscreen && styles.fullscreenVideoGrid,
+        lumoStyles.videoGrid,
+        tracks.length === 1 && lumoStyles.singleVideoGrid,
+        isFullscreen && lumoStyles.fullscreenVideoGrid,
       ]}
     />
   );
 
   const renderControls = () => publishable ? (
-    <View style={styles.controls}>
+    <View style={lumoStyles.controls}>
       <Pressable
         onPress={() => void localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)}
-        style={[styles.controlButton, !isMicrophoneEnabled && styles.controlDisabled]}
+        style={[lumoStyles.controlButton, !isMicrophoneEnabled && lumoStyles.controlDisabled]}
       >
-        <Ionicons name={isMicrophoneEnabled ? 'mic' : 'mic-off'} size={19} color="#F2F5F7" />
-        <Text style={styles.controlText}>{isMicrophoneEnabled ? 'Mute' : 'Unmute'}</Text>
+        <Ionicons name={isMicrophoneEnabled ? 'mic' : 'mic-off'} size={19} color={resolveThemeColor("#F2F5F7", "color")} />
+        <Text style={lumoStyles.controlText}>{isMicrophoneEnabled ? 'Mute' : 'Unmute'}</Text>
       </Pressable>
       <Pressable
         onPress={() => void localParticipant.setCameraEnabled(!isCameraEnabled)}
-        style={[styles.controlButton, !isCameraEnabled && styles.controlDisabled]}
+        style={[lumoStyles.controlButton, !isCameraEnabled && lumoStyles.controlDisabled]}
       >
-        <Ionicons name={isCameraEnabled ? 'videocam' : 'videocam-off'} size={19} color="#F2F5F7" />
-        <Text style={styles.controlText}>{isCameraEnabled ? 'Camera' : 'Camera off'}</Text>
+        <Ionicons name={isCameraEnabled ? 'videocam' : 'videocam-off'} size={19} color={resolveThemeColor("#F2F5F7", "color")} />
+        <Text style={lumoStyles.controlText}>{isCameraEnabled ? 'Camera' : 'Camera off'}</Text>
       </Pressable>
     </View>
   ) : (
-    <Text style={styles.viewerNote}>Your microphone and camera stay off while watching.</Text>
+    <Text style={lumoStyles.viewerNote}>Your microphone and camera stay off while watching.</Text>
   );
 
   return (
     <>
-      <View style={styles.stageBody}>
-        <View style={styles.stageHeader}>
-          <View style={styles.stageStatus}>
-            <View style={styles.liveDot} />
-            <Text style={styles.stageStatusText}>LIVE STAGE</Text>
+      <View style={lumoStyles.stageBody}>
+        <View style={lumoStyles.stageHeader}>
+          <View style={lumoStyles.stageStatus}>
+            <View style={lumoStyles.liveDot} />
+            <Text style={lumoStyles.stageStatusText}>LIVE STAGE</Text>
           </View>
           <Pressable
             onPress={() => setFullscreen(true)}
-            style={styles.fullscreenButton}
+            style={lumoStyles.fullscreenButton}
             accessibilityRole="button"
             accessibilityLabel="Open full screen live"
           >
-            <Ionicons name="expand-outline" size={18} color="#F2F5F7" />
+            <Ionicons name="expand-outline" size={18} color={resolveThemeColor("#F2F5F7", "color")} />
           </Pressable>
         </View>
 
         {!fullscreen ? (
           tracks.length ? renderGrid() : (
-            <View style={styles.placeholder}>
-              <Ionicons name="people-outline" size={34} color="#9AA5B2" />
-              <Text style={styles.placeholderTitle}>The stage is ready</Text>
-              <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+            <View style={lumoStyles.placeholder}>
+              <Ionicons name="people-outline" size={34} color={resolveThemeColor("#9AA5B2", "color")} />
+              <Text style={lumoStyles.placeholderTitle}>The stage is ready</Text>
+              <Text style={lumoStyles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
             </View>
           )
         ) : null}
@@ -119,28 +122,28 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
 
       {fullscreen ? (
         <Modal visible animationType="fade" onRequestClose={() => setFullscreen(false)} statusBarTranslucent>
-          <View style={styles.fullscreenContainer}>
-            <View style={styles.fullscreenHeader}>
-              <View style={styles.stageStatus}>
-                <View style={styles.liveDot} />
-                <Text style={styles.stageStatusText}>LUMO LIVE</Text>
+          <View style={lumoStyles.fullscreenContainer}>
+            <View style={lumoStyles.fullscreenHeader}>
+              <View style={lumoStyles.stageStatus}>
+                <View style={lumoStyles.liveDot} />
+                <Text style={lumoStyles.stageStatusText}>LUMO LIVE</Text>
               </View>
               <Pressable
                 onPress={() => setFullscreen(false)}
-                style={styles.fullscreenButton}
+                style={lumoStyles.fullscreenButton}
                 accessibilityRole="button"
                 accessibilityLabel="Exit full screen live"
               >
-                <Ionicons name="contract-outline" size={19} color="#F2F5F7" />
+                <Ionicons name="contract-outline" size={19} color={resolveThemeColor("#F2F5F7", "color")} />
               </Pressable>
             </View>
 
-            <View style={styles.fullscreenStage}>
+            <View style={lumoStyles.fullscreenStage}>
               {tracks.length ? renderGrid(true) : (
-                <View style={styles.placeholder}>
-                  <Ionicons name="people-outline" size={34} color="#9AA5B2" />
-                  <Text style={styles.placeholderTitle}>The stage is ready</Text>
-                  <Text style={styles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
+                <View style={lumoStyles.placeholder}>
+                  <Ionicons name="people-outline" size={34} color={resolveThemeColor("#9AA5B2", "color")} />
+                  <Text style={lumoStyles.placeholderTitle}>The stage is ready</Text>
+                  <Text style={lumoStyles.placeholderCopy}>Video appears here when the host or guests turn on their cameras</Text>
                 </View>
               )}
             </View>
@@ -154,6 +157,7 @@ function NativeLiveStage({ role, onStageReady }: { role: LiveRole; onStageReady?
 }
 
 export default function LiveRoomNative({ sessionId, onConnectionChange }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [connection, setConnection] = useState<{ url: string; token: string; role: LiveRole } | null>(null);
   const [connecting, setConnecting] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,20 +201,20 @@ export default function LiveRoomNative({ sessionId, onConnectionChange }: Props)
 
   if (connecting) {
     return (
-      <View style={styles.placeholder}>
-        <ActivityIndicator color="#C9D9A4" size="large" />
-        <Text style={styles.placeholderTitle}>Entering the live room</Text>
-        <Text style={styles.placeholderCopy}>Securely connecting your session</Text>
+      <View style={lumoStyles.placeholder}>
+        <ActivityIndicator color={resolveThemeColor("#C9D9A4", "color")} size="large" />
+        <Text style={lumoStyles.placeholderTitle}>Entering the live room</Text>
+        <Text style={lumoStyles.placeholderCopy}>Securely connecting your session</Text>
       </View>
     );
   }
 
   if (error || !connection) {
     return (
-      <View style={styles.placeholder}>
-        <Ionicons name="videocam-off-outline" size={34} color="#D8B879" />
-        <Text style={styles.placeholderTitle}>Video is not connected</Text>
-        <Text style={styles.placeholderCopy}>{error || 'Live connection is unavailable.'}</Text>
+      <View style={lumoStyles.placeholder}>
+        <Ionicons name="videocam-off-outline" size={34} color={resolveThemeColor("#D8B879", "color")} />
+        <Text style={lumoStyles.placeholderTitle}>Video is not connected</Text>
+        <Text style={lumoStyles.placeholderCopy}>{error || 'Live connection is unavailable.'}</Text>
       </View>
     );
   }
@@ -218,13 +222,13 @@ export default function LiveRoomNative({ sessionId, onConnectionChange }: Props)
   const publishable = connection.role === 'host' || connection.role === 'guest';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.stageHeader}>
-        <View style={styles.stageStatus}>
-          <View style={styles.liveDot} />
-          <Text style={styles.stageStatusText}>LIVE CONNECTION</Text>
+    <View style={lumoStyles.container}>
+      <View style={lumoStyles.stageHeader}>
+        <View style={lumoStyles.stageStatus}>
+          <View style={lumoStyles.liveDot} />
+          <Text style={lumoStyles.stageStatusText}>LIVE CONNECTION</Text>
         </View>
-        <Text style={styles.stageMeta}>{publishable ? 'Your camera is on stage' : 'You are watching'}</Text>
+        <Text style={lumoStyles.stageMeta}>{publishable ? 'Your camera is on stage' : 'You are watching'}</Text>
       </View>
       <LiveKitRoom
         key={sessionId}

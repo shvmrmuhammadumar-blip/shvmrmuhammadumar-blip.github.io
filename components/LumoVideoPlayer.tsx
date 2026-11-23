@@ -14,6 +14,9 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../lib/auth";
 import { createContentSessionKey, trackContentPlayback } from "../lib/studio-analytics";
+import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 const SPEEDS = [1, 1.5, 2, 0.5];
 
@@ -49,6 +52,7 @@ export default function LumoVideoPlayer({
   onOpenClip,
   analytics,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const player = useVideoPlayer(uri, (p) => {
     p.loop = false;
     p.muted = true;
@@ -228,12 +232,12 @@ export default function LumoVideoPlayer({
   const failed = status === "error";
 
   return (
-    <View style={[styles.root, { paddingTop: topInset }, style]}>
-      <View style={styles.videoArea}>
+    <View style={[lumoStyles.root, { paddingTop: topInset }, style]}>
+      <View style={lumoStyles.videoArea}>
         <VideoView
           player={player}
           surfaceType="textureView"
-          style={styles.video}
+          style={lumoStyles.video}
           nativeControls={false}
           contentFit="contain"
         />
@@ -246,12 +250,12 @@ export default function LumoVideoPlayer({
         />
 
         {!compact && !isPlaying && !loading && !failed && (
-          <View style={styles.centerOverlay} pointerEvents="none">
-            <View style={styles.bigPlay}>
+          <View style={lumoStyles.centerOverlay} pointerEvents="none">
+            <View style={lumoStyles.bigPlay}>
               <Ionicons
                 name="play"
                 size={30}
-                color="#090C12"
+                color={resolveThemeColor("#090C12", "color")}
                 style={{ marginLeft: 4 }}
               />
             </View>
@@ -259,15 +263,15 @@ export default function LumoVideoPlayer({
         )}
 
         {loading && (
-          <View style={styles.centerOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color="#B9C7D6" />
+          <View style={lumoStyles.centerOverlay} pointerEvents="none">
+            <ActivityIndicator size="large" color={resolveThemeColor("#B9C7D6", "color")} />
           </View>
         )}
 
         {failed && (
-          <View style={styles.centerOverlay} pointerEvents="none">
-            <Ionicons name="alert-circle-outline" size={34} color="#FF647C" />
-            <Text style={styles.errorText}>Video ochilmadi</Text>
+          <View style={lumoStyles.centerOverlay} pointerEvents="none">
+            <Ionicons name="alert-circle-outline" size={34} color={resolveThemeColor("#FF647C", "color")} />
+            <Text style={lumoStyles.errorText}>Video ochilmadi</Text>
           </View>
         )}
 
@@ -275,8 +279,8 @@ export default function LumoVideoPlayer({
           <Pressable
             onPress={toggleMute}
             style={({ pressed }) => [
-              styles.compactMuteButton,
-              pressed && styles.pressed,
+              lumoStyles.compactMuteButton,
+              pressed && lumoStyles.pressed,
             ]}
             hitSlop={8}
             accessibilityRole="button"
@@ -285,18 +289,18 @@ export default function LumoVideoPlayer({
             <Ionicons
               name={muted ? "volume-mute" : "volume-high"}
               size={20}
-              color="#F2F5F7"
+              color={resolveThemeColor("#F2F5F7", "color")}
             />
           </Pressable>
         )}
       </View>
 
-      <View style={[styles.panel, compact && styles.compactPanel, { marginBottom: bottomInset }]}>
-        <View style={styles.progressRow}>
-          <Text style={styles.time}>{fmt(shownTime)}</Text>
+      <View style={[lumoStyles.panel, compact && lumoStyles.compactPanel, { marginBottom: bottomInset }]}>
+        <View style={lumoStyles.progressRow}>
+          <Text style={lumoStyles.time}>{fmt(shownTime)}</Text>
 
           <View
-            style={styles.barHit}
+            style={lumoStyles.barHit}
             onLayout={(e: LayoutChangeEvent) => {
               barWidth.current = e.nativeEvent.layout.width || 1;
             }}
@@ -319,50 +323,50 @@ export default function LumoVideoPlayer({
             }}
             onResponderTerminate={() => setScrub(null)}
           >
-            <View style={styles.track} pointerEvents="none">
-              <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+            <View style={lumoStyles.track} pointerEvents="none">
+              <View style={[lumoStyles.fill, { width: `${progress * 100}%` }]} />
             </View>
             <View
               pointerEvents="none"
               style={[
-                styles.thumb,
-                scrub != null && styles.thumbActive,
+                lumoStyles.thumb,
+                scrub != null && lumoStyles.thumbActive,
                 { left: `${progress * 100}%` },
               ]}
             />
           </View>
 
-          <Text style={styles.time}>{fmt(duration)}</Text>
+          <Text style={lumoStyles.time}>{fmt(duration)}</Text>
         </View>
 
-        <View style={styles.row}>
+        <View style={lumoStyles.row}>
           <Pressable
             onPress={cycleSpeed}
-            style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
+            style={({ pressed }) => [lumoStyles.pill, pressed && lumoStyles.pressed]}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Change playback speed"
           >
-            <Text style={styles.pillText}>{SPEEDS[speedIndex]}x</Text>
+            <Text style={lumoStyles.pillText}>{SPEEDS[speedIndex]}x</Text>
           </Pressable>
 
-          <View style={styles.center}>
+          <View style={lumoStyles.center}>
             <Pressable
               onPress={() => seekBy(-10)}
-              style={({ pressed }) => [styles.side, pressed && styles.pressed]}
+              style={({ pressed }) => [lumoStyles.side, pressed && lumoStyles.pressed]}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Back 10 seconds"
             >
-              <Ionicons name="play-back" size={20} color="#F2F5F7" />
-              <Text style={styles.sideText}>10</Text>
+              <Ionicons name="play-back" size={20} color={resolveThemeColor("#F2F5F7", "color")} />
+              <Text style={lumoStyles.sideText}>10</Text>
             </Pressable>
 
             <Pressable
               onPress={togglePlay}
               style={({ pressed }) => [
-                styles.playBtn,
-                pressed && styles.pressed,
+                lumoStyles.playBtn,
+                pressed && lumoStyles.pressed,
               ]}
               accessibilityRole="button"
               accessibilityLabel={isPlaying ? "Pause" : "Play"}
@@ -370,26 +374,26 @@ export default function LumoVideoPlayer({
               <Ionicons
                 name={isPlaying ? "pause" : "play"}
                 size={26}
-                color="#090C12"
+                color={resolveThemeColor("#090C12", "color")}
                 style={!isPlaying ? { marginLeft: 3 } : undefined}
               />
             </Pressable>
 
             <Pressable
               onPress={() => seekBy(10)}
-              style={({ pressed }) => [styles.side, pressed && styles.pressed]}
+              style={({ pressed }) => [lumoStyles.side, pressed && lumoStyles.pressed]}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Forward 10 seconds"
             >
-              <Ionicons name="play-forward" size={20} color="#F2F5F7" />
-              <Text style={styles.sideText}>10</Text>
+              <Ionicons name="play-forward" size={20} color={resolveThemeColor("#F2F5F7", "color")} />
+              <Text style={lumoStyles.sideText}>10</Text>
             </Pressable>
           </View>
 
           <Pressable
             onPress={toggleMute}
-            style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
+            style={({ pressed }) => [lumoStyles.pill, pressed && lumoStyles.pressed]}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={muted ? "Unmute" : "Mute"}
@@ -397,7 +401,7 @@ export default function LumoVideoPlayer({
             <Ionicons
               name={muted ? "volume-mute" : "volume-high"}
               size={17}
-              color="#B9C7D6"
+              color={resolveThemeColor("#B9C7D6", "color")}
             />
           </Pressable>
         </View>
@@ -416,7 +420,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: "100%",
-    backgroundColor: "#000",
+    backgroundColor: colors.mediaBg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -436,7 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   centerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,

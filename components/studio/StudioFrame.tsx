@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter, useSegments } from 'expo-router';
+import { getAppContentWidth, getStudioBodyWidth } from '../../lib/responsive';
 import { colors, radii } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 type NavItem = { label: string; href: string; icon: IconName };
 
 const groups: { label: string; items: NavItem[] }[] = [
   { label: 'WORKSPACE', items: [
-    { label: 'Studio home', href: '/studio', icon: 'layers-outline' },
     { label: 'Dashboard', href: '/creator-studio', icon: 'grid-outline' },
   ] },
   { label: 'INSIGHTS', items: [
@@ -35,16 +36,21 @@ const groups: { label: string; items: NavItem[] }[] = [
 type Props = { title: string; subtitle?: string; icon?: IconName; wide?: boolean; children: React.ReactNode };
 
 export function StudioFrame({ title, subtitle, icon = 'grid-outline', wide = false, children }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const { width } = useWindowDimensions();
-  const desktop = width >= 1160;
+  const segments = useSegments();
+  const appContentWidth = getAppContentWidth(width, segments[0] === '(tabs)');
+  const bodyWidth = getStudioBodyWidth(appContentWidth);
+  const desktop = appContentWidth >= 960;
+  const compactHeader = bodyWidth < 520;
   const pathname = usePathname();
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     WORKSPACE: true, INSIGHTS: true, CONTENT: true, COMMUNITY: true, GROWTH: true, BUSINESS: true,
   });
 
-  const active = (item: NavItem) => item.href === '/studio'
-    ? pathname === '/studio' || pathname === '/studio/'
+  const active = (item: NavItem) => item.href === '/creator-studio'
+    ? pathname === '/creator-studio' || pathname === '/creator-studio/'
     : pathname === item.href || pathname.startsWith(item.href + '/');
 
   const navItem = (item: NavItem, compact = false) => {
@@ -53,77 +59,77 @@ export function StudioFrame({ title, subtitle, icon = 'grid-outline', wide = fal
       <Pressable
         key={item.href}
         onPress={() => router.push(item.href as never)}
-        style={[styles.navItem, compact && styles.navItemCompact, selected && styles.navItemActive]}
+        style={[lumoStyles.navItem, compact && lumoStyles.navItemCompact, selected && lumoStyles.navItemActive]}
         accessibilityRole="button"
         accessibilityState={{ selected }}
       >
         <Ionicons name={item.icon} size={18} color={selected ? colors.accentStrong : colors.muted} />
-        <Text numberOfLines={1} style={[styles.navText, selected && styles.navTextActive]}>{item.label}</Text>
-        {selected && desktop ? <View style={styles.activeMark} /> : null}
+        <Text numberOfLines={1} style={[lumoStyles.navText, selected && lumoStyles.navTextActive]}>{item.label}</Text>
+        {selected && desktop ? <View style={lumoStyles.activeMark} /> : null}
       </Pressable>
     );
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.topbar}>
-        <Pressable onPress={() => router.push('/studio')} style={styles.brand} accessibilityRole="button">
-          <Image source={require('../../assets/lumo-mark.png')} style={styles.brandMark} contentFit="contain" />
-          <View style={styles.brandCopy}>
-            <Text style={styles.brandName}>LUMO</Text>
-            <Text style={styles.brandSub}>STUDIO</Text>
+    <View style={lumoStyles.root}>
+      <View style={[lumoStyles.topbar, compactHeader && lumoStyles.topbarCompact]}>
+        <Pressable onPress={() => router.push('/creator-studio')} style={lumoStyles.brand} accessibilityRole="button">
+          <Image source={require('../../assets/lumo-mark.png')} style={lumoStyles.brandMark} contentFit="contain" />
+          <View style={lumoStyles.brandCopy}>
+            <Text style={lumoStyles.brandName}>LUMO</Text>
+            {!compactHeader ? <Text style={lumoStyles.brandSub}>STUDIO</Text> : null}
           </View>
         </Pressable>
-        <View style={styles.topDivider} />
-        <View style={styles.pageHeading}>
-          <View style={styles.pageIcon}><Ionicons name={icon} size={18} color={colors.accentStrong} /></View>
-          <View style={styles.pageCopy}>
-            <Text style={styles.pageTitle}>{title}</Text>
-            {subtitle ? <Text style={styles.pageSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
+        {!compactHeader ? <View style={lumoStyles.topDivider} /> : null}
+        <View style={lumoStyles.pageHeading}>
+          {!compactHeader ? <View style={lumoStyles.pageIcon}><Ionicons name={icon} size={18} color={colors.accentStrong} /></View> : null}
+          <View style={lumoStyles.pageCopy}>
+            <Text style={[lumoStyles.pageTitle, compactHeader && lumoStyles.pageTitleCompact]} numberOfLines={1}>{title}</Text>
+            {subtitle && !compactHeader ? <Text style={lumoStyles.pageSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
           </View>
         </View>
-        <Pressable onPress={() => router.push('/profile')} style={styles.exitButton} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/profile')} style={[lumoStyles.exitButton, compactHeader && lumoStyles.exitButtonCompact]} accessibilityRole="button">
           <Ionicons name="arrow-up-right-box" size={16} color={colors.muted} />
-          <Text style={styles.exitText}>Lumo</Text>
+          {!compactHeader ? <Text style={lumoStyles.exitText}>Lumo</Text> : null}
         </Pressable>
       </View>
 
-      <View style={styles.main}>
+      <View style={lumoStyles.main}>
         {desktop ? (
-          <View style={styles.sidebar}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidebarContent}>
+          <View style={lumoStyles.sidebar}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={lumoStyles.sidebarContent}>
               {groups.map((group) => (
-                <View key={group.label} style={styles.navGroup}>
+                <View key={group.label} style={lumoStyles.navGroup}>
                   <Pressable
                     onPress={() => setExpandedGroups((current) => ({ ...current, [group.label]: !current[group.label] }))}
-                    style={styles.groupHeader}
+                    style={lumoStyles.groupHeader}
                     accessibilityRole="button"
                     accessibilityState={{ expanded: Boolean(expandedGroups[group.label]) }}
                   >
-                    <Text style={styles.groupLabel}>{group.label}</Text>
+                    <Text style={lumoStyles.groupLabel}>{group.label}</Text>
                     <Ionicons name={expandedGroups[group.label] ? 'chevron-down' : 'chevron-forward'} size={12} color={colors.dim} />
                   </Pressable>
                   {expandedGroups[group.label] ? group.items.map((item) => navItem(item)) : null}
                 </View>
               ))}
             </ScrollView>
-            <View style={styles.sidebarFooter}>
+            <View style={lumoStyles.sidebarFooter}>
               <Ionicons name="shield-checkmark-outline" size={15} color={colors.dim} />
-              <Text style={styles.sidebarFooterText}>Your account workspace</Text>
+              <Text style={lumoStyles.sidebarFooterText}>Your account workspace</Text>
             </View>
           </View>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mobileNav}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.mobileNav}>
             {groups.flatMap((group) => group.items).map((item) => navItem(item, true))}
           </ScrollView>
         )}
         <ScrollView
-          style={styles.body}
-          contentContainerStyle={[styles.bodyContent, { paddingHorizontal: width < 520 ? 16 : width < 900 ? 22 : 30 }]}
+          style={lumoStyles.body}
+          contentContainerStyle={[lumoStyles.bodyContent, { paddingHorizontal: bodyWidth < 520 ? 16 : bodyWidth < 900 ? 22 : 30 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.contentWidth, wide && styles.contentWidthWide]}>{children}</View>
+          <View style={[lumoStyles.contentWidth, wide && lumoStyles.contentWidthWide]}>{children}</View>
         </ScrollView>
       </View>
     </View>
@@ -131,7 +137,8 @@ export function StudioFrame({ title, subtitle, icon = 'grid-outline', wide = fal
 }
 
 export function StudioPanel({ children, style }: { children: React.ReactNode; style?: object }) {
-  return <View style={[styles.panel, style]}>{children}</View>;
+  const lumoStyles = useThemedStyles(styles);
+  return <View style={[lumoStyles.panel, style]}>{children}</View>;
 }
 
 export const studioStyles = StyleSheet.create({
@@ -148,6 +155,7 @@ export const studioStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   topbar: { minHeight: 72, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, gap: 18, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.bg },
+  topbarCompact: { minHeight: 60, paddingHorizontal: 14, gap: 9 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 112 },
   brandMark: { width: 30, height: 30 },
   brandCopy: { gap: 1 },
@@ -158,8 +166,10 @@ const styles = StyleSheet.create({
   pageIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border },
   pageCopy: { flex: 1, minWidth: 0, gap: 2 },
   pageTitle: { color: colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  pageTitleCompact: { fontSize: 14, letterSpacing: -0.1 },
   pageSubtitle: { color: colors.muted, fontSize: 10 },
   exitButton: { minHeight: 38, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },
+  exitButtonCompact: { width: 36, minHeight: 36, paddingHorizontal: 0 },
   exitText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
   main: { flex: 1, minHeight: 0, flexDirection: 'row' },
   sidebar: { width: 218, flexShrink: 0, borderRightWidth: 1, borderRightColor: colors.border, backgroundColor: colors.surface, justifyContent: 'space-between' },

@@ -7,12 +7,14 @@ import { StudioChip, StudioMetric, StudioSection } from '../../components/studio
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Mode = 'followers' | 'following';
 type Person = { id: string; username: string | null; full_name: string | null; avatar_url: string | null; created_at: string };
 type AudienceData = { followers: number; following: number; recentFollowers: number; people: Person[] };
 
 export default function StudioAudienceScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -69,45 +71,45 @@ export default function StudioAudienceScreen() {
 
   return (
     <StudioFrame title="Audience" subtitle="People around your profile" icon="people-outline">
-      <View style={styles.headingBlock}>
-        <Text style={styles.heading}>Audience</Text>
-        <Text style={styles.subheading}>Understand who follows your work.</Text>
+      <View style={lumoStyles.headingBlock}>
+        <Text style={lumoStyles.heading}>Audience</Text>
+        <Text style={lumoStyles.subheading}>Understand who follows your work.</Text>
       </View>
-      <View style={styles.metrics}>
+      <View style={lumoStyles.metrics}>
         <StudioMetric label="Followers" value={data.followers.toLocaleString()} icon="people-outline" />
         <StudioMetric label="Following" value={data.following.toLocaleString()} icon="person-add-outline" />
-        <StudioMetric label="New В· 30 days" value={data.recentFollowers.toLocaleString()} icon="trending-up-outline" />
+        <StudioMetric label="New · 30 days" value={data.recentFollowers.toLocaleString()} icon="trending-up-outline" />
       </View>
-      <View style={styles.tabs}>
-        <StudioChip label={`Followers В· ${data.followers}`} active={mode === 'followers'} onPress={() => setMode('followers')} />
-        <StudioChip label={`Following В· ${data.following}`} active={mode === 'following'} onPress={() => setMode('following')} />
+      <View style={lumoStyles.tabs}>
+        <StudioChip label={`Followers · ${data.followers}`} active={mode === 'followers'} onPress={() => setMode('followers')} />
+        <StudioChip label={`Following · ${data.following}`} active={mode === 'following'} onPress={() => setMode('following')} />
       </View>
-      <StudioPanel style={styles.listPanel}>
-        <View style={styles.searchBox}>
+      <StudioPanel style={lumoStyles.listPanel}>
+        <View style={lumoStyles.searchBox}>
           <Ionicons name="search-outline" size={17} color={colors.muted} />
-          <TextInput value={search} onChangeText={setSearch} placeholder="Search people" placeholderTextColor={colors.dim} style={styles.searchInput} autoCapitalize="none" />
+          <TextInput value={search} onChangeText={setSearch} placeholder="Search people" placeholderTextColor={colors.dim} style={lumoStyles.searchInput} autoCapitalize="none" />
         </View>
         <StudioSection title={mode === 'followers' ? 'Recent followers' : 'Following'} />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
         {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 24 }} /> : null}
         {!loading && !visiblePeople.length ? (
-          <View style={styles.empty}><Ionicons name="people-outline" size={23} color={colors.dim} /><Text style={styles.emptyText}>No accounts found.</Text></View>
+          <View style={lumoStyles.empty}><Ionicons name="people-outline" size={23} color={colors.dim} /><Text style={lumoStyles.emptyText}>No accounts found.</Text></View>
         ) : null}
         {visiblePeople.map((person) => (
-          <Pressable key={person.id} onPress={() => router.push(`/user/${person.id}`)} style={styles.personRow} accessibilityRole="button">
-            {person.avatar_url ? <Image source={{ uri: person.avatar_url }} style={styles.avatar} /> : (
-              <View style={styles.avatarFallback}><Text style={styles.avatarInitial}>{(person.username ?? 'L').slice(0, 1).toUpperCase()}</Text></View>
+          <Pressable key={person.id} onPress={() => router.push(`/user/${person.id}`)} style={lumoStyles.personRow} accessibilityRole="button">
+            {person.avatar_url ? <Image source={{ uri: person.avatar_url }} style={lumoStyles.avatar} /> : (
+              <View style={lumoStyles.avatarFallback}><Text style={lumoStyles.avatarInitial}>{(person.username ?? 'L').slice(0, 1).toUpperCase()}</Text></View>
             )}
-            <View style={styles.personCopy}>
-              <Text style={styles.personName} numberOfLines={1}>{person.full_name || person.username || 'Lumo member'}</Text>
-              <Text style={styles.personHandle}>@{person.username ?? 'user'}</Text>
+            <View style={lumoStyles.personCopy}>
+              <Text style={lumoStyles.personName} numberOfLines={1}>{person.full_name || person.username || 'Lumo member'}</Text>
+              <Text style={lumoStyles.personHandle}>@{person.username ?? 'user'}</Text>
             </View>
-            <Text style={styles.personDate}>{new Date(person.created_at).toLocaleDateString()}</Text>
+            <Text style={lumoStyles.personDate}>{new Date(person.created_at).toLocaleDateString()}</Text>
             <Ionicons name="chevron-forward" size={15} color={colors.dim} />
           </Pressable>
         ))}
       </StudioPanel>
-      <Text style={styles.footnote}>Follower history is based on follow records currently available to your account.</Text>
+      <Text style={lumoStyles.footnote}>Follower history is based on follow records currently available to your account.</Text>
     </StudioFrame>
   );
 }

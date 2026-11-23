@@ -7,6 +7,7 @@ import { StudioEmpty, StudioSection } from '../../components/studio/StudioWidget
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type CommentRow = {
   id: string;
@@ -18,6 +19,7 @@ type CommentRow = {
 };
 
 export default function StudioCommunityScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -48,47 +50,47 @@ export default function StudioCommunityScreen() {
 
   return (
     <StudioFrame title="Community" subtitle="Conversations around your content" icon="chatbubbles-outline">
-      <View style={styles.headingRow}>
-        <View style={styles.headingCopy}>
-          <Text style={styles.heading}>Community</Text>
-          <Text style={styles.subheading}>Stay close to your audience.</Text>
+      <View style={lumoStyles.headingRow}>
+        <View style={lumoStyles.headingCopy}>
+          <Text style={lumoStyles.heading}>Community</Text>
+          <Text style={lumoStyles.subheading}>Stay close to your audience.</Text>
         </View>
-        <Pressable onPress={() => router.push('/messages')} style={styles.inboxButton} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/messages')} style={lumoStyles.inboxButton} accessibilityRole="button">
           <Ionicons name="mail-outline" size={16} color={colors.bg} />
-          <Text style={styles.inboxText}>Open inbox</Text>
+          <Text style={lumoStyles.inboxText}>Open inbox</Text>
         </Pressable>
       </View>
 
-      <View style={styles.shortcutGrid}>
-        <Pressable style={styles.shortcut} onPress={() => router.push('/messages')} accessibilityRole="button">
-          <View style={styles.shortcutIcon}><Ionicons name="chatbubbles-outline" size={20} color={colors.accentStrong} /></View>
-          <Text style={styles.shortcutTitle}>Messages</Text>
-          <Text style={styles.shortcutMeta}>Direct conversations</Text>
+      <View style={lumoStyles.shortcutGrid}>
+        <Pressable style={lumoStyles.shortcut} onPress={() => router.push('/messages')} accessibilityRole="button">
+          <View style={lumoStyles.shortcutIcon}><Ionicons name="chatbubbles-outline" size={20} color={colors.accentStrong} /></View>
+          <Text style={lumoStyles.shortcutTitle}>Messages</Text>
+          <Text style={lumoStyles.shortcutMeta}>Direct conversations</Text>
         </Pressable>
-        <Pressable style={styles.shortcut} onPress={() => router.push('/creator-studio/audience')} accessibilityRole="button">
-          <View style={styles.shortcutIcon}><Ionicons name="people-outline" size={20} color={colors.accentStrong} /></View>
-          <Text style={styles.shortcutTitle}>Audience</Text>
-          <Text style={styles.shortcutMeta}>Followers & following</Text>
+        <Pressable style={lumoStyles.shortcut} onPress={() => router.push('/creator-studio/audience')} accessibilityRole="button">
+          <View style={lumoStyles.shortcutIcon}><Ionicons name="people-outline" size={20} color={colors.accentStrong} /></View>
+          <Text style={lumoStyles.shortcutTitle}>Audience</Text>
+          <Text style={lumoStyles.shortcutMeta}>Followers & following</Text>
         </Pressable>
       </View>
 
-      <View style={styles.section}>
+      <View style={lumoStyles.section}>
         <StudioSection title="Recent comments" />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
         {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 22 }} /> : null}
         {!loading && comments.length ? (
-          <StudioPanel style={styles.commentPanel}>
+          <StudioPanel style={lumoStyles.commentPanel}>
             {comments.map((comment) => (
-              <Pressable key={comment.id} onPress={() => router.push(`/post/${comment.post_id}`)} style={styles.commentRow} accessibilityRole="button">
-                {comment.person?.avatar_url ? <Image source={{ uri: comment.person.avatar_url }} style={styles.avatar} /> : (
-                  <View style={styles.avatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>
+              <Pressable key={comment.id} onPress={() => router.push(`/post/${comment.post_id}`)} style={lumoStyles.commentRow} accessibilityRole="button">
+                {comment.person?.avatar_url ? <Image source={{ uri: comment.person.avatar_url }} style={lumoStyles.avatar} /> : (
+                  <View style={lumoStyles.avatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>
                 )}
-                <View style={styles.commentCopy}>
-                  <View style={styles.commentTop}>
-                    <Text style={styles.username}>@{comment.person?.username ?? 'user'}</Text>
-                    <Text style={styles.date}>{new Date(comment.created_at).toLocaleDateString()}</Text>
+                <View style={lumoStyles.commentCopy}>
+                  <View style={lumoStyles.commentTop}>
+                    <Text style={lumoStyles.username}>@{comment.person?.username ?? 'user'}</Text>
+                    <Text style={lumoStyles.date}>{new Date(comment.created_at).toLocaleDateString()}</Text>
                   </View>
-                  <Text style={styles.commentText} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
+                  <Text style={lumoStyles.commentText} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={15} color={colors.dim} />
               </Pressable>

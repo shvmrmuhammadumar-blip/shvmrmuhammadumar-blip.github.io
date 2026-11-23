@@ -21,10 +21,12 @@ import {
 } from "../../../lib/market";
 import { colors } from "../../../lib/theme";
 import MarketListingCard from "../../../components/market/MarketListingCard";
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 type CatalogFilter = "all" | "product" | "service";
 
 export default function StorefrontScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const params = useLocalSearchParams<{ slug?: string | string[] }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const router = useRouter();
@@ -93,104 +95,104 @@ export default function StorefrontScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerState}>
+      <View style={lumoStyles.centerState}>
         <ActivityIndicator size="large" color={colors.accentStrong} />
-        <Text style={styles.stateText}>Opening storefront...</Text>
+        <Text style={lumoStyles.stateText}>Opening storefront...</Text>
       </View>
     );
   }
 
   if (error || !store) {
     return (
-      <View style={styles.centerState}>
-        <View style={styles.stateIcon}>
+      <View style={lumoStyles.centerState}>
+        <View style={lumoStyles.stateIcon}>
           <Ionicons name="storefront-outline" size={29} color={colors.muted} />
         </View>
-        <Text style={styles.stateTitle}>Store unavailable</Text>
-        <Text style={styles.stateText}>{error || "This store could not be found."}</Text>
-        <Pressable onPress={() => router.replace("/market" as never)} style={styles.backToMarket}>
-          <Text style={styles.backToMarketText}>Back to Market</Text>
+        <Text style={lumoStyles.stateTitle}>Store unavailable</Text>
+        <Text style={lumoStyles.stateText}>{error || "This store could not be found."}</Text>
+        <Pressable onPress={() => router.replace("/market" as never)} style={lumoStyles.backToMarket}>
+          <Text style={lumoStyles.backToMarketText}>Back to Market</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <View style={lumoStyles.root}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={lumoStyles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <View style={styles.topBar}>
-            <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <View style={lumoStyles.container}>
+          <View style={lumoStyles.topBar}>
+            <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
               <Ionicons name="arrow-back" size={18} color={colors.muted} />
-              <Text style={styles.backText}>Back</Text>
+              <Text style={lumoStyles.backText}>Back</Text>
             </Pressable>
 
-            <View style={styles.topActions}>
+            <View style={lumoStyles.topActions}>
               {isOwner ? (
                 <Pressable
                   onPress={() =>
                     router.push(`/market/store/manage/${store.id}` as never)
                   }
-                  style={styles.manageButton}
+                  style={lumoStyles.manageButton}
                 >
                   <Ionicons name="settings-outline" size={15} color={colors.text} />
-                  <Text style={styles.manageButtonText}>Manage store</Text>
+                  <Text style={lumoStyles.manageButtonText}>Manage store</Text>
                 </Pressable>
               ) : (
                 <Pressable
                   onPress={() => router.push(`/chat/${store.owner_id}` as never)}
-                  style={styles.contactButton}
+                  style={lumoStyles.contactButton}
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={15} color={colors.bg} />
-                  <Text style={styles.contactButtonText}>Contact store</Text>
+                  <Text style={lumoStyles.contactButtonText}>Contact store</Text>
                 </Pressable>
               )}
             </View>
           </View>
 
-          <View style={styles.cover}>
+          <View style={lumoStyles.cover}>
             {store.cover_url ? (
               <Image
                 source={{ uri: store.cover_url }}
-                style={styles.coverImage}
+                style={lumoStyles.coverImage}
                 contentFit="cover"
               />
             ) : (
-              <View style={styles.coverFallback}>
+              <View style={lumoStyles.coverFallback}>
                 <Ionicons name="storefront-outline" size={43} color={colors.dim} />
-                <Text style={styles.coverFallbackLabel}>LUMO STORE</Text>
+                <Text style={lumoStyles.coverFallbackLabel}>LUMO STORE</Text>
               </View>
             )}
-            <View style={styles.coverShade} />
-            <View style={styles.coverLabel}>
-              <Text style={styles.coverLabelText}>LUMO MARKET / STOREFRONT</Text>
+            <View style={lumoStyles.coverShade} />
+            <View style={lumoStyles.coverLabel}>
+              <Text style={lumoStyles.coverLabelText}>LUMO MARKET / STOREFRONT</Text>
             </View>
           </View>
 
-          <View style={styles.identity}>
-            <View style={styles.logo}>
+          <View style={lumoStyles.identity}>
+            <View style={lumoStyles.logo}>
               {store.avatar_url ? (
                 <Image
                   source={{ uri: store.avatar_url }}
-                  style={styles.logoImage}
+                  style={lumoStyles.logoImage}
                   contentFit="cover"
                 />
               ) : (
-                <View style={styles.logoFallback}>
+                <View style={lumoStyles.logoFallback}>
                   <Ionicons name="storefront" size={34} color={colors.accentStrong} />
                 </View>
               )}
             </View>
 
-            <View style={styles.identityCopy}>
-              <Text style={styles.storeName}>{store.name}</Text>
-              <Text style={styles.storeHandle}>@{store.slug}</Text>
-              <View style={styles.location}>
+            <View style={lumoStyles.identityCopy}>
+              <Text style={lumoStyles.storeName}>{store.name}</Text>
+              <Text style={lumoStyles.storeHandle}>@{store.slug}</Text>
+              <View style={lumoStyles.location}>
                 <Ionicons name="location-outline" size={13} color={colors.dim} />
-                <Text style={styles.locationText}>
+                <Text style={lumoStyles.locationText}>
                   {[store.city, store.region, store.country]
                     .filter(Boolean)
                     .join(", ")}
@@ -199,40 +201,40 @@ export default function StorefrontScreen() {
             </View>
           </View>
 
-          <View style={styles.stats}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{listings.length}</Text>
-              <Text style={styles.statLabel}>LISTINGS</Text>
+          <View style={lumoStyles.stats}>
+            <View style={lumoStyles.stat}>
+              <Text style={lumoStyles.statValue}>{listings.length}</Text>
+              <Text style={lumoStyles.statLabel}>LISTINGS</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{productsCount}</Text>
-              <Text style={styles.statLabel}>PRODUCTS</Text>
+            <View style={lumoStyles.statDivider} />
+            <View style={lumoStyles.stat}>
+              <Text style={lumoStyles.statValue}>{productsCount}</Text>
+              <Text style={lumoStyles.statLabel}>PRODUCTS</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{servicesCount}</Text>
-              <Text style={styles.statLabel}>SERVICES</Text>
+            <View style={lumoStyles.statDivider} />
+            <View style={lumoStyles.stat}>
+              <Text style={lumoStyles.statValue}>{servicesCount}</Text>
+              <Text style={lumoStyles.statLabel}>SERVICES</Text>
             </View>
           </View>
 
           {store.description ? (
-            <View style={styles.aboutCard}>
-              <View style={styles.aboutHeader}>
-                <View style={styles.aboutIcon}>
+            <View style={lumoStyles.aboutCard}>
+              <View style={lumoStyles.aboutHeader}>
+                <View style={lumoStyles.aboutIcon}>
                   <Ionicons name="information-circle-outline" size={19} color={colors.accentStrong} />
                 </View>
-                <Text style={styles.aboutTitle}>About this store</Text>
+                <Text style={lumoStyles.aboutTitle}>About this store</Text>
               </View>
-              <Text style={styles.aboutText}>{store.description}</Text>
+              <Text style={lumoStyles.aboutText}>{store.description}</Text>
             </View>
           ) : null}
 
-          <View style={styles.catalogHeader}>
-            <View style={styles.catalogHeading}>
-              <Text style={styles.eyebrow}>EXPLORE THE COLLECTION</Text>
-              <Text style={styles.catalogTitle}>Store catalog</Text>
-              <Text style={styles.catalogSubtitle}>
+          <View style={lumoStyles.catalogHeader}>
+            <View style={lumoStyles.catalogHeading}>
+              <Text style={lumoStyles.eyebrow}>EXPLORE THE COLLECTION</Text>
+              <Text style={lumoStyles.catalogTitle}>Store catalog</Text>
+              <Text style={lumoStyles.catalogSubtitle}>
                 Browse products and services offered by {store.name}.
               </Text>
             </View>
@@ -241,15 +243,15 @@ export default function StorefrontScreen() {
                 onPress={() =>
                   router.push(`/market/create?storeId=${store.id}` as never)
                 }
-                style={styles.addListingButton}
+                style={lumoStyles.addListingButton}
               >
                 <Ionicons name="add" size={16} color={colors.bg} />
-                <Text style={styles.addListingText}>Add listing</Text>
+                <Text style={lumoStyles.addListingText}>Add listing</Text>
               </Pressable>
             ) : null}
           </View>
 
-          <View style={styles.filters}>
+          <View style={lumoStyles.filters}>
             {(
               [
                 ["all", "All listings"],
@@ -264,14 +266,14 @@ export default function StorefrontScreen() {
                   key={key}
                   onPress={() => setFilter(key)}
                   style={[
-                    styles.filter,
-                    selected && styles.filterActive,
+                    lumoStyles.filter,
+                    selected && lumoStyles.filterActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.filterText,
-                      selected && styles.filterTextActive,
+                      lumoStyles.filterText,
+                      selected && lumoStyles.filterTextActive,
                     ]}
                   >
                     {label}
@@ -282,12 +284,12 @@ export default function StorefrontScreen() {
           </View>
 
           {visibleListings.length > 0 ? (
-            <View style={styles.listingGrid}>
+            <View style={lumoStyles.listingGrid}>
               {visibleListings.map((item) => (
                 <View
                   key={item.id}
                   style={[
-                    styles.listingItem,
+                    lumoStyles.listingItem,
                     { flexBasis: columns },
                   ]}
                 >
@@ -300,14 +302,14 @@ export default function StorefrontScreen() {
               ))}
             </View>
           ) : (
-            <View style={styles.emptyCatalog}>
-              <View style={styles.emptyIcon}>
+            <View style={lumoStyles.emptyCatalog}>
+              <View style={lumoStyles.emptyIcon}>
                 <Ionicons name="cube-outline" size={28} color={colors.muted} />
               </View>
-              <Text style={styles.emptyTitle}>
+              <Text style={lumoStyles.emptyTitle}>
                 {isOwner ? "Your catalog is ready" : "No listings yet"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={lumoStyles.emptyText}>
                 {isOwner
                   ? "Add your first product or service to this storefront."
                   : "This store has not published any listings yet."}
@@ -317,18 +319,18 @@ export default function StorefrontScreen() {
                   onPress={() =>
                     router.push(`/market/create?storeId=${store.id}` as never)
                   }
-                  style={styles.emptyAction}
+                  style={lumoStyles.emptyAction}
                 >
-                  <Text style={styles.emptyActionText}>Add first listing</Text>
+                  <Text style={lumoStyles.emptyActionText}>Add first listing</Text>
                   <Ionicons name="arrow-forward" size={15} color={colors.bg} />
                 </Pressable>
               ) : null}
             </View>
           )}
 
-          <View style={styles.footer}>
+          <View style={lumoStyles.footer}>
             <Ionicons name="shield-checkmark-outline" size={17} color={colors.muted} />
-            <Text style={styles.footerText}>
+            <Text style={lumoStyles.footerText}>
               Powered by Lumo Market. Contact the store directly through Lumo Chat.
             </Text>
           </View>
@@ -391,7 +393,7 @@ const styles = StyleSheet.create({
   coverImage: { width: "100%", height: "100%" },
   coverFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 9 },
   coverFallbackLabel: { color: colors.dim, fontSize: 9, fontWeight: "900", letterSpacing: 2 },
-  coverShade: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(5,8,12,0.14)" },
+  coverShade: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(5,8,12,0.14)" },
   coverLabel: {
     position: "absolute",
     left: 15,

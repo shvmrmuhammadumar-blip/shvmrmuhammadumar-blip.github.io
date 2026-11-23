@@ -27,6 +27,7 @@ import {
   type ChannelRole,
 } from '../../../lib/channels';
 import type { Database } from '../../../lib/database.types';
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 type Person = Pick<
   Database['public']['Tables']['profiles']['Row'],
@@ -34,6 +35,7 @@ type Person = Pick<
 >;
 
 export default function ChannelSubscribersScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -231,43 +233,43 @@ export default function ChannelSubscribersScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
-        <View style={styles.headerCopy}>
-          <Text style={styles.title}>Members</Text>
-          <Text style={styles.subtitle}>
+        <View style={lumoStyles.headerCopy}>
+          <Text style={lumoStyles.title}>Members</Text>
+          <Text style={lumoStyles.subtitle}>
             {channel?.name ?? 'Channel'} · {subscribers.length} people
           </Text>
         </View>
-        <View style={styles.headerSpacer} />
+        <View style={lumoStyles.headerSpacer} />
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <ActivityIndicator color={colors.lime} size="large" />
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={lumoStyles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {canManage && (
-            <View style={styles.searchCard}>
-              <Text style={styles.sectionTitle}>Add members</Text>
-              <Text style={styles.sectionHint}>
+            <View style={lumoStyles.searchCard}>
+              <Text style={lumoStyles.sectionTitle}>Add members</Text>
+              <Text style={lumoStyles.sectionHint}>
                 Find Lumo users and invite them to your channel.
               </Text>
 
-              <View style={styles.searchRow}>
+              <View style={lumoStyles.searchRow}>
                 <Ionicons name="search-outline" size={17} color={colors.muted} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={lumoStyles.searchInput}
                   value={query}
                   onChangeText={(value) => {
                     setQuery(value);
@@ -282,7 +284,7 @@ export default function ChannelSubscribersScreen() {
                   returnKeyType="search"
                 />
                 <Pressable
-                  style={styles.searchButton}
+                  style={lumoStyles.searchButton}
                   onPress={() => void searchPeople()}
                   disabled={searching}
                 >
@@ -295,16 +297,16 @@ export default function ChannelSubscribersScreen() {
               </View>
 
               {people.map((person) => (
-                <View key={person.id} style={styles.personRow}>
+                <View key={person.id} style={lumoStyles.personRow}>
                   <Avatar uri={person.avatar_url} name={person.username} size={38} />
-                  <View style={styles.personCopy}>
-                    <Text style={styles.personName}>@{person.username}</Text>
+                  <View style={lumoStyles.personCopy}>
+                    <Text style={lumoStyles.personName}>@{person.username}</Text>
                     {!!person.full_name && (
-                      <Text style={styles.personHint}>{person.full_name}</Text>
+                      <Text style={lumoStyles.personHint}>{person.full_name}</Text>
                     )}
                   </View>
                   <Pressable
-                    style={styles.addButton}
+                    style={lumoStyles.addButton}
                     onPress={() => void addPerson(person)}
                     disabled={!!busyId}
                   >
@@ -318,22 +320,22 @@ export default function ChannelSubscribersScreen() {
               ))}
 
               {query.trim().length >= 2 && !searching && people.length === 0 && (
-                <Text style={styles.noResults}>
+                <Text style={lumoStyles.noResults}>
                   No new users found. Try another username.
                 </Text>
               )}
             </View>
           )}
 
-          <View style={styles.listHeading}>
+          <View style={lumoStyles.listHeading}>
             <View>
-              <Text style={styles.sectionTitle}>All members</Text>
-              <Text style={styles.sectionHint}>
+              <Text style={lumoStyles.sectionTitle}>All members</Text>
+              <Text style={lumoStyles.sectionHint}>
                 People who belong to this channel
               </Text>
             </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{subscribers.length}</Text>
+            <View style={lumoStyles.countBadge}>
+              <Text style={lumoStyles.countText}>{subscribers.length}</Text>
             </View>
           </View>
 
@@ -343,41 +345,41 @@ export default function ChannelSubscribersScreen() {
             const isOwner = member.role === 'owner';
 
             return (
-              <View key={member.user_id} style={styles.memberRow}>
+              <View key={member.user_id} style={lumoStyles.memberRow}>
                 <Avatar
                   uri={member.profile?.avatar_url}
                   name={username}
                   size={43}
                 />
-                <View style={styles.memberCopy}>
-                  <Text style={styles.personName}>
+                <View style={lumoStyles.memberCopy}>
+                  <Text style={lumoStyles.personName}>
                     {member.profile?.full_name || username}
                     {isSelf ? ' · You' : ''}
                   </Text>
-                  <Text style={styles.personHint}>
+                  <Text style={lumoStyles.personHint}>
                     @{username}
                   </Text>
-                  <Text style={styles.roleText}>
+                  <Text style={lumoStyles.roleText}>
                     {member.role.toUpperCase()}
                   </Text>
                 </View>
 
                 {(myRole === 'owner' || isDeveloper) && !isSelf && !isOwner && (
-                  <View style={styles.actions}>
+                  <View style={lumoStyles.actions}>
                     <Pressable
-                      style={styles.actionButton}
+                      style={lumoStyles.actionButton}
                       onPress={() => void changeRole(member)}
                       disabled={!!busyId}
                     >
-                      <Text style={styles.actionText}>
+                      <Text style={lumoStyles.actionText}>
                         {member.role === 'admin' ? 'Demote' : 'Make admin'}
                       </Text>
                     </Pressable>
 
                     <Pressable
                       style={[
-                        styles.ownerButton,
-                        confirmTransfer === member.user_id && styles.confirmButton,
+                        lumoStyles.ownerButton,
+                        confirmTransfer === member.user_id && lumoStyles.confirmButton,
                       ]}
                       onPress={() => void transferOwnership(member)}
                       disabled={!!busyId}
@@ -385,7 +387,7 @@ export default function ChannelSubscribersScreen() {
                       {busyId === member.user_id ? (
                         <ActivityIndicator color={colors.lime} size="small" />
                       ) : (
-                        <Text style={styles.actionText}>
+                        <Text style={lumoStyles.actionText}>
                           {confirmTransfer === member.user_id
                             ? 'Confirm'
                             : 'Make owner'}
@@ -399,18 +401,18 @@ export default function ChannelSubscribersScreen() {
           })}
 
           {subscribers.length === 0 && (
-            <View style={styles.empty}>
+            <View style={lumoStyles.empty}>
               <Ionicons name="people-outline" size={30} color={colors.muted} />
-              <Text style={styles.emptyText}>No members yet.</Text>
+              <Text style={lumoStyles.emptyText}>No members yet.</Text>
             </View>
           )}
 
           {!!confirmTransfer && (
             <Pressable
-              style={styles.cancelAction}
+              style={lumoStyles.cancelAction}
               onPress={() => setConfirmTransfer('')}
             >
-              <Text style={styles.cancelText}>Cancel ownership transfer</Text>
+              <Text style={lumoStyles.cancelText}>Cancel ownership transfer</Text>
             </Pressable>
           )}
         </ScrollView>

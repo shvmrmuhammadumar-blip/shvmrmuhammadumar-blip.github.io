@@ -19,6 +19,8 @@ import { timeAgo } from '../../lib/api';
 import type { Message, MiniProfile } from '../../lib/types';
 import { getMyGroups, type GroupSummary } from '../../lib/groups';
 import { getMyChannels, type ChannelSummary } from '../../lib/channels';
+import { useThemedStyles } from "../../lib/theme-styles";
+import { colors } from '../../lib/theme';
 
 type MessageCategory = 'Everything' | 'Personal' | 'Groups' | 'Channels';
 type Conversation = {
@@ -40,16 +42,16 @@ type Preview = {
 type SortMode = 'recent' | 'unread';
 
 const palette = {
-  canvas: '#090C12',
-  surface: '#10130F',
-  raised: '#151914',
-  ink: '#F1F3EC',
-  muted: '#9AA5B2',
-  dim: '#687164',
-  line: '#262C24',
-  lime: '#B9C7D6',
-  limeSoft: '#20291A',
-  danger: '#E58B8B',
+  get canvas() { return colors.bg; },
+  get surface() { return colors.surface; },
+  get raised() { return colors.surfaceRaised; },
+  get ink() { return colors.text; },
+  get muted() { return colors.muted; },
+  get dim() { return colors.dim; },
+  get line() { return colors.border; },
+  get lime() { return colors.accent; },
+  get limeSoft() { return colors.accentDark; },
+  get danger() { return colors.danger; },
 };
 
 const MESSAGE_WITH_FILE_NAME_SELECT =
@@ -101,6 +103,7 @@ function MessageRow({
   me: string;
   onPress: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   const preview = previewOf(item.last);
   const unread = item.unreadCount > 0;
   const mine = item.last.sender_id === me;
@@ -108,40 +111,40 @@ function MessageRow({
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      style={({ pressed }) => [lumoStyles.row, pressed && lumoStyles.rowPressed]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open conversation with ${username}${unread ? `, ${item.unreadCount} unread messages` : ''}`}
     >
-      <View style={styles.avatarWrap}>
+      <View style={lumoStyles.avatarWrap}>
         <Avatar
           uri={item.profile?.avatar_url}
           name={item.profile?.username ?? 'User'}
           size={50}
         />
-        {unread ? <View style={styles.avatarUnreadDot} /> : null}
+        {unread ? <View style={lumoStyles.avatarUnreadDot} /> : null}
       </View>
 
-      <View style={styles.rowContent}>
-        <View style={styles.rowHeading}>
+      <View style={lumoStyles.rowContent}>
+        <View style={lumoStyles.rowHeading}>
           <Text
-            style={[styles.username, unread && styles.usernameUnread]}
+            style={[lumoStyles.username, unread && lumoStyles.usernameUnread]}
             numberOfLines={1}
           >
             {username}
           </Text>
-          <Text style={[styles.timestamp, unread && styles.timestampUnread]}>
+          <Text style={[lumoStyles.timestamp, unread && lumoStyles.timestampUnread]}>
             {safeTimeAgo(item.last.created_at)}
           </Text>
         </View>
 
-        <View style={styles.previewRow}>
+        <View style={lumoStyles.previewRow}>
           {mine ? (
             <Ionicons
               name={item.last.read_at ? 'checkmark-done' : 'checkmark'}
               size={15}
               color={item.last.read_at ? palette.lime : palette.dim}
-              style={styles.deliveryIcon}
+              style={lumoStyles.deliveryIcon}
             />
           ) : null}
           {preview.icon ? (
@@ -149,19 +152,19 @@ function MessageRow({
               name={preview.icon}
               size={15}
               color={palette.muted}
-              style={styles.previewIcon}
+              style={lumoStyles.previewIcon}
             />
           ) : null}
           <Text
-            style={[styles.previewText, unread && styles.previewTextUnread]}
+            style={[lumoStyles.previewText, unread && lumoStyles.previewTextUnread]}
             numberOfLines={1}
           >
             {mine && !preview.icon ? 'You: ' : ''}
             {preview.text}
           </Text>
           {unread ? (
-            <View style={styles.unreadCount}>
-              <Text style={styles.unreadCountText}>
+            <View style={lumoStyles.unreadCount}>
+              <Text style={lumoStyles.unreadCountText}>
                 {item.unreadCount > 99 ? '99+' : item.unreadCount}
               </Text>
             </View>
@@ -173,6 +176,7 @@ function MessageRow({
 }
 
 export default function Messages() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session?.user?.id;
   const router = useRouter();
@@ -512,23 +516,23 @@ export default function Messages() {
   const categoryIsCommunity = category === 'Groups' || category === 'Channels';
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.header}>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.title}>Messages</Text>
-          <Text style={styles.subtitle}>Your conversations</Text>
+    <View style={[lumoStyles.screen, { paddingTop: insets.top + 8 }]}>
+      <View style={lumoStyles.header}>
+        <View style={lumoStyles.headerTitleWrap}>
+          <Text style={lumoStyles.title}>Messages</Text>
+          <Text style={lumoStyles.subtitle}>Your conversations</Text>
         </View>
-        <View style={styles.headerActions}>
+        <View style={lumoStyles.headerActions}>
           {!categoryIsCommunity && totalUnread > 0 ? (
-            <View style={styles.unreadSummary}>
-              <View style={styles.unreadSummaryDot} />
-              <Text style={styles.unreadSummaryText}>
+            <View style={lumoStyles.unreadSummary}>
+              <View style={lumoStyles.unreadSummaryDot} />
+              <Text style={lumoStyles.unreadSummaryText}>
                 {totalUnread > 99 ? '99+' : totalUnread} unread
               </Text>
             </View>
           ) : null}
           <Pressable
-            style={styles.newChatButton}
+            style={lumoStyles.newChatButton}
             onPress={() => {
               if (category === 'Groups') router.push('/groups/create');
               else if (category === 'Channels') router.push('/channels/create');
@@ -549,10 +553,10 @@ export default function Messages() {
         </View>
       </View>
 
-      <View style={styles.searchBar}>
+      <View style={lumoStyles.searchBar}>
         <Ionicons name="search-outline" size={18} color={palette.muted} />
         <TextInput
-          style={styles.searchInput}
+          style={lumoStyles.searchInput}
           placeholder={
             category === 'Groups'
               ? 'Search groups'
@@ -580,7 +584,7 @@ export default function Messages() {
         ) : null}
       </View>
 
-      <View style={styles.categoryRow}>
+      <View style={lumoStyles.categoryRow}>
         {CATEGORIES.map((tab) => {
           const active = category === tab;
           return (
@@ -591,44 +595,44 @@ export default function Messages() {
                 setQuery('');
                 setUnreadOnly(false);
               }}
-              style={styles.categoryButton}
+              style={lumoStyles.categoryButton}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
             >
               <Text
                 style={[
-                  styles.categoryText,
-                  active && styles.categoryTextActive,
+                  lumoStyles.categoryText,
+                  active && lumoStyles.categoryTextActive,
                 ]}
               >
                 {tab}
               </Text>
-              {active ? <View style={styles.categoryIndicator} /> : null}
+              {active ? <View style={lumoStyles.categoryIndicator} /> : null}
             </Pressable>
           );
         })}
       </View>
 
-      <View style={[styles.listTools, categoryIsCommunity && { display: 'none' }]}>
+      <View style={[lumoStyles.listTools, categoryIsCommunity && { display: 'none' }]}>
         <Pressable
           onPress={() => setUnreadOnly((current) => !current)}
           style={[
-            styles.unreadFilter,
-            unreadOnly && styles.unreadFilterActive,
+            lumoStyles.unreadFilter,
+            unreadOnly && lumoStyles.unreadFilterActive,
           ]}
           accessibilityRole="button"
           accessibilityState={{ selected: unreadOnly }}
         >
           <View
             style={[
-              styles.unreadFilterDot,
-              unreadOnly && styles.unreadFilterDotActive,
+              lumoStyles.unreadFilterDot,
+              unreadOnly && lumoStyles.unreadFilterDotActive,
             ]}
           />
           <Text
             style={[
-              styles.unreadFilterText,
-              unreadOnly && styles.unreadFilterTextActive,
+              lumoStyles.unreadFilterText,
+              unreadOnly && lumoStyles.unreadFilterTextActive,
             ]}
           >
             Unread
@@ -641,7 +645,7 @@ export default function Messages() {
               current === 'recent' ? 'unread' : 'recent',
             )
           }
-          style={styles.sortButton}
+          style={lumoStyles.sortButton}
           accessibilityRole="button"
           accessibilityLabel={
             sortMode === 'recent' ? 'Sort unread first' : 'Sort by recent'
@@ -652,18 +656,18 @@ export default function Messages() {
             size={15}
             color={palette.muted}
           />
-          <Text style={styles.sortText}>
+          <Text style={lumoStyles.sortText}>
             {sortMode === 'recent' ? 'Recent' : 'Unread first'}
           </Text>
         </Pressable>
       </View>
 
       {!categoryIsCommunity && loadError && items.length > 0 ? (
-        <Pressable style={styles.inlineError} onPress={() => void reload()}>
-          <Text style={styles.inlineErrorText} numberOfLines={2}>
+        <Pressable style={lumoStyles.inlineError} onPress={() => void reload()}>
+          <Text style={lumoStyles.inlineErrorText} numberOfLines={2}>
             {loadError}
           </Text>
-          <Text style={styles.retryLink}>Retry</Text>
+          <Text style={lumoStyles.retryLink}>Retry</Text>
         </Pressable>
       ) : null}
 
@@ -672,9 +676,9 @@ export default function Messages() {
           data={everythingItems}
           keyExtractor={(item) => `${item.kind}:${item.id}`}
           contentContainerStyle={[
-            styles.listContent,
+            lumoStyles.listContent,
             { paddingBottom: Math.max(insets.bottom, 14) + 76 },
-            everythingItems.length === 0 && styles.listContentEmpty,
+            everythingItems.length === 0 && lumoStyles.listContentEmpty,
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -700,18 +704,18 @@ export default function Messages() {
             if (item.kind === 'group') {
               return (
                 <Pressable
-                  style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                  style={({ pressed }) => [lumoStyles.row, pressed && lumoStyles.rowPressed]}
                   onPress={() => router.push(`/groups/${item.id}`)}
                 >
-                  <View style={styles.avatarWrap}>
+                  <View style={lumoStyles.avatarWrap}>
                     <Avatar uri={item.group.avatar_url} name={item.group.name} size={50} />
                   </View>
-                  <View style={styles.rowContent}>
-                    <View style={styles.rowHeading}>
-                      <Text style={styles.username} numberOfLines={1}>{item.group.name}</Text>
-                      <Text style={styles.timestamp}>{item.group.member_count} members</Text>
+                  <View style={lumoStyles.rowContent}>
+                    <View style={lumoStyles.rowHeading}>
+                      <Text style={lumoStyles.username} numberOfLines={1}>{item.group.name}</Text>
+                      <Text style={lumoStyles.timestamp}>{item.group.member_count} members</Text>
                     </View>
-                    <Text style={styles.previewText} numberOfLines={1}>
+                    <Text style={lumoStyles.previewText} numberOfLines={1}>
                       {item.group.description?.trim() || `You are ${item.group.my_role}`}
                     </Text>
                   </View>
@@ -722,18 +726,18 @@ export default function Messages() {
 
             return (
               <Pressable
-                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                style={({ pressed }) => [lumoStyles.row, pressed && lumoStyles.rowPressed]}
                 onPress={() => router.push(`/channels/${item.id}`)}
               >
-                <View style={styles.avatarWrap}>
+                <View style={lumoStyles.avatarWrap}>
                   <Avatar uri={item.channel.avatar_url} name={item.channel.name} size={50} />
                 </View>
-                <View style={styles.rowContent}>
-                  <View style={styles.rowHeading}>
-                    <Text style={styles.username} numberOfLines={1}>{item.channel.name}</Text>
-                    <Text style={styles.timestamp}>{item.channel.member_count} members</Text>
+                <View style={lumoStyles.rowContent}>
+                  <View style={lumoStyles.rowHeading}>
+                    <Text style={lumoStyles.username} numberOfLines={1}>{item.channel.name}</Text>
+                    <Text style={lumoStyles.timestamp}>{item.channel.member_count} members</Text>
                   </View>
-                  <Text style={styles.previewText} numberOfLines={1}>
+                  <Text style={lumoStyles.previewText} numberOfLines={1}>
                     @{item.channel.username}
                     {item.channel.description?.trim() ? ` · ${item.channel.description.trim()}` : ''}
                   </Text>
@@ -742,17 +746,17 @@ export default function Messages() {
               </Pressable>
             );
           }}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={() => <View style={lumoStyles.separator} />}
           ListEmptyComponent={
             loading || communityLoading ? (
-              <View style={styles.loadingState}>
+              <View style={lumoStyles.loadingState}>
                 <ActivityIndicator color={palette.lime} size="small" />
               </View>
             ) : (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons name="chatbubbles-outline" size={25} color={palette.dim} />
-                <Text style={styles.emptyTitle}>No conversations yet</Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyTitle}>No conversations yet</Text>
+                <Text style={lumoStyles.emptyDescription}>
                   Your personal chats, groups and channels will appear here.
                 </Text>
               </View>
@@ -764,9 +768,9 @@ export default function Messages() {
           data={visibleGroups}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
-            styles.listContent,
+            lumoStyles.listContent,
             { paddingBottom: Math.max(insets.bottom, 14) + 76 },
-            visibleGroups.length === 0 && styles.listContentEmpty,
+            visibleGroups.length === 0 && lumoStyles.listContentEmpty,
           ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -775,48 +779,48 @@ export default function Messages() {
           }
           renderItem={({ item }) => (
             <Pressable
-              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+              style={({ pressed }) => [lumoStyles.row, pressed && lumoStyles.rowPressed]}
               onPress={() => router.push(`/groups/${item.id}`)}
             >
-              <View style={styles.avatarWrap}>
+              <View style={lumoStyles.avatarWrap}>
                 <Avatar uri={item.avatar_url} name={item.name} size={50} />
               </View>
-              <View style={styles.rowContent}>
-                <View style={styles.rowHeading}>
-                  <Text style={styles.username} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.timestamp}>{item.member_count} members</Text>
+              <View style={lumoStyles.rowContent}>
+                <View style={lumoStyles.rowHeading}>
+                  <Text style={lumoStyles.username} numberOfLines={1}>{item.name}</Text>
+                  <Text style={lumoStyles.timestamp}>{item.member_count} members</Text>
                 </View>
-                <Text style={styles.previewText} numberOfLines={1}>
+                <Text style={lumoStyles.previewText} numberOfLines={1}>
                   {item.description?.trim() || `You are ${item.my_role}`}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={17} color={palette.dim} />
             </Pressable>
           )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={() => <View style={lumoStyles.separator} />}
           ListEmptyComponent={
             communityLoading ? (
-              <View style={styles.loadingState}>
+              <View style={lumoStyles.loadingState}>
                 <ActivityIndicator color={palette.lime} size="small" />
               </View>
             ) : (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons name="people-outline" size={27} color={palette.dim} />
-                <Text style={styles.emptyTitle}>
+                <Text style={lumoStyles.emptyTitle}>
                   {communityError ? 'Groups unavailable' : query.trim() ? 'No groups found' : 'No groups yet'}
                 </Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyDescription}>
                   {communityError || (query.trim()
                     ? 'Try another group name.'
                     : 'Create a group and bring your conversations together.')}
                 </Text>
                 {communityError ? (
-                  <Pressable onPress={() => void loadGroups()} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Try again</Text>
+                  <Pressable onPress={() => void loadGroups()} style={lumoStyles.retryButton}>
+                    <Text style={lumoStyles.retryButtonText}>Try again</Text>
                   </Pressable>
                 ) : !query.trim() ? (
-                  <Pressable onPress={() => router.push('/groups/create')} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Create group</Text>
+                  <Pressable onPress={() => router.push('/groups/create')} style={lumoStyles.retryButton}>
+                    <Text style={lumoStyles.retryButtonText}>Create group</Text>
                   </Pressable>
                 ) : null}
               </View>
@@ -828,9 +832,9 @@ export default function Messages() {
           data={visibleChannels}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
-            styles.listContent,
+            lumoStyles.listContent,
             { paddingBottom: Math.max(insets.bottom, 14) + 76 },
-            visibleChannels.length === 0 && styles.listContentEmpty,
+            visibleChannels.length === 0 && lumoStyles.listContentEmpty,
           ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -839,18 +843,18 @@ export default function Messages() {
           }
           renderItem={({ item }) => (
             <Pressable
-              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+              style={({ pressed }) => [lumoStyles.row, pressed && lumoStyles.rowPressed]}
               onPress={() => router.push(`/channels/${item.id}`)}
             >
-              <View style={styles.avatarWrap}>
+              <View style={lumoStyles.avatarWrap}>
                 <Avatar uri={item.avatar_url} name={item.name} size={50} />
               </View>
-              <View style={styles.rowContent}>
-                <View style={styles.rowHeading}>
-                  <Text style={styles.username} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.timestamp}>{item.member_count} members</Text>
+              <View style={lumoStyles.rowContent}>
+                <View style={lumoStyles.rowHeading}>
+                  <Text style={lumoStyles.username} numberOfLines={1}>{item.name}</Text>
+                  <Text style={lumoStyles.timestamp}>{item.member_count} members</Text>
                 </View>
-                <Text style={styles.previewText} numberOfLines={1}>
+                <Text style={lumoStyles.previewText} numberOfLines={1}>
                   @{item.username}
                   {item.description?.trim() ? ` · ${item.description.trim()}` : ''}
                 </Text>
@@ -858,30 +862,30 @@ export default function Messages() {
               <Ionicons name="chevron-forward" size={17} color={palette.dim} />
             </Pressable>
           )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={() => <View style={lumoStyles.separator} />}
           ListEmptyComponent={
             communityLoading ? (
-              <View style={styles.loadingState}>
+              <View style={lumoStyles.loadingState}>
                 <ActivityIndicator color={palette.lime} size="small" />
               </View>
             ) : (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons name="megaphone-outline" size={27} color={palette.dim} />
-                <Text style={styles.emptyTitle}>
+                <Text style={lumoStyles.emptyTitle}>
                   {communityError ? 'Channels unavailable' : query.trim() ? 'No channels found' : 'No channels yet'}
                 </Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyDescription}>
                   {communityError || (query.trim()
                     ? 'Try another channel name.'
                     : 'Create a channel to share updates with your channel members.')}
                 </Text>
                 {communityError ? (
-                  <Pressable onPress={() => void loadChannels()} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Try again</Text>
+                  <Pressable onPress={() => void loadChannels()} style={lumoStyles.retryButton}>
+                    <Text style={lumoStyles.retryButtonText}>Try again</Text>
                   </Pressable>
                 ) : !query.trim() ? (
-                  <Pressable onPress={() => router.push('/channels/create')} style={styles.retryButton}>
-                    <Text style={styles.retryButtonText}>Create channel</Text>
+                  <Pressable onPress={() => router.push('/channels/create')} style={lumoStyles.retryButton}>
+                    <Text style={lumoStyles.retryButtonText}>Create channel</Text>
                   </Pressable>
                 ) : null}
               </View>
@@ -893,9 +897,9 @@ export default function Messages() {
           data={visible}
           keyExtractor={(conversation) => conversation.userId}
           contentContainerStyle={[
-            styles.listContent,
+            lumoStyles.listContent,
             { paddingBottom: Math.max(insets.bottom, 14) + 76 },
-            visible.length === 0 && styles.listContentEmpty,
+            visible.length === 0 && lumoStyles.listContentEmpty,
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -914,68 +918,68 @@ export default function Messages() {
               onPress={() => router.push(`/chat/${item.userId}`)}
             />
           )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={() => <View style={lumoStyles.separator} />}
           ListEmptyComponent={
             loading ? (
-              <View style={styles.loadingState}>
+              <View style={lumoStyles.loadingState}>
                 <ActivityIndicator color={palette.lime} size="small" />
               </View>
             ) : loadError ? (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons
                   name="cloud-offline-outline"
                   size={24}
                   color={palette.dim}
                 />
-                <Text style={styles.emptyTitle}>Messages unavailable</Text>
-                <Text style={styles.emptyDescription}>{loadError}</Text>
+                <Text style={lumoStyles.emptyTitle}>Messages unavailable</Text>
+                <Text style={lumoStyles.emptyDescription}>{loadError}</Text>
                 <Pressable
                   onPress={() => void reload()}
-                  style={styles.retryButton}
+                  style={lumoStyles.retryButton}
                 >
-                  <Text style={styles.retryButtonText}>Try again</Text>
+                  <Text style={lumoStyles.retryButtonText}>Try again</Text>
                 </Pressable>
               </View>
             ) : query.trim() ? (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons
                   name="search-outline"
                   size={24}
                   color={palette.dim}
                 />
-                <Text style={styles.emptyTitle}>No results</Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyTitle}>No results</Text>
+                <Text style={lumoStyles.emptyDescription}>
                   Try another name or message.
                 </Text>
               </View>
             ) : unreadOnly ? (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons
                   name="checkmark-done-outline"
                   size={24}
                   color={palette.dim}
                 />
-                <Text style={styles.emptyTitle}>You are all caught up</Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyTitle}>You are all caught up</Text>
+                <Text style={lumoStyles.emptyDescription}>
                   There are no unread conversations in this list.
                 </Text>
               </View>
             ) : (
-              <View style={styles.emptyState}>
+              <View style={lumoStyles.emptyState}>
                 <Ionicons
                   name="chatbubbles-outline"
                   size={25}
                   color={palette.dim}
                 />
-                <Text style={styles.emptyTitle}>No conversations yet</Text>
-                <Text style={styles.emptyDescription}>
+                <Text style={lumoStyles.emptyTitle}>No conversations yet</Text>
+                <Text style={lumoStyles.emptyDescription}>
                   Start a conversation from someone’s profile.
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(tabs)/search')}
-                  style={styles.retryButton}
+                  style={lumoStyles.retryButton}
                 >
-                  <Text style={styles.retryButtonText}>Find people</Text>
+                  <Text style={lumoStyles.retryButtonText}>Find people</Text>
                 </Pressable>
               </View>
             )

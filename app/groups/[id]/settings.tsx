@@ -23,8 +23,11 @@ import {
   type ChatGroup,
   type GroupRole,
 } from '../../../lib/groups';
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+
 
 export default function GroupSettings() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -148,59 +151,59 @@ export default function GroupSettings() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Group settings</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={lumoStyles.headerTitle}>Group settings</Text>
+        <View style={lumoStyles.headerSpacer} />
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <ActivityIndicator color={colors.lime} size="large" />
         </View>
       ) : error ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <Ionicons name="alert-circle-outline" size={32} color={colors.muted} />
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={() => void load()} style={styles.retryButton}>
-            <Text style={styles.retryText}>Try again</Text>
+          <Text style={lumoStyles.errorText}>{error}</Text>
+          <Pressable onPress={() => void load()} style={lumoStyles.retryButton}>
+            <Text style={lumoStyles.retryText}>Try again</Text>
           </Pressable>
         </View>
       ) : !group ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Group not found.</Text>
+        <View style={lumoStyles.center}>
+          <Text style={lumoStyles.errorText}>Group not found.</Text>
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={lumoStyles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.hero}>
-            <View style={styles.heroIcon}>
+          <View style={lumoStyles.hero}>
+            <View style={lumoStyles.heroIcon}>
               <Ionicons name="people" size={27} color={colors.lime} />
             </View>
-            <Text style={styles.heroName}>{group.name}</Text>
-            <Text style={styles.heroRole}>{role?.toUpperCase() ?? 'MEMBER'}</Text>
+            <Text style={lumoStyles.heroName}>{group.name}</Text>
+            <Text style={lumoStyles.heroRole}>{role?.toUpperCase() ?? 'MEMBER'}</Text>
           </View>
 
           {!canManage && (
-            <View style={styles.notice}>
+            <View style={lumoStyles.notice}>
               <Ionicons name="lock-closed-outline" size={17} color={colors.muted} />
-              <Text style={styles.noticeText}>
+              <Text style={lumoStyles.noticeText}>
                 Only group owners and admins can edit group details.
               </Text>
             </View>
           )}
 
-          <Text style={styles.label}>GROUP NAME</Text>
+          <Text style={lumoStyles.label}>GROUP NAME</Text>
           <TextInput
-            style={[styles.input, !canManage && styles.readOnly]}
+            style={[lumoStyles.input, !canManage && lumoStyles.readOnly]}
             value={name}
             onChangeText={setName}
             editable={canManage}
@@ -208,11 +211,11 @@ export default function GroupSettings() {
             placeholder="Group name"
             placeholderTextColor={colors.dim}
           />
-          <Text style={styles.counter}>{name.length}/80</Text>
+          <Text style={lumoStyles.counter}>{name.length}/80</Text>
 
-          <Text style={styles.label}>DESCRIPTION</Text>
+          <Text style={lumoStyles.label}>DESCRIPTION</Text>
           <TextInput
-            style={[styles.input, styles.multiline, !canManage && styles.readOnly]}
+            style={[lumoStyles.input, lumoStyles.multiline, !canManage && lumoStyles.readOnly]}
             value={description}
             onChangeText={setDescription}
             editable={canManage}
@@ -222,21 +225,21 @@ export default function GroupSettings() {
             placeholder="Describe your group"
             placeholderTextColor={colors.dim}
           />
-          <Text style={styles.counter}>{description.length}/500</Text>
+          <Text style={lumoStyles.counter}>{description.length}/500</Text>
 
-          <View style={styles.visibilityCard}>
-            <View style={styles.visibilityIcon}>
+          <View style={lumoStyles.visibilityCard}>
+            <View style={lumoStyles.visibilityIcon}>
               <Ionicons
                 name={isPublic ? 'globe-outline' : 'lock-closed-outline'}
                 size={19}
                 color={colors.lime}
               />
             </View>
-            <View style={styles.visibilityCopy}>
-              <Text style={styles.visibilityTitle}>
+            <View style={lumoStyles.visibilityCopy}>
+              <Text style={lumoStyles.visibilityTitle}>
                 {isPublic ? 'Public group' : 'Private group'}
               </Text>
-              <Text style={styles.visibilityHint}>
+              <Text style={lumoStyles.visibilityHint}>
                 {isPublic
                   ? 'Anyone can discover and join this group.'
                   : 'Only invited members can access this group.'}
@@ -253,7 +256,7 @@ export default function GroupSettings() {
 
           {canManage && (
             <Pressable
-              style={[styles.saveButton, saving && styles.disabled]}
+              style={[lumoStyles.saveButton, saving && lumoStyles.disabled]}
               onPress={() => void save()}
               disabled={saving || !name.trim()}
             >
@@ -262,35 +265,35 @@ export default function GroupSettings() {
               ) : (
                 <>
                   <Ionicons name="checkmark" size={18} color={colors.bg} />
-                  <Text style={styles.saveText}>Save changes</Text>
+                  <Text style={lumoStyles.saveText}>Save changes</Text>
                 </>
               )}
             </Pressable>
           )}
 
           <Pressable
-            style={styles.membersButton}
+            style={lumoStyles.membersButton}
             onPress={() => router.push(`/groups/${id}/member`)}
           >
             <Ionicons name="people-outline" size={18} color={colors.lime} />
-            <Text style={styles.membersText}>Manage members</Text>
+            <Text style={lumoStyles.membersText}>Manage members</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.muted} />
           </Pressable>
 
           <Pressable
-            style={styles.leaveButton}
+            style={lumoStyles.leaveButton}
             onPress={() => void handleLeave()}
             disabled={saving}
           >
-            <Ionicons name="exit-outline" size={18} color="#FF6478" />
-            <Text style={styles.leaveText}>
+            <Ionicons name="exit-outline" size={18} color={resolveThemeColor("#FF6478", "color")} />
+            <Text style={lumoStyles.leaveText}>
               {leaving ? 'Tap again to confirm leaving' : 'Leave group'}
             </Text>
           </Pressable>
 
           {leaving && (
-            <Pressable onPress={() => setLeaving(false)} style={styles.cancelLeave}>
-              <Text style={styles.cancelLeaveText}>Cancel</Text>
+            <Pressable onPress={() => setLeaving(false)} style={lumoStyles.cancelLeave}>
+              <Text style={lumoStyles.cancelLeaveText}>Cancel</Text>
             </Pressable>
           )}
         </ScrollView>

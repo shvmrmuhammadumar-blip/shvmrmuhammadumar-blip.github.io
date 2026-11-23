@@ -9,6 +9,8 @@ import {
   View,
 } from "react-native";
 import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 type MediaType = "image" | "video" | "audio" | "file";
 
@@ -29,15 +31,16 @@ function InlineVideo({
   uri: string;
   onExpand?: () => void;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   const player = useVideoPlayer(uri, (instance) => {
     instance.loop = false;
   });
 
   return (
-    <View style={styles.videoFrame}>
+    <View style={lumoStyles.videoFrame}>
       <VideoView
         player={player}
-        style={styles.video}
+        style={lumoStyles.video}
         contentFit="contain"
         nativeControls
       />
@@ -45,12 +48,12 @@ function InlineVideo({
       {onExpand && (
         <Pressable
           onPress={onExpand}
-          style={styles.videoExpand}
+          style={lumoStyles.videoExpand}
           accessibilityRole="button"
           accessibilityLabel="Open video viewer"
           hitSlop={5}
         >
-          <Ionicons name="expand-outline" size={14} color="#FFFFFF" />
+          <Ionicons name="expand-outline" size={14} color={resolveThemeColor(colors.mediaText, "color")} />
         </Pressable>
       )}
     </View>
@@ -66,17 +69,18 @@ export default function ChatMediaAttachment({
   onPress,
   onLongPress,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   if (type === "image") {
     if (!uri) {
       return (
         <Pressable
-          style={styles.unavailable}
+          style={lumoStyles.unavailable}
           onPress={onPress}
           onLongPress={onLongPress}
           disabled={!onPress}
         >
           <Ionicons name="image-outline" size={20} color={colors.muted} />
-          <Text style={styles.unavailableText}>Attachment unavailable</Text>
+          <Text style={lumoStyles.unavailableText}>Attachment unavailable</Text>
         </Pressable>
       );
     }
@@ -85,13 +89,13 @@ export default function ChatMediaAttachment({
       <>
         <Image
           source={{ uri }}
-          style={styles.image}
+          style={lumoStyles.image}
           contentFit="cover"
           transition={180}
         />
         {onPress && (
-          <View style={styles.photoExpandBadge} pointerEvents="none">
-            <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
+          <View style={lumoStyles.photoExpandBadge} pointerEvents="none">
+            <Ionicons name="expand-outline" size={13} color={resolveThemeColor(colors.mediaText, "color")} />
           </View>
         )}
       </>
@@ -101,14 +105,14 @@ export default function ChatMediaAttachment({
       <Pressable
         onPress={onPress}
         onLongPress={onLongPress}
-        style={styles.imageFrame}
+        style={lumoStyles.imageFrame}
         accessibilityRole="button"
         accessibilityLabel="Open photo attachment"
       >
         {content}
       </Pressable>
     ) : (
-      <View style={styles.imageFrame}>{content}</View>
+      <View style={lumoStyles.imageFrame}>{content}</View>
     );
   }
 
@@ -117,12 +121,12 @@ export default function ChatMediaAttachment({
       <InlineVideo uri={uri} onExpand={onPress} />
     ) : (
       <Pressable
-        style={styles.unavailable}
+        style={lumoStyles.unavailable}
         onPress={onPress}
         disabled={!onPress}
       >
         <Ionicons name="videocam-outline" size={20} color={colors.muted} />
-        <Text style={styles.unavailableText}>Video unavailable</Text>
+        <Text style={lumoStyles.unavailableText}>Video unavailable</Text>
       </Pressable>
     );
   }
@@ -132,14 +136,14 @@ export default function ChatMediaAttachment({
 
   return (
     <Pressable
-      style={styles.fileCard}
+      style={lumoStyles.fileCard}
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={!onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open ${resolvedName}`}
     >
-      <View style={styles.fileIcon}>
+      <View style={lumoStyles.fileIcon}>
         <Ionicons
           name={type === "audio" ? "musical-notes-outline" : "document-outline"}
           size={21}
@@ -147,14 +151,14 @@ export default function ChatMediaAttachment({
         />
       </View>
 
-      <View style={styles.fileDetails}>
+      <View style={lumoStyles.fileDetails}>
         <Text
-          style={[styles.fileName, mine && styles.ownText]}
+          style={[lumoStyles.fileName, mine && lumoStyles.ownText]}
           numberOfLines={2}
         >
           {resolvedName}
         </Text>
-        <Text style={[styles.fileAction, mine && styles.ownAction]}>
+        <Text style={[lumoStyles.fileAction, mine && lumoStyles.ownAction]}>
           {fileAction ||
             (type === "audio"
               ? "AUDIO · TAP TO OPEN"

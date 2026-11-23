@@ -8,6 +8,7 @@ import { StudioChip, StudioEmpty, StudioSection } from '../../components/studio/
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type ContentFilter = 'all' | 'photos' | 'videos' | 'stories';
 type PostRow = { id: string; caption: string | null; media_type: string; created_at: string; image_url: string | null; video_url: string | null };
@@ -21,6 +22,7 @@ const filters: { key: ContentFilter; label: string }[] = [
 ];
 
 export default function StudioContentScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -71,40 +73,40 @@ export default function StudioContentScreen() {
 
   return (
     <StudioFrame title="Content" subtitle="Published library" icon="images-outline">
-      <View style={styles.headerRow}>
-        <View style={styles.headingCopy}>
-          <Text style={styles.heading}>Content library</Text>
-          <Text style={styles.subheading}>{posts.length} posts В· {stories.length} active stories</Text>
+      <View style={lumoStyles.headerRow}>
+        <View style={lumoStyles.headingCopy}>
+          <Text style={lumoStyles.heading}>Content library</Text>
+          <Text style={lumoStyles.subheading}>{posts.length} posts · {stories.length} active stories</Text>
         </View>
-        <Pressable onPress={() => router.push('/create')} style={styles.createButton} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/create')} style={lumoStyles.createButton} accessibilityRole="button">
           <Ionicons name="add" size={17} color={colors.bg} />
-          <Text style={styles.createText}>Create</Text>
+          <Text style={lumoStyles.createText}>Create</Text>
         </Pressable>
       </View>
 
-      <View style={styles.filters}>
+      <View style={lumoStyles.filters}>
         {filters.map((item) => <StudioChip key={item.key} label={item.label} active={filter === item.key} onPress={() => setFilter(item.key)} />)}
       </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading ? <View style={styles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
+      {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
+      {loading ? <View style={lumoStyles.loading}><ActivityIndicator color={colors.accentStrong} /></View> : null}
 
-      <StudioPanel style={styles.summaryPanel}>
-        <Text style={styles.summaryLabel}>IN THIS LIBRARY</Text>
-        <Text style={styles.summaryValue}>{total.toLocaleString()}</Text>
-        <Text style={styles.summaryNote}>{filter === 'stories' ? 'Active stories В· 24 hours' : filter === 'all' ? 'Published posts and active stories' : filter === 'videos' ? 'Video posts' : 'Photo posts'}</Text>
+      <StudioPanel style={lumoStyles.summaryPanel}>
+        <Text style={lumoStyles.summaryLabel}>IN THIS LIBRARY</Text>
+        <Text style={lumoStyles.summaryValue}>{total.toLocaleString()}</Text>
+        <Text style={lumoStyles.summaryNote}>{filter === 'stories' ? 'Active stories · 24 hours' : filter === 'all' ? 'Published posts and active stories' : filter === 'videos' ? 'Video posts' : 'Photo posts'}</Text>
       </StudioPanel>
 
       <StudioSection title={filter === 'stories' ? 'Active stories' : 'Published posts'} />
       {filter === 'stories' ? (
         stories.length ? (
-          <View style={styles.contentList}>
+          <View style={lumoStyles.contentList}>
             {stories.map((story) => (
-              <Pressable key={story.id} onPress={() => router.push(`/story/${userId}`)} style={styles.contentRow} accessibilityRole="button">
-                <Image source={{ uri: story.image_url }} style={styles.thumbnail} contentFit="cover" />
-                <View style={styles.contentCopy}>
-                  <Text style={styles.contentTitle}>Story</Text>
-                  <Text style={styles.contentMeta}>Active В· {new Date(story.created_at).toLocaleString()}</Text>
+              <Pressable key={story.id} onPress={() => router.push(`/story/${userId}`)} style={lumoStyles.contentRow} accessibilityRole="button">
+                <Image source={{ uri: story.image_url }} style={lumoStyles.thumbnail} contentFit="cover" />
+                <View style={lumoStyles.contentCopy}>
+                  <Text style={lumoStyles.contentTitle}>Story</Text>
+                  <Text style={lumoStyles.contentMeta}>Active · {new Date(story.created_at).toLocaleString()}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.dim} />
               </Pressable>
@@ -112,18 +114,18 @@ export default function StudioContentScreen() {
           </View>
         ) : <StudioEmpty icon="time-outline" title="No active stories" action="Create a post" onAction={() => router.push('/create')} />
       ) : visiblePosts.length ? (
-        <View style={styles.contentList}>
+        <View style={lumoStyles.contentList}>
           {visiblePosts.map((post) => {
             const video = post.media_type === 'video' || Boolean(post.video_url);
             const imageUrl = post.image_url;
             return (
-              <Pressable key={post.id} onPress={() => router.push(video ? `/creator-studio/video/${post.id}` : `/post/${post.id}`)} style={styles.contentRow} accessibilityRole="button">
-                {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.thumbnail} contentFit="cover" /> : (
-                  <View style={styles.thumbnailFallback}><Ionicons name={video ? 'play' : 'image-outline'} size={18} color={colors.muted} /></View>
+              <Pressable key={post.id} onPress={() => router.push(video ? `/creator-studio/video/${post.id}` : `/post/${post.id}`)} style={lumoStyles.contentRow} accessibilityRole="button">
+                {imageUrl ? <Image source={{ uri: imageUrl }} style={lumoStyles.thumbnail} contentFit="cover" /> : (
+                  <View style={lumoStyles.thumbnailFallback}><Ionicons name={video ? 'play' : 'image-outline'} size={18} color={colors.muted} /></View>
                 )}
-                <View style={styles.contentCopy}>
-                  <Text style={styles.contentTitle} numberOfLines={1}>{post.caption?.trim() || (video ? 'Video post' : 'Photo post')}</Text>
-                  <Text style={styles.contentMeta}>{video ? 'VIDEO' : 'PHOTO'}  В·  {new Date(post.created_at).toLocaleDateString()}</Text>
+                <View style={lumoStyles.contentCopy}>
+                  <Text style={lumoStyles.contentTitle} numberOfLines={1}>{post.caption?.trim() || (video ? 'Video post' : 'Photo post')}</Text>
+                  <Text style={lumoStyles.contentMeta}>{video ? 'VIDEO' : 'PHOTO'}  ·  {new Date(post.created_at).toLocaleDateString()}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.dim} />
               </Pressable>

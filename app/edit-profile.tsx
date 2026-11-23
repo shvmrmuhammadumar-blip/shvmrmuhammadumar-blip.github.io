@@ -17,8 +17,11 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { pickImage, uploadImage } from '../lib/api';
 import { colors } from '../lib/theme';
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 export default function EditProfile() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session!.user.id;
   const router = useRouter();
@@ -94,7 +97,7 @@ export default function EditProfile() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={lumoStyles.center}>
         <ActivityIndicator color={colors.lime} />
       </View>
     );
@@ -102,33 +105,33 @@ export default function EditProfile() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        {!!loadError && <Text style={styles.loadError} accessibilityRole="alert">{loadError}</Text>}
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>PROFILE SETTINGS</Text>
-          <Text style={styles.title}>Edit identity</Text>
+      <ScrollView contentContainerStyle={lumoStyles.container} keyboardShouldPersistTaps="handled">
+        {!!loadError && <Text style={lumoStyles.loadError} accessibilityRole="alert">{loadError}</Text>}
+        <View style={lumoStyles.header}>
+          <Text style={lumoStyles.eyebrow}>PROFILE SETTINGS</Text>
+          <Text style={lumoStyles.title}>Edit identity</Text>
         </View>
 
-        <Pressable onPress={changePhoto} style={styles.avatarWrap}>
+        <Pressable onPress={changePhoto} style={lumoStyles.avatarWrap}>
           <Avatar uri={newAvatarUri ?? avatarUrl} name={username} size={96} />
-          <Text style={styles.changePhoto}>Change photo</Text>
+          <Text style={lumoStyles.changePhoto}>Change photo</Text>
         </Pressable>
 
-        <View style={styles.fieldWrap}>
-          <Text style={styles.label}>Username</Text>
-          <TextInput style={styles.input} value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
+        <View style={lumoStyles.fieldWrap}>
+          <Text style={lumoStyles.label}>Username</Text>
+          <TextInput style={lumoStyles.input} value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} />
         </View>
-        <View style={styles.fieldWrap}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput style={styles.input} value={fullName} onChangeText={setFullName} />
+        <View style={lumoStyles.fieldWrap}>
+          <Text style={lumoStyles.label}>Name</Text>
+          <TextInput style={lumoStyles.input} value={fullName} onChangeText={setFullName} />
         </View>
-        <View style={styles.fieldWrap}>
-          <Text style={styles.label}>Bio</Text>
-          <TextInput style={[styles.input, { minHeight: 90, textAlignVertical: 'top' }]} value={bio} onChangeText={setBio} multiline maxLength={150} />
+        <View style={lumoStyles.fieldWrap}>
+          <Text style={lumoStyles.label}>Bio</Text>
+          <TextInput style={[lumoStyles.input, { minHeight: 90, textAlignVertical: 'top' }]} value={bio} onChangeText={setBio} multiline maxLength={150} />
         </View>
 
-        <Pressable style={[styles.button, busy && { opacity: 0.6 }]} onPress={save} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save changes</Text>}
+        <Pressable style={[lumoStyles.button, busy && { opacity: 0.6 }]} onPress={save} disabled={busy}>
+          {busy ? <ActivityIndicator color={colors.inverseText} /> : <Text style={lumoStyles.buttonText}>Save changes</Text>}
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

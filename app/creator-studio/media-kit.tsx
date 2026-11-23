@@ -9,10 +9,12 @@ import { formatStudioNumber, loadStudioOverview, type StudioOverview } from '../
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Profile = { username: string | null; full_name: string | null; bio: string | null; avatar_url: string | null };
 
 export default function StudioMediaKitScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -46,7 +48,7 @@ export default function StudioMediaKitScreen() {
     const label = data.accountType === 'business' ? 'Business' : data.accountType === 'creator' ? 'Creator' : 'Lumo member';
     const message = [
       profile.full_name || profile.username || 'Lumo creator',
-      `@${profile.username ?? 'user'} В· ${label}`,
+      `@${profile.username ?? 'user'} · ${label}`,
       profile.bio ?? '',
       `Followers: ${data.followers.toLocaleString()}`,
       `Published posts: ${data.posts.toLocaleString()}`,
@@ -58,48 +60,48 @@ export default function StudioMediaKitScreen() {
 
   return (
     <StudioFrame title="Media Kit" subtitle="A shareable creator profile" icon="document-text-outline">
-      <View style={styles.headingBlock}>
-        <Text style={styles.heading}>Media Kit</Text>
-        <Text style={styles.subheading}>A compact introduction for potential partners.</Text>
+      <View style={lumoStyles.headingBlock}>
+        <Text style={lumoStyles.heading}>Media Kit</Text>
+        <Text style={lumoStyles.subheading}>A compact introduction for potential partners.</Text>
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
       {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 18 }} /> : null}
 
       {profile && data ? (
         <>
-          <StudioPanel style={styles.kitCard}>
-            <View style={styles.kitHeader}>
-              {profile.avatar_url ? <Image source={{ uri: profile.avatar_url }} style={styles.avatar} /> : (
-                <View style={styles.avatarFallback}><Ionicons name="person" size={24} color={colors.muted} /></View>
+          <StudioPanel style={lumoStyles.kitCard}>
+            <View style={lumoStyles.kitHeader}>
+              {profile.avatar_url ? <Image source={{ uri: profile.avatar_url }} style={lumoStyles.avatar} /> : (
+                <View style={lumoStyles.avatarFallback}><Ionicons name="person" size={24} color={colors.muted} /></View>
               )}
-              <View style={styles.identity}>
-                <Text style={styles.name}>{profile.full_name || profile.username || 'Lumo creator'}</Text>
-                <Text style={styles.handle}>@{profile.username ?? 'user'}</Text>
-                <Text style={styles.category}>{data.category || (data.accountType === 'business' ? 'BUSINESS' : data.accountType === 'creator' ? 'CREATOR' : 'LUMO MEMBER')}</Text>
+              <View style={lumoStyles.identity}>
+                <Text style={lumoStyles.name}>{profile.full_name || profile.username || 'Lumo creator'}</Text>
+                <Text style={lumoStyles.handle}>@{profile.username ?? 'user'}</Text>
+                <Text style={lumoStyles.category}>{data.category || (data.accountType === 'business' ? 'BUSINESS' : data.accountType === 'creator' ? 'CREATOR' : 'LUMO MEMBER')}</Text>
               </View>
               <Ionicons name="sparkles-outline" size={20} color={colors.accentStrong} />
             </View>
-            {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : <Text style={styles.bioEmpty}>Add a short bio to complete your media kit.</Text>}
-            <View style={styles.stats}>
-              <View style={styles.stat}><Text style={styles.statValue}>{formatStudioNumber(data.followers)}</Text><Text style={styles.statLabel}>FOLLOWERS</Text></View>
-              <View style={styles.statDivider} />
-              <View style={styles.stat}><Text style={styles.statValue}>{formatStudioNumber(data.posts)}</Text><Text style={styles.statLabel}>POSTS</Text></View>
-              <View style={styles.statDivider} />
-              <View style={styles.stat}><Text style={styles.statValue}>{formatStudioNumber(data.likes)}</Text><Text style={styles.statLabel}>LIKES</Text></View>
+            {profile.bio ? <Text style={lumoStyles.bio}>{profile.bio}</Text> : <Text style={lumoStyles.bioEmpty}>Add a short bio to complete your media kit.</Text>}
+            <View style={lumoStyles.stats}>
+              <View style={lumoStyles.stat}><Text style={lumoStyles.statValue}>{formatStudioNumber(data.followers)}</Text><Text style={lumoStyles.statLabel}>FOLLOWERS</Text></View>
+              <View style={lumoStyles.statDivider} />
+              <View style={lumoStyles.stat}><Text style={lumoStyles.statValue}>{formatStudioNumber(data.posts)}</Text><Text style={lumoStyles.statLabel}>POSTS</Text></View>
+              <View style={lumoStyles.statDivider} />
+              <View style={lumoStyles.stat}><Text style={lumoStyles.statValue}>{formatStudioNumber(data.likes)}</Text><Text style={lumoStyles.statLabel}>LIKES</Text></View>
             </View>
-            <Text style={styles.kitFooter}>LUMO  В·  CREATOR PROFILE</Text>
+            <Text style={lumoStyles.kitFooter}>LUMO  ·  CREATOR PROFILE</Text>
           </StudioPanel>
-          <Pressable onPress={() => void shareKit()} style={styles.shareButton} accessibilityRole="button">
+          <Pressable onPress={() => void shareKit()} style={lumoStyles.shareButton} accessibilityRole="button">
             <Ionicons name="share-outline" size={17} color={colors.bg} />
-            <Text style={styles.shareText}>Share media kit</Text>
+            <Text style={lumoStyles.shareText}>Share media kit</Text>
           </Pressable>
-          <Pressable onPress={() => void Share.share({ message: `Find @${profile.username ?? 'user'} on Lumo.` })} style={styles.profileButton} accessibilityRole="button">
+          <Pressable onPress={() => void Share.share({ message: `Find @${profile.username ?? 'user'} on Lumo.` })} style={lumoStyles.profileButton} accessibilityRole="button">
             <Ionicons name="person-circle-outline" size={17} color={colors.accentStrong} />
-            <Text style={styles.profileButtonText}>Share profile</Text>
+            <Text style={lumoStyles.profileButtonText}>Share profile</Text>
           </Pressable>
         </>
       ) : null}
-      <Text style={styles.note}>This media kit uses live Lumo profile and engagement totals. It does not include verified reach, demographics or paid campaign results.</Text>
+      <Text style={lumoStyles.note}>This media kit uses live Lumo profile and engagement totals. It does not include verified reach, demographics or paid campaign results.</Text>
     </StudioFrame>
   );
 }

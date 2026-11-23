@@ -15,10 +15,12 @@ import { supabase } from '../lib/supabase';
 import { dayAgoIso, pickPostMedia, uploadPostMedia } from '../lib/api';
 import { colors } from '../lib/theme';
 import type { MiniProfile } from '../lib/types';
+import { useThemedStyles } from "../lib/theme-styles";
 
 type Ring = { userId: string; profile: MiniProfile | null };
 
 export default function StoriesBar() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session!.user.id;
   const router = useRouter();
@@ -92,24 +94,24 @@ export default function StoriesBar() {
   const others = rings.filter((r) => r.userId !== me);
 
   return (
-    <View style={styles.wrap}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        <View style={styles.item}>
-          <View style={styles.ownStoryWrap}>
+    <View style={lumoStyles.wrap}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.row}>
+        <View style={lumoStyles.item}>
+          <View style={lumoStyles.ownStoryWrap}>
             <Pressable
               onPress={hasOwn ? () => router.push(`/story/${me}`) : addStory}
               accessibilityRole="button"
               accessibilityLabel={hasOwn ? 'View your story' : 'Add a story'}
-              style={({ pressed }) => [pressed && styles.pressed]}
+              style={({ pressed }) => [pressed && lumoStyles.pressed]}
             >
-              <View style={[styles.ring, hasOwn && styles.ringActive]}>
+              <View style={[lumoStyles.ring, hasOwn && lumoStyles.ringActive]}>
                 <Avatar uri={myAvatar?.avatar_url} name={myAvatar?.username} size={58} />
               </View>
             </Pressable>
             <Pressable
               onPress={addStory}
               disabled={busy}
-              style={({ pressed }) => [styles.plus, pressed && styles.pressed, busy && styles.plusBusy]}
+              style={({ pressed }) => [lumoStyles.plus, pressed && lumoStyles.pressed, busy && lumoStyles.plusBusy]}
               accessibilityRole="button"
               accessibilityLabel="Add a story"
               hitSlop={8}
@@ -117,19 +119,19 @@ export default function StoriesBar() {
               <Ionicons name="add" size={18} color={colors.bg} />
             </Pressable>
           </View>
-          <Text style={styles.label} numberOfLines={1}>{busy ? 'Uploading…' : 'Your story'}</Text>
+          <Text style={lumoStyles.label} numberOfLines={1}>{busy ? 'Uploading…' : 'Your story'}</Text>
         </View>
 
         {others.map((r) => (
-          <Pressable key={r.userId} style={styles.item} onPress={() => router.push(`/story/${r.userId}`)}>
-            <View style={[styles.ring, styles.ringActive]}>
+          <Pressable key={r.userId} style={lumoStyles.item} onPress={() => router.push(`/story/${r.userId}`)}>
+            <View style={[lumoStyles.ring, lumoStyles.ringActive]}>
               <Avatar uri={r.profile?.avatar_url} name={r.profile?.username} size={58} />
             </View>
-            <Text style={styles.label} numberOfLines={1}>{r.profile?.username ?? 'user'}</Text>
+            <Text style={lumoStyles.label} numberOfLines={1}>{r.profile?.username ?? 'user'}</Text>
           </Pressable>
         ))}
       </ScrollView>
-      {!!loadError && <Text accessibilityRole="alert" style={styles.error}>{loadError}</Text>}
+      {!!loadError && <Text accessibilityRole="alert" style={lumoStyles.error}>{loadError}</Text>}
     </View>
   );
 }
@@ -141,12 +143,12 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
-    marginBottom: 12,
+    marginBottom: 6,
     backgroundColor: colors.bg,
   },
   row: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 14,
   },
   item: {

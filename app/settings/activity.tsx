@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../lib/auth';
 import { colors } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 const db = supabase as any;
 
@@ -145,6 +146,7 @@ function eventColor(type: string) {
 }
 
 export default function ActivityHistoryScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
@@ -353,19 +355,19 @@ export default function ActivityHistoryScreen() {
   }, [events, activeTab, activeTimeRange]);
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <Stack.Screen options={{ title: 'Your activity', headerShown: true }} />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={lumoStyles.content}
       >
-        <View style={styles.heading}>
-          <Text style={styles.kicker}>YOUR LUMO HISTORY</Text>
-          <Text style={styles.title}>Your activity</Text>
-          <Text style={styles.subtitle}>A private timeline of your actions and time spent in Lumo.</Text>
+        <View style={lumoStyles.heading}>
+          <Text style={lumoStyles.kicker}>YOUR LUMO HISTORY</Text>
+          <Text style={lumoStyles.title}>Your activity</Text>
+          <Text style={lumoStyles.subtitle}>A private timeline of your actions and time spent in Lumo.</Text>
         </View>
 
-        <View style={styles.statsGrid}>
+        <View style={lumoStyles.statsGrid}>
           <StatCard icon="time-outline" label="Time in Lumo" value={formatDuration(totalTime)} />
           <StatCard icon="play-circle-outline" label="Reels watched" value={String(stats.reels)} />
           <StatCard icon="hourglass-outline" label="Reels watch time" value={formatDuration(reelWatchTime)} />
@@ -374,16 +376,16 @@ export default function ActivityHistoryScreen() {
           <StatCard icon="arrow-redo-outline" label="Forwards" value={String(stats.forwards)} />
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Activity history</Text>
-          <Text style={styles.sectionMeta}>{visibleEvents.length} items</Text>
+        <View style={lumoStyles.sectionHeader}>
+          <Text style={lumoStyles.sectionTitle}>Activity history</Text>
+          <Text style={lumoStyles.sectionMeta}>{visibleEvents.length} items</Text>
         </View>
 
-        <Text style={styles.timeFilterLabel}>TIME RANGE</Text>
+        <Text style={lumoStyles.timeFilterLabel}>TIME RANGE</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.timeFilters}
+          contentContainerStyle={lumoStyles.timeFilters}
         >
           {timeRanges.map((range) => {
             const selected = activeTimeRange === range.key;
@@ -391,9 +393,9 @@ export default function ActivityHistoryScreen() {
               <Pressable
                 key={range.key}
                 onPress={() => setActiveTimeRange(range.key)}
-                style={[styles.timeRangeChip, selected && styles.timeRangeChipActive]}
+                style={[lumoStyles.timeRangeChip, selected && lumoStyles.timeRangeChipActive]}
               >
-                <Text style={[styles.timeRangeText, selected && styles.timeRangeTextActive]}>
+                <Text style={[lumoStyles.timeRangeText, selected && lumoStyles.timeRangeTextActive]}>
                   {range.label}
                 </Text>
               </Pressable>
@@ -404,7 +406,7 @@ export default function ActivityHistoryScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
+          contentContainerStyle={lumoStyles.filters}
         >
           {activityTabs.map((tab) => {
             const selected = activeTab === tab.key;
@@ -419,9 +421,9 @@ export default function ActivityHistoryScreen() {
               <Pressable
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
-                style={[styles.filter, selected && styles.filterActive]}
+                style={[lumoStyles.filter, selected && lumoStyles.filterActive]}
               >
-                <Text style={[styles.filterText, selected && styles.filterTextActive]}>
+                <Text style={[lumoStyles.filterText, selected && lumoStyles.filterTextActive]}>
                   {count === null ? tab.label : `${tab.label} ${count}`}
                 </Text>
               </Pressable>
@@ -430,20 +432,20 @@ export default function ActivityHistoryScreen() {
         </ScrollView>
 
         {loading ? (
-          <View style={styles.centerState}>
+          <View style={lumoStyles.centerState}>
             <ActivityIndicator color={colors.lime} />
-            <Text style={styles.stateText}>Loading your activity…</Text>
+            <Text style={lumoStyles.stateText}>Loading your activity…</Text>
           </View>
         ) : error ? (
-          <View style={styles.emptyCard}>
+          <View style={lumoStyles.emptyCard}>
             <Ionicons name="alert-circle-outline" size={26} color={colors.like} />
-            <Text style={styles.emptyTitle}>Activity could not be loaded</Text>
-            <Text style={styles.stateText}>{error}</Text>
+            <Text style={lumoStyles.emptyTitle}>Activity could not be loaded</Text>
+            <Text style={lumoStyles.stateText}>{error}</Text>
           </View>
         ) : visibleEvents.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={lumoStyles.emptyCard}>
             <Ionicons name="time-outline" size={28} color={colors.muted} />
-            <Text style={styles.emptyTitle}>
+            <Text style={lumoStyles.emptyTitle}>
               {activeTab === 'comments'
                 ? 'No comments in this time range'
                 : activeTab === 'likes'
@@ -452,10 +454,10 @@ export default function ActivityHistoryScreen() {
                     ? 'No forwards in this time range'
                     : 'No activity in this time range'}
             </Text>
-            <Text style={styles.stateText}>Choose another time range or keep using Lumo. New activity will appear here.</Text>
+            <Text style={lumoStyles.stateText}>Choose another time range or keep using Lumo. New activity will appear here.</Text>
           </View>
         ) : (
-          <View style={styles.timeline}>
+          <View style={lumoStyles.timeline}>
             {visibleEvents.map((item, index) => {
               const post = item.entity_id ? posts[item.entity_id] : undefined;
               const description = describeEvent(item, post);
@@ -474,18 +476,18 @@ export default function ActivityHistoryScreen() {
                   disabled={!canOpenPost}
                   onPress={() => item.entity_id && router.push(`/post/${item.entity_id}`)}
                   style={({ pressed }) => [
-                    styles.eventRow,
-                    index === visibleEvents.length - 1 && styles.eventRowLast,
-                    pressed && styles.eventPressed,
+                    lumoStyles.eventRow,
+                    index === visibleEvents.length - 1 && lumoStyles.eventRowLast,
+                    pressed && lumoStyles.eventPressed,
                   ]}
                 >
-                  <View style={[styles.eventIcon, { backgroundColor: `${eventColor(item.event_type)}18` }]}>
+                  <View style={[lumoStyles.eventIcon, { backgroundColor: `${eventColor(item.event_type)}18` }]}>
                     <Ionicons name={eventIcon(item.event_type)} size={17} color={eventColor(item.event_type)} />
                   </View>
-                  <View style={styles.eventCopy}>
-                    <Text style={styles.eventTitle}>{description}</Text>
-                    {secondaryText ? <Text style={styles.eventCaption} numberOfLines={2}>{secondaryText}</Text> : null}
-                    <Text style={styles.eventTime}>{time}</Text>
+                  <View style={lumoStyles.eventCopy}>
+                    <Text style={lumoStyles.eventTitle}>{description}</Text>
+                    {secondaryText ? <Text style={lumoStyles.eventCaption} numberOfLines={2}>{secondaryText}</Text> : null}
+                    <Text style={lumoStyles.eventTime}>{time}</Text>
                   </View>
                   {canOpenPost ? <Ionicons name="chevron-forward" size={16} color={colors.dim} /> : null}
                 </Pressable>
@@ -494,7 +496,7 @@ export default function ActivityHistoryScreen() {
           </View>
         )}
 
-        <Text style={styles.privacyNote}>
+        <Text style={lumoStyles.privacyNote}>
           Only you can view this history. Private message text is not stored in the activity log.
         </Text>
       </ScrollView>
@@ -511,13 +513,14 @@ function StatCard({
   label: string;
   value: string;
 }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.statCard}>
-      <View style={styles.statIcon}>
+    <View style={lumoStyles.statCard}>
+      <View style={lumoStyles.statIcon}>
         <Ionicons name={icon} size={17} color={colors.lime} />
       </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={lumoStyles.statValue}>{value}</Text>
+      <Text style={lumoStyles.statLabel}>{label}</Text>
     </View>
   );
 }

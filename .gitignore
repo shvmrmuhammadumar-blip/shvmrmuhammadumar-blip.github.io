@@ -4,3 +4,26 @@ dist/
 .env
 *.log
 .DS_Store
+
+# Local environment and secrets
+.env*
+!.env.example
+
+# Android generated files
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/app/debug.keystore
+*.jks
+*.keystore
+
+# Local crash logs
+android/hs_err_pid*.log
+
+# Temporary QA screenshots and browser profiles
+.tmp-live-branch/
+.tmp-live-design/
+.tmp-responsive-qa/

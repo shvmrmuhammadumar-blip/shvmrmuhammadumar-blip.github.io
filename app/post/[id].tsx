@@ -24,8 +24,11 @@ import { POST_SELECT, setLike, timeAgo, toggleLikeLocally } from '../../lib/api'
 import { trackContentOpen } from '../../lib/studio-analytics';
 import { colors } from '../../lib/theme';
 import type { Comment, Post } from '../../lib/types';
+import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+
 
 export default function PostScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const me = session!.user.id;
@@ -229,9 +232,9 @@ export default function PostScreen() {
 
   if (loading) {
     return (
-      <View style={styles.screen}>
+      <View style={lumoStyles.screen}>
         <ScreenHeader onBack={goBack} />
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <ActivityIndicator color={colors.accent} />
         </View>
       </View>
@@ -239,9 +242,9 @@ export default function PostScreen() {
   }
   if (!post) {
     return (
-      <View style={styles.screen}>
+      <View style={lumoStyles.screen}>
         <ScreenHeader onBack={goBack} />
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <Text style={{ color: colors.text, fontWeight: '700', textAlign: 'center' }}>
             {loadError ? 'Could not load this post' : 'This post is no longer available.'}
           </Text>
@@ -253,10 +256,10 @@ export default function PostScreen() {
                 void load().catch((error: unknown) => setLoadError(error instanceof Error ? error.message : 'Please try again.'))
                   .finally(() => setLoading(false));
               }}
-              style={styles.retryButton}
+              style={lumoStyles.retryButton}
               accessibilityRole="button"
             >
-              <Text style={styles.retryButtonText}>Try again</Text>
+              <Text style={lumoStyles.retryButtonText}>Try again</Text>
             </Pressable>
           )}
           <Pressable onPress={goBack} style={{ padding: 12 }} accessibilityRole="button">
@@ -269,7 +272,7 @@ export default function PostScreen() {
 
   return (
     <>
-      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+      <KeyboardAvoidingView style={lumoStyles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
         <ScreenHeader onBack={goBack} />
         <FlatList
           data={comments}
@@ -295,14 +298,14 @@ export default function PostScreen() {
             </View>
           }
           renderItem={({ item }) => (
-            <View style={styles.comment}>
+            <View style={lumoStyles.comment}>
               <Avatar uri={item.profiles?.avatar_url} name={item.profiles?.username} size={32} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, lineHeight: 20 }}>
                   <Text style={{ fontWeight: '700' }}>{item.profiles?.username ?? 'user'} </Text>
                   {item.body}
                 </Text>
-                <Text style={styles.time}>{timeAgo(item.created_at)} ago</Text>
+                <Text style={lumoStyles.time}>{timeAgo(item.created_at)} ago</Text>
               </View>
               {(item.user_id === me || post.user_id === me) && (
                 <Pressable
@@ -311,9 +314,9 @@ export default function PostScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Delete comment by ${item.profiles?.username ?? 'user'}`}
                   hitSlop={8}
-                  style={styles.deleteComment}
+                  style={lumoStyles.deleteComment}
                 >
-                  <Text style={[styles.deleteCommentText, deletingCommentId === item.id && { opacity: 0.5 }]}>
+                  <Text style={[lumoStyles.deleteCommentText, deletingCommentId === item.id && { opacity: 0.5 }]}>
                     Delete
                   </Text>
                 </Pressable>
@@ -321,9 +324,9 @@ export default function PostScreen() {
             </View>
           )}
         />
-        <View style={styles.inputRow}>
+        <View style={lumoStyles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={lumoStyles.input}
             placeholder="Add a comment…"
             placeholderTextColor={colors.muted}
             value={text}
@@ -331,7 +334,7 @@ export default function PostScreen() {
             maxLength={1000}
           />
           <Pressable onPress={send} disabled={!text.trim() || sending}>
-            <Text style={[styles.post, (!text.trim() || sending) && { opacity: 0.4 }]}>Post</Text>
+            <Text style={[lumoStyles.post, (!text.trim() || sending) && { opacity: 0.4 }]}>Post</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -343,7 +346,7 @@ export default function PostScreen() {
           if (!deletingCommentId) setCommentToDelete(null);
         }}
       >
-        <View style={styles.modalOverlay}>
+        <View style={lumoStyles.modalOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
@@ -352,37 +355,37 @@ export default function PostScreen() {
               if (!deletingCommentId) setCommentToDelete(null);
             }}
           />
-          <View style={styles.confirmDialog} accessibilityViewIsModal>
-            <View style={styles.deleteIcon}>
+          <View style={lumoStyles.confirmDialog} accessibilityViewIsModal>
+            <View style={lumoStyles.deleteIcon}>
               <Ionicons name="trash-outline" size={22} color={colors.like} />
             </View>
-            <Text style={styles.confirmEyebrow}>CONFIRM ACTION</Text>
-            <Text style={styles.confirmTitle}>Delete this comment?</Text>
-            <Text style={styles.confirmMessage}>
+            <Text style={lumoStyles.confirmEyebrow}>CONFIRM ACTION</Text>
+            <Text style={lumoStyles.confirmTitle}>Delete this comment?</Text>
+            <Text style={lumoStyles.confirmMessage}>
               This comment will be permanently removed.
             </Text>
             {!!deleteCommentError && (
-              <Text style={styles.confirmError}>{deleteCommentError}</Text>
+              <Text style={lumoStyles.confirmError}>{deleteCommentError}</Text>
             )}
-            <View style={styles.confirmActions}>
+            <View style={lumoStyles.confirmActions}>
               <Pressable
                 onPress={() => setCommentToDelete(null)}
                 disabled={!!deletingCommentId}
-                style={styles.cancelButton}
+                style={lumoStyles.cancelButton}
                 accessibilityRole="button"
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={lumoStyles.cancelButtonText}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={() => void confirmDeleteComment()}
                 disabled={!!deletingCommentId}
-                style={styles.confirmDeleteButton}
+                style={lumoStyles.confirmDeleteButton}
                 accessibilityRole="button"
               >
                 {deletingCommentId ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={colors.inverseText} size="small" />
                 ) : (
-                  <Text style={styles.confirmDeleteText}>Delete</Text>
+                  <Text style={lumoStyles.confirmDeleteText}>Delete</Text>
                 )}
               </Pressable>
             </View>
@@ -397,7 +400,7 @@ export default function PostScreen() {
           if (!deletingPost) setPostDeleteVisible(false);
         }}
       >
-        <View style={styles.modalOverlay}>
+        <View style={lumoStyles.modalOverlay}>
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
@@ -406,37 +409,37 @@ export default function PostScreen() {
               if (!deletingPost) setPostDeleteVisible(false);
             }}
           />
-          <View style={styles.confirmDialog} accessibilityViewIsModal>
-            <View style={styles.deleteIcon}>
+          <View style={lumoStyles.confirmDialog} accessibilityViewIsModal>
+            <View style={lumoStyles.deleteIcon}>
               <Ionicons name="trash-outline" size={22} color={colors.like} />
             </View>
-            <Text style={styles.confirmEyebrow}>TASDIQLASH</Text>
-            <Text style={styles.confirmTitle}>Postni o‘chirmoqchimisiz?</Text>
-            <Text style={styles.confirmMessage}>
+            <Text style={lumoStyles.confirmEyebrow}>TASDIQLASH</Text>
+            <Text style={lumoStyles.confirmTitle}>Postni o‘chirmoqchimisiz?</Text>
+            <Text style={lumoStyles.confirmMessage}>
               Post butunlay o‘chiriladi. Bu amalni ortga qaytarib bo‘lmaydi.
             </Text>
             {!!postDeleteError && (
-              <Text style={styles.confirmError}>{postDeleteError}</Text>
+              <Text style={lumoStyles.confirmError}>{postDeleteError}</Text>
             )}
-            <View style={styles.confirmActions}>
+            <View style={lumoStyles.confirmActions}>
               <Pressable
                 onPress={() => setPostDeleteVisible(false)}
                 disabled={deletingPost}
-                style={styles.cancelButton}
+                style={lumoStyles.cancelButton}
                 accessibilityRole="button"
               >
-                <Text style={styles.cancelButtonText}>Bekor qilish</Text>
+                <Text style={lumoStyles.cancelButtonText}>Bekor qilish</Text>
               </Pressable>
               <Pressable
                 onPress={() => void confirmDeletePost()}
                 disabled={deletingPost}
-                style={styles.confirmDeleteButton}
+                style={lumoStyles.confirmDeleteButton}
                 accessibilityRole="button"
               >
                 {deletingPost ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={colors.inverseText} size="small" />
                 ) : (
-                  <Text style={styles.confirmDeleteText}>O‘chirish</Text>
+                  <Text style={lumoStyles.confirmDeleteText}>O‘chirish</Text>
                 )}
               </Pressable>
             </View>
@@ -449,19 +452,20 @@ export default function PostScreen() {
 }
 
 function ScreenHeader({ onBack }: { onBack: () => void }) {
+  const lumoStyles = useThemedStyles(styles);
   return (
-    <View style={styles.header}>
+    <View style={lumoStyles.header}>
       <Pressable
         onPress={onBack}
         accessibilityRole="button"
         accessibilityLabel="Go back"
         hitSlop={8}
-        style={styles.backButton}
+        style={lumoStyles.backButton}
       >
         <Ionicons name="arrow-back" size={21} color={colors.text} />
       </Pressable>
-      <Text style={styles.headerTitle}>Post</Text>
-      <View style={styles.headerSpacer} />
+      <Text style={lumoStyles.headerTitle}>Post</Text>
+      <View style={lumoStyles.headerSpacer} />
     </View>
   );
 }

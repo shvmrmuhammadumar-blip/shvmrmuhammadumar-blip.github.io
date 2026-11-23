@@ -7,6 +7,7 @@ import { StudioChip, StudioEmpty, StudioSection } from '../../components/studio/
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type ContentType = 'post' | 'video' | 'story' | 'live';
 type PlanStatus = 'idea' | 'planned' | 'published' | 'archived';
@@ -30,6 +31,7 @@ const types: { key: ContentType; label: string }[] = [
 type Filter = 'all' | 'idea' | 'planned' | 'published';
 
 export default function StudioPlannerScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -128,71 +130,71 @@ export default function StudioPlannerScreen() {
 
   return (
     <StudioFrame title="Planner" subtitle="Ideas and publishing schedule" icon="calendar-outline">
-      <View style={styles.headerRow}>
-        <View style={styles.headingCopy}>
-          <Text style={styles.heading}>Content planner</Text>
-          <Text style={styles.subheading}>Keep ideas moving towards publish.</Text>
+      <View style={lumoStyles.headerRow}>
+        <View style={lumoStyles.headingCopy}>
+          <Text style={lumoStyles.heading}>Content planner</Text>
+          <Text style={lumoStyles.subheading}>Keep ideas moving towards publish.</Text>
         </View>
-        <Pressable onPress={() => setShowForm((value) => !value)} style={styles.addButton} accessibilityRole="button">
+        <Pressable onPress={() => setShowForm((value) => !value)} style={lumoStyles.addButton} accessibilityRole="button">
           <Ionicons name={showForm ? 'close' : 'add'} size={17} color={colors.bg} />
-          <Text style={styles.addText}>{showForm ? 'Close' : 'New plan'}</Text>
+          <Text style={lumoStyles.addText}>{showForm ? 'Close' : 'New plan'}</Text>
         </Pressable>
       </View>
 
       {showForm ? (
-        <StudioPanel style={styles.form}>
-          <Text style={styles.formTitle}>New content plan</Text>
-          <TextInput value={title} onChangeText={setTitle} placeholder="Working title" placeholderTextColor={colors.dim} style={styles.input} maxLength={100} />
-          <TextInput value={notes} onChangeText={setNotes} placeholder="Notes (optional)" placeholderTextColor={colors.dim} style={[styles.input, styles.notesInput]} multiline maxLength={1200} />
-          <View style={styles.typeRow}>
+        <StudioPanel style={lumoStyles.form}>
+          <Text style={lumoStyles.formTitle}>New content plan</Text>
+          <TextInput value={title} onChangeText={setTitle} placeholder="Working title" placeholderTextColor={colors.dim} style={lumoStyles.input} maxLength={100} />
+          <TextInput value={notes} onChangeText={setNotes} placeholder="Notes (optional)" placeholderTextColor={colors.dim} style={[lumoStyles.input, lumoStyles.notesInput]} multiline maxLength={1200} />
+          <View style={lumoStyles.typeRow}>
             {types.map((item) => <StudioChip key={item.key} label={item.label} active={contentType === item.key} onPress={() => setContentType(item.key)} />)}
           </View>
-          <Text style={styles.fieldLabel}>PUBLISH DATE В· OPTIONAL</Text>
-          <TextInput value={scheduledDate} onChangeText={setScheduledDate} placeholder="YYYY-MM-DD" placeholderTextColor={colors.dim} style={styles.input} maxLength={10} />
-          <Text style={styles.helper}>No date saves this as an idea. A date adds it to Planned.</Text>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable onPress={() => void savePlan()} disabled={saving || !title.trim()} style={[styles.saveButton, (!title.trim() || saving) && styles.disabled]} accessibilityRole="button">
-            {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Save plan</Text>}
+          <Text style={lumoStyles.fieldLabel}>PUBLISH DATE · OPTIONAL</Text>
+          <TextInput value={scheduledDate} onChangeText={setScheduledDate} placeholder="YYYY-MM-DD" placeholderTextColor={colors.dim} style={lumoStyles.input} maxLength={10} />
+          <Text style={lumoStyles.helper}>No date saves this as an idea. A date adds it to Planned.</Text>
+          {error ? <Text style={lumoStyles.error}>{error}</Text> : null}
+          <Pressable onPress={() => void savePlan()} disabled={saving || !title.trim()} style={[lumoStyles.saveButton, (!title.trim() || saving) && lumoStyles.disabled]} accessibilityRole="button">
+            {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={lumoStyles.saveText}>Save plan</Text>}
           </Pressable>
         </StudioPanel>
       ) : null}
 
-      <View style={styles.filters}>
+      <View style={lumoStyles.filters}>
         {(['all', 'idea', 'planned', 'published'] as Filter[]).map((key) => (
           <StudioChip key={key} label={key === 'all' ? 'All' : key === 'idea' ? 'Ideas' : key === 'planned' ? 'Planned' : 'Published'} active={filter === key} onPress={() => setFilter(key)} />
         ))}
       </View>
 
-      {error && !showForm ? <Text style={styles.error}>{error}</Text> : null}
+      {error && !showForm ? <Text style={lumoStyles.error}>{error}</Text> : null}
       <StudioSection title={filter === 'all' ? 'Your plans' : filter === 'idea' ? 'Ideas' : filter === 'planned' ? 'Scheduled' : 'Published'} />
       {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 24 }} /> : null}
       {!loading && !visiblePlans.length ? <StudioEmpty icon="calendar-outline" title="Nothing planned here yet" action="Create a plan" onAction={() => setShowForm(true)} /> : null}
 
       {visiblePlans.map((plan) => (
-        <StudioPanel key={plan.id} style={styles.planCard}>
-          <View style={styles.planTop}>
-            <View style={styles.planType}>
+        <StudioPanel key={plan.id} style={lumoStyles.planCard}>
+          <View style={lumoStyles.planTop}>
+            <View style={lumoStyles.planType}>
               <Ionicons name={plan.content_type === 'video' ? 'play-circle-outline' : plan.content_type === 'story' ? 'aperture-outline' : plan.content_type === 'live' ? 'radio-outline' : 'image-outline'} size={16} color={colors.muted} />
-              <Text style={styles.planTypeText}>{plan.content_type.toUpperCase()}</Text>
+              <Text style={lumoStyles.planTypeText}>{plan.content_type.toUpperCase()}</Text>
             </View>
-            <Text style={[styles.status, plan.status === 'published' && styles.statusPublished]}>{plan.status.toUpperCase()}</Text>
+            <Text style={[lumoStyles.status, plan.status === 'published' && lumoStyles.statusPublished]}>{plan.status.toUpperCase()}</Text>
           </View>
-          <Text style={styles.planTitle}>{plan.title}</Text>
-          {plan.notes ? <Text style={styles.planNotes}>{plan.notes}</Text> : null}
-          <View style={styles.planBottom}>
-            <Text style={styles.planDate}>{plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString() : 'No date set'}</Text>
-            <View style={styles.actions}>
+          <Text style={lumoStyles.planTitle}>{plan.title}</Text>
+          {plan.notes ? <Text style={lumoStyles.planNotes}>{plan.notes}</Text> : null}
+          <View style={lumoStyles.planBottom}>
+            <Text style={lumoStyles.planDate}>{plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString() : 'No date set'}</Text>
+            <View style={lumoStyles.actions}>
               {plan.status !== 'published' ? (
-                <Pressable onPress={() => void updateStatus(plan, 'published')} style={styles.actionButton} accessibilityRole="button">
-                  <Ionicons name="checkmark" size={15} color={colors.accentStrong} /><Text style={styles.actionText}>Done</Text>
+                <Pressable onPress={() => void updateStatus(plan, 'published')} style={lumoStyles.actionButton} accessibilityRole="button">
+                  <Ionicons name="checkmark" size={15} color={colors.accentStrong} /><Text style={lumoStyles.actionText}>Done</Text>
                 </Pressable>
               ) : null}
               {plan.status === 'idea' ? (
-                <Pressable onPress={() => void updateStatus(plan, 'planned')} style={styles.actionButton} accessibilityRole="button">
-                  <Ionicons name="calendar-outline" size={14} color={colors.accentStrong} /><Text style={styles.actionText}>Plan</Text>
+                <Pressable onPress={() => void updateStatus(plan, 'planned')} style={lumoStyles.actionButton} accessibilityRole="button">
+                  <Ionicons name="calendar-outline" size={14} color={colors.accentStrong} /><Text style={lumoStyles.actionText}>Plan</Text>
                 </Pressable>
               ) : null}
-              <Pressable onPress={() => void removePlan(plan)} hitSlop={8} style={styles.deleteButton} accessibilityRole="button" accessibilityLabel="Delete plan">
+              <Pressable onPress={() => void removePlan(plan)} hitSlop={8} style={lumoStyles.deleteButton} accessibilityRole="button" accessibilityLabel="Delete plan">
                 <Ionicons name="trash-outline" size={15} color={colors.danger} />
               </Pressable>
             </View>

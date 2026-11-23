@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import type { ViewToken } from 'react-native';
+import type { ListViewToken } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import PostCard from '../../components/PostCard';
@@ -13,7 +13,9 @@ import { supabase } from '../../lib/supabase';
 import { POST_SELECT, setLike, toggleLikeLocally } from '../../lib/api';
 import { trackContentOpen } from '../../lib/studio-analytics';
 import { colors } from '../../lib/theme';
+import { usePreferences } from '../../lib/preferences';
 import type { Post } from '../../lib/types';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type FeedFilter = 'for-you' | 'following';
 
@@ -24,7 +26,9 @@ function getErrorMessage(error: unknown) {
 }
 
 export default function Feed() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
+  const { palette } = usePreferences();
   const me = session!.user.id;
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -37,7 +41,7 @@ export default function Feed() {
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 55, minimumViewTime: 250 }).current;
   const onViewableItemsChanged = useRef(
-    ({ changed }: { viewableItems: ViewToken[]; changed: ViewToken[] }) => {
+    ({ changed }: { viewableItems: ListViewToken[]; changed: ListViewToken[] }) => {
       changed.forEach(({ item, isViewable }) => {
         if (!isViewable) return;
         const post = item as Post;
@@ -143,30 +147,26 @@ export default function Feed() {
   };
 
   const header = (
-    <View style={styles.feedHeader}>
-      <Pressable style={styles.profileSearch} onPress={() => router.push('/search')} accessibilityRole="button" accessibilityLabel="Search profiles">
-        <Ionicons name="search-outline" size={18} color={colors.muted} />
-        <Text style={styles.profileSearchText}>Search people and profiles</Text>
-      </Pressable>
+    <View style={lumoStyles.feedHeader}>
       <StoriesBar />
-      <View style={styles.filterRow}>
+      <View style={lumoStyles.filterRow}>
         <Pressable onPress={() => setFilter('for-you')} accessibilityRole="tab"
           accessibilityState={{ selected: filter === 'for-you' }}
-          style={[styles.filterTab, filter === 'for-you' && styles.filterTabActive]}>
-          <Ionicons name="sparkles" size={15} color={filter === 'for-you' ? colors.text : colors.muted} />
-          <Text style={[styles.filterText, filter === 'for-you' && styles.filterTextActive]}>For you</Text>
+          style={[lumoStyles.filterTab, { backgroundColor: filter === 'for-you' ? palette.surfaceRaised : palette.surface, borderColor: filter === 'for-you' ? palette.accent : palette.border }]}>
+          <Ionicons name="sparkles" size={15} color={filter === 'for-you' ? palette.text : palette.muted} />
+          <Text style={[lumoStyles.filterText, { color: filter === 'for-you' ? palette.text : palette.muted }]}>For you</Text>
         </Pressable>
         <Pressable onPress={() => setFilter('following')} accessibilityRole="tab"
           accessibilityState={{ selected: filter === 'following' }}
-          style={[styles.filterTab, filter === 'following' && styles.filterTabActive]}>
-          <Ionicons name="people-outline" size={16} color={filter === 'following' ? colors.text : colors.muted} />
-          <Text style={[styles.filterText, filter === 'following' && styles.filterTextActive]}>Following</Text>
+          style={[lumoStyles.filterTab, { backgroundColor: filter === 'following' ? palette.surfaceRaised : palette.surface, borderColor: filter === 'following' ? palette.accent : palette.border }]}>
+          <Ionicons name="people-outline" size={16} color={filter === 'following' ? palette.text : palette.muted} />
+          <Text style={[lumoStyles.filterText, { color: filter === 'following' ? palette.text : palette.muted }]}>Following</Text>
         </Pressable>
       </View>
     </View>
   );
 
-  if (loading) return <View style={styles.center}><ActivityIndicator color={colors.lime} size="small" /></View>;
+  if (loading) return <View style={[lumoStyles.center, { backgroundColor: palette.bg }]}><ActivityIndicator color={palette.accent} size="small" /></View>;
 
   return (
     <>
@@ -185,14 +185,14 @@ export default function Feed() {
             onOpenVideo={(post) => router.push(('/post-viewer/' + post.id) as any)} />
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name={loadError ? 'cloud-offline-outline' : 'layers-outline'} size={28} color={colors.muted} />
-            <Text style={styles.emptyTitle}>{loadError ? 'Feed unavailable' : filter === 'following' ? 'No posts from your circle yet' : 'Nothing new yet'}</Text>
-            <Text style={styles.emptyText}>{loadError ? loadError : filter === 'following' ? 'Follow people to see their posts here.' : 'New posts from the LUMO community will appear here.'}</Text>
+          <View style={lumoStyles.empty}>
+            <Ionicons name={loadError ? 'cloud-offline-outline' : 'layers-outline'} size={28} color={palette.muted} />
+            <Text style={[lumoStyles.emptyTitle, { color: palette.text }]}>{loadError ? 'Feed unavailable' : filter === 'following' ? 'No posts from your circle yet' : 'Nothing new yet'}</Text>
+            <Text style={[lumoStyles.emptyText, { color: palette.muted }]}>{loadError ? loadError : filter === 'following' ? 'Follow people to see their posts here.' : 'New posts from the LUMO community will appear here.'}</Text>
           </View>
         }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.lime} colors={[colors.lime]} />}
-        style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.accent} colors={[palette.accent]} />}
+        style={[lumoStyles.list, { backgroundColor: palette.bg }]} contentContainerStyle={lumoStyles.listContent} showsVerticalScrollIndicator={false}
       />
       <UniversalForwardModal visible={!!forwardSource} userId={me} source={forwardSource}
         onClose={() => setForwardSource(null)} onSuccess={() => setForwardSource(null)} />
@@ -204,13 +204,11 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   list: { backgroundColor: colors.bg },
   listContent: { paddingBottom: 24, flexGrow: 1 },
-  feedHeader: { paddingTop: 8, paddingBottom: 4 },
-  profileSearch: { minHeight: 43, flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  profileSearchText: { color: colors.muted, fontSize: 13, fontWeight: '500' },
-  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, maxWidth: 960, width: '100%', alignSelf: 'center' },
-  filterTab: { minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  feedHeader: { paddingTop: 4, paddingBottom: 2 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10, maxWidth: 960, width: '100%', alignSelf: 'center' },
+  filterTab: { flex: 1, minWidth: 0, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 10, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   filterTabActive: { backgroundColor: colors.surfaceRaised, borderColor: colors.accent },
-  filterText: { color: colors.muted, fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
+  filterText: { flexShrink: 1, color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 0.1 },
   filterTextActive: { color: colors.text },
   empty: { flex: 1, paddingHorizontal: 32, paddingVertical: 52, alignItems: 'center', justifyContent: 'center', gap: 10 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.text, textAlign: 'center' },

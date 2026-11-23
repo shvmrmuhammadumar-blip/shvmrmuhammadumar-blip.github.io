@@ -8,12 +8,15 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useSegments } from 'expo-router';
+import { getAppContentWidth } from '../lib/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
 import LumoVideoPlayer from './LumoVideoPlayer';
 import { colors } from '../lib/theme';
 import { timeAgo } from '../lib/api';
 import type { Post } from '../lib/types';
+import { useThemedStyles } from "../lib/theme-styles";
 
 type Props = {
   post: Post;
@@ -48,10 +51,11 @@ export default function PostCard({
   onOpenVideo,
   autoPlayVideo = false,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const [menuVisible, setMenuVisible] = useState(false);
   const { width: viewportWidth, height: viewportHeight } = useWindowDimensions();
-  const appShellInset = viewportWidth >= 1040 ? 236 : viewportWidth >= 760 ? 76 : 0;
-  const availableWidth = Math.max(280, viewportWidth - appShellInset);
+  const segments = useSegments();
+  const availableWidth = getAppContentWidth(viewportWidth, segments[0] === '(tabs)');
   const isWideLayout = availableWidth >= 900;
   const cardWidth = isWideLayout
     ? Math.min(availableWidth - 80, 720)
@@ -73,29 +77,29 @@ export default function PostCard({
   const handleShare = () => onShare(post);
 
   return (
-    <View style={[styles.card, { width: cardWidth }]}>
+    <View style={[lumoStyles.card, { width: cardWidth }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={lumoStyles.header}>
         <Pressable
-          style={styles.authorRow}
+          style={lumoStyles.authorRow}
           onPress={() => onOpenUser(post.user_id)}
           accessibilityRole="button"
           accessibilityLabel={`Open profile of ${username}`}
         >
           <Avatar uri={post.profiles?.avatar_url} name={username} size={38} hasStory={false} />
-          <View style={styles.authorMeta}>
-            <View style={styles.nameRow}>
-              <Text style={styles.username}>{username}</Text>
-              <Ionicons name="checkmark-circle" size={14} color={colors.verified} style={styles.verifiedIcon} />
+          <View style={lumoStyles.authorMeta}>
+            <View style={lumoStyles.nameRow}>
+              <Text style={lumoStyles.username}>{username}</Text>
+              <Ionicons name="checkmark-circle" size={14} color={colors.verified} style={lumoStyles.verifiedIcon} />
             </View>
-            <Text style={styles.timeMeta}>{timeAgo(post.created_at)} ago</Text>
+            <Text style={lumoStyles.timeMeta}>{timeAgo(post.created_at)} ago</Text>
           </View>
         </Pressable>
 
         <Pressable
           onPress={() => setMenuVisible(true)}
           hitSlop={10}
-          style={styles.menuTrigger}
+          style={lumoStyles.menuTrigger}
           accessibilityRole="button"
           accessibilityLabel="Post options"
         >
@@ -106,11 +110,11 @@ export default function PostCard({
       {/* Media */}
       {isVideoPost ? (
         post.video_url ? (
-          <View style={[styles.mediaContainer, { height: videoHeight }]}>
+          <View style={[lumoStyles.mediaContainer, { height: videoHeight }]}>
             <LumoVideoPlayer
               uri={post.video_url}
               analytics={{ ownerId: post.user_id, contentId: post.id, contentType: 'post' }}
-              style={styles.videoPlayer}
+              style={lumoStyles.videoPlayer}
               bottomInset={8}
               autoPlay={autoPlayVideo}
               compact
@@ -118,16 +122,16 @@ export default function PostCard({
             />
           </View>
         ) : (
-          <View style={[styles.mediaUnavailable, { height: mediaHeight }]}>
+          <View style={[lumoStyles.mediaUnavailable, { height: mediaHeight }]}>
             <Ionicons name="videocam-off-outline" size={34} color={colors.muted} />
-            <Text style={styles.mediaUnavailableText}>Video unavailable</Text>
+            <Text style={lumoStyles.mediaUnavailableText}>Video unavailable</Text>
           </View>
         )
       ) : post.image_url ? (
-        <View style={[styles.mediaContainer, { height: mediaHeight }]}>
+        <View style={[lumoStyles.mediaContainer, { height: mediaHeight }]}>
           <Image
             source={{ uri: post.image_url }}
-            style={styles.image}
+            style={lumoStyles.image}
             contentFit="contain"
             transition={250}
           />
@@ -135,12 +139,12 @@ export default function PostCard({
       ) : null}
 
       {/* Action Bar */}
-      <View style={styles.actionBar}>
-        <View style={styles.leftActions}>
+      <View style={lumoStyles.actionBar}>
+        <View style={lumoStyles.leftActions}>
           <Pressable
             onPress={() => onLike(post)}
             hitSlop={8}
-            style={styles.actionBtn}
+            style={lumoStyles.actionBtn}
             accessibilityRole="button"
             accessibilityLabel={liked ? 'Unlike post' : 'Like post'}
           >
@@ -150,7 +154,7 @@ export default function PostCard({
               color={liked ? colors.like : colors.text}
             />
             {likeCount > 0 && (
-              <Text style={[styles.actionCount, liked && { color: colors.like }]}>
+              <Text style={[lumoStyles.actionCount, liked && { color: colors.like }]}>
                 {formatCount(likeCount)}
               </Text>
             )}
@@ -159,20 +163,20 @@ export default function PostCard({
           <Pressable
             onPress={() => onOpenComments(post)}
             hitSlop={8}
-            style={styles.actionBtn}
+            style={lumoStyles.actionBtn}
             accessibilityRole="button"
             accessibilityLabel="View comments"
           >
             <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
             {commentCount > 0 && (
-              <Text style={styles.actionCount}>{formatCount(commentCount)}</Text>
+              <Text style={lumoStyles.actionCount}>{formatCount(commentCount)}</Text>
             )}
           </Pressable>
 
           <Pressable
             onPress={handleShare}
             hitSlop={8}
-            style={styles.actionBtn}
+            style={lumoStyles.actionBtn}
             accessibilityRole="button"
             accessibilityLabel="Forward post"
           >
@@ -184,7 +188,7 @@ export default function PostCard({
           <Pressable
             onPress={() => onSave(post)}
             hitSlop={8}
-            style={styles.saveBtn}
+            style={lumoStyles.saveBtn}
             accessibilityRole="button"
             accessibilityLabel={isSaved ? 'Remove from saved' : 'Save post'}
           >
@@ -198,24 +202,24 @@ export default function PostCard({
       </View>
 
       {/* Body & Caption */}
-      <View style={styles.body}>
+      <View style={lumoStyles.body}>
         {likeCount > 0 && (
-          <Text style={styles.likesSnippet}>
-            Liked by <Text style={styles.boldText}>{formatCount(likeCount)}</Text>{' '}
+          <Text style={lumoStyles.likesSnippet}>
+            Liked by <Text style={lumoStyles.boldText}>{formatCount(likeCount)}</Text>{' '}
             {likeCount === 1 ? 'person' : 'people'}
           </Text>
         )}
 
         {!!post.caption && (
-          <Text style={styles.caption}>
-            <Text style={styles.captionUsername}>{username} </Text>
+          <Text style={lumoStyles.caption}>
+            <Text style={lumoStyles.captionUsername}>{username} </Text>
             {post.caption}
           </Text>
         )}
 
         {commentCount > 0 && (
           <Pressable onPress={() => onOpenComments(post)} hitSlop={6}>
-            <Text style={styles.viewComments}>
+            <Text style={lumoStyles.viewComments}>
               View all {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
             </Text>
           </Pressable>
@@ -229,23 +233,23 @@ export default function PostCard({
         animationType="fade"
         onRequestClose={() => setMenuVisible(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
+        <Pressable style={lumoStyles.modalOverlay} onPress={() => setMenuVisible(false)}>
+          <View style={lumoStyles.modalSheet}>
+            <View style={lumoStyles.modalHandle} />
             <Pressable
-              style={styles.modalItem}
+              style={lumoStyles.modalItem}
               onPress={() => {
                 setMenuVisible(false);
                 void handleShare();
               }}
             >
               <Ionicons name="share-outline" size={22} color={colors.text} />
-              <Text style={styles.modalItemText}>Forward to...</Text>
+              <Text style={lumoStyles.modalItemText}>Forward to...</Text>
             </Pressable>
 
             {onSave && (
               <Pressable
-                style={styles.modalItem}
+                style={lumoStyles.modalItem}
                 onPress={() => {
                   setMenuVisible(false);
                   onSave(post);
@@ -256,7 +260,7 @@ export default function PostCard({
                   size={22}
                   color={isSaved ? colors.lime : colors.text}
                 />
-                <Text style={styles.modalItemText}>
+                <Text style={lumoStyles.modalItemText}>
                   {isSaved ? 'Remove from Saved' : 'Save Post'}
                 </Text>
               </Pressable>
@@ -264,24 +268,24 @@ export default function PostCard({
 
             {isMine && onDeletePost && (
               <Pressable
-                style={styles.modalItem}
+                style={lumoStyles.modalItem}
                 onPress={() => {
                   setMenuVisible(false);
                   onDeletePost(post);
                 }}
               >
                 <Ionicons name="trash-outline" size={22} color={colors.danger} />
-                <Text style={[styles.modalItemText, { color: colors.danger }]}>
+                <Text style={[lumoStyles.modalItemText, { color: colors.danger }]}>
                   Delete Post
                 </Text>
               </Pressable>
             )}
 
             <Pressable
-              style={[styles.modalItem, styles.modalCancelItem]}
+              style={[lumoStyles.modalItem, lumoStyles.modalCancelItem]}
               onPress={() => setMenuVisible(false)}
             >
-              <Text style={styles.modalCancelText}>Cancel</Text>
+              <Text style={lumoStyles.modalCancelText}>Cancel</Text>
             </Pressable>
           </View>
         </Pressable>

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Avatar from '../Avatar';
 import { colors } from '../../lib/theme';
 import type { GroupMemberWithProfile } from '../../lib/groups';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Props = {
   member: GroupMemberWithProfile;
@@ -15,35 +16,36 @@ export default function GroupMemberRow({
   currentUserId,
   compact = false,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const username = member.profile?.username ?? 'member';
   const name = member.profile?.full_name || username;
 
   return (
-    <View style={[styles.row, compact && styles.compact]}>
+    <View style={[lumoStyles.row, compact && lumoStyles.compact]}>
       <Avatar
         uri={member.profile?.avatar_url}
         name={username}
         size={compact ? 36 : 43}
       />
 
-      <View style={styles.copy}>
-        <Text style={styles.name} numberOfLines={1}>
+      <View style={lumoStyles.copy}>
+        <Text style={lumoStyles.name} numberOfLines={1}>
           {name}
           {member.user_id === currentUserId ? ' · You' : ''}
         </Text>
-        <Text style={styles.username} numberOfLines={1}>
+        <Text style={lumoStyles.username} numberOfLines={1}>
           @{username}
         </Text>
       </View>
 
       <View
         style={[
-          styles.roleBadge,
-          member.role === 'owner' && styles.ownerBadge,
-          member.role === 'admin' && styles.adminBadge,
+          lumoStyles.roleBadge,
+          member.role === 'owner' && lumoStyles.ownerBadge,
+          member.role === 'admin' && lumoStyles.adminBadge,
         ]}
       >
-        <Text style={styles.roleText}>
+        <Text style={lumoStyles.roleText}>
           {member.role.toUpperCase()}
         </Text>
       </View>

@@ -28,8 +28,11 @@ import {
   type Channel,
   type ChannelRole,
 } from '../../../lib/channels';
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+
 
 export default function ChannelSettings() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -263,42 +266,42 @@ export default function ChannelSettings() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.backButton}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Kanal sozlamalari</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={lumoStyles.headerTitle}>Kanal sozlamalari</Text>
+        <View style={lumoStyles.headerSpacer} />
       </View>
 
       {loading ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <ActivityIndicator color={colors.lime} size="large" />
         </View>
       ) : error ? (
-        <View style={styles.center}>
+        <View style={lumoStyles.center}>
           <Ionicons name="alert-circle-outline" size={32} color={colors.muted} />
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable onPress={() => void load()} style={styles.retryButton}>
-            <Text style={styles.retryText}>Qayta urinish</Text>
+          <Text style={lumoStyles.errorText}>{error}</Text>
+          <Pressable onPress={() => void load()} style={lumoStyles.retryButton}>
+            <Text style={lumoStyles.retryText}>Qayta urinish</Text>
           </Pressable>
         </View>
       ) : !channel ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Kanal topilmadi.</Text>
+        <View style={lumoStyles.center}>
+          <Text style={lumoStyles.errorText}>Kanal topilmadi.</Text>
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={lumoStyles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Avatar section */}
           <Pressable
-            style={styles.avatarCard}
+            style={lumoStyles.avatarCard}
             onPress={() => void pickAvatar()}
             disabled={!canManage}
             accessibilityRole="button"
@@ -307,41 +310,41 @@ export default function ChannelSettings() {
             {avatarUri ? (
               <Image
                 source={{ uri: avatarUri }}
-                style={styles.avatarImage}
+                style={lumoStyles.avatarImage}
                 contentFit="cover"
                 transition={200}
               />
             ) : (
-              <View style={styles.avatarPlaceholder}>
+              <View style={lumoStyles.avatarPlaceholder}>
                 <Ionicons name="megaphone" size={27} color={colors.lime} />
               </View>
             )}
-            <View style={styles.avatarInfo}>
-              <Text style={styles.heroName}>{channel.name}</Text>
-              <Text style={styles.heroUsername}>@{channel.username}</Text>
-              <Text style={styles.heroRole}>
+            <View style={lumoStyles.avatarInfo}>
+              <Text style={lumoStyles.heroName}>{channel.name}</Text>
+              <Text style={lumoStyles.heroUsername}>@{channel.username}</Text>
+              <Text style={lumoStyles.heroRole}>
                 {role?.toUpperCase() ?? 'SUBSCRIBER'}
               </Text>
             </View>
             {canManage && (
-              <View style={styles.avatarEditBadge}>
+              <View style={lumoStyles.avatarEditBadge}>
                 <Ionicons name="camera" size={14} color={colors.lime} />
               </View>
             )}
           </Pressable>
 
           {!canManage && (
-            <View style={styles.notice}>
+            <View style={lumoStyles.notice}>
               <Ionicons name="lock-closed-outline" size={17} color={colors.muted} />
-              <Text style={styles.noticeText}>
+              <Text style={lumoStyles.noticeText}>
                 Faqat kanal egasi va adminlar sozlamalarni o'zgartirishi mumkin.
               </Text>
             </View>
           )}
 
-          <Text style={styles.label}>KANAL NOMI</Text>
+          <Text style={lumoStyles.label}>KANAL NOMI</Text>
           <TextInput
-            style={[styles.input, !canManage && styles.readOnly]}
+            style={[lumoStyles.input, !canManage && lumoStyles.readOnly]}
             value={name}
             onChangeText={setName}
             editable={canManage}
@@ -350,13 +353,13 @@ export default function ChannelSettings() {
             placeholderTextColor={colors.dim}
           />
 
-          <Text style={styles.label}>KANAL SLUG</Text>
-          <View style={[styles.slugInput, !canManage && styles.readOnly]}>
-            <Text style={styles.slugPrefix}>
+          <Text style={lumoStyles.label}>KANAL SLUG</Text>
+          <View style={[lumoStyles.slugInput, !canManage && lumoStyles.readOnly]}>
+            <Text style={lumoStyles.slugPrefix}>
               @{ownerPrefix}-
             </Text>
             <TextInput
-              style={styles.slugField}
+              style={lumoStyles.slugField}
               value={slug}
               onChangeText={(value) =>
                 setSlug(
@@ -372,18 +375,18 @@ export default function ChannelSettings() {
             />
           </View>
           {ownerPrefix && slug ? (
-            <Text style={styles.usernamePreview}>
+            <Text style={lumoStyles.usernamePreview}>
               To'liq link: @{ownerPrefix}-{slug}
             </Text>
           ) : (
-            <Text style={styles.helper}>
+            <Text style={lumoStyles.helper}>
               Faqat kichik harflar, raqamlar va pastki chiziq.
             </Text>
           )}
 
-          <Text style={styles.label}>TAVSIF</Text>
+          <Text style={lumoStyles.label}>TAVSIF</Text>
           <TextInput
-            style={[styles.input, styles.multiline, !canManage && styles.readOnly]}
+            style={[lumoStyles.input, lumoStyles.multiline, !canManage && lumoStyles.readOnly]}
             value={description}
             onChangeText={setDescription}
             editable={canManage}
@@ -393,21 +396,21 @@ export default function ChannelSettings() {
             placeholder="Kanalni tasvirlab bering"
             placeholderTextColor={colors.dim}
           />
-          <Text style={styles.counter}>{description.length}/500</Text>
+          <Text style={lumoStyles.counter}>{description.length}/500</Text>
 
-          <View style={styles.visibilityCard}>
-            <View style={styles.visibilityIcon}>
+          <View style={lumoStyles.visibilityCard}>
+            <View style={lumoStyles.visibilityIcon}>
               <Ionicons
                 name={isPublic ? 'globe-outline' : 'lock-closed-outline'}
                 size={19}
                 color={colors.lime}
               />
             </View>
-            <View style={styles.visibilityCopy}>
-              <Text style={styles.visibilityTitle}>
+            <View style={lumoStyles.visibilityCopy}>
+              <Text style={lumoStyles.visibilityTitle}>
                 {isPublic ? 'Ochiq kanal' : 'Yopiq kanal'}
               </Text>
-              <Text style={styles.visibilityHint}>
+              <Text style={lumoStyles.visibilityHint}>
                 {isPublic
                   ? "Har kim topishi va obuna bo'lishi mumkin."
                   : "Faqat taklif qilinganlar ko'ra oladi."}
@@ -424,7 +427,7 @@ export default function ChannelSettings() {
 
           {canManage && (
             <Pressable
-              style={[styles.saveButton, saving && styles.disabled]}
+              style={[lumoStyles.saveButton, saving && lumoStyles.disabled]}
               onPress={() => void save()}
               disabled={saving || !name.trim() || !slug.trim()}
             >
@@ -433,18 +436,18 @@ export default function ChannelSettings() {
               ) : (
                 <>
                   <Ionicons name="checkmark" size={18} color={colors.bg} />
-                  <Text style={styles.saveText}>Saqlash</Text>
+                  <Text style={lumoStyles.saveText}>Saqlash</Text>
                 </>
               )}
             </Pressable>
           )}
 
           <Pressable
-            style={styles.subscribersButton}
+            style={lumoStyles.subscribersButton}
             onPress={() => router.push(`/channels/${id}/members`)}
           >
             <Ionicons name="people-outline" size={18} color={colors.lime} />
-            <Text style={styles.subscribersText}>A’zolarni boshqarish</Text>
+            <Text style={lumoStyles.subscribersText}>A’zolarni boshqarish</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.muted} />
           </Pressable>
 
@@ -452,19 +455,19 @@ export default function ChannelSettings() {
           {!isOwner && (
             <>
               <Pressable
-                style={styles.leaveButton}
+                style={lumoStyles.leaveButton}
                 onPress={() => void handleLeave()}
                 disabled={saving}
               >
-                <Ionicons name="exit-outline" size={18} color="#FF6478" />
-                <Text style={styles.leaveText}>
+                <Ionicons name="exit-outline" size={18} color={resolveThemeColor("#FF6478", "color")} />
+                <Text style={lumoStyles.leaveText}>
                   {confirmLeave ? 'Chiqishni tasdiqlash uchun qayta bosing' : 'Kanaldan chiqish'}
                 </Text>
               </Pressable>
 
               {confirmLeave && (
-                <Pressable onPress={() => setConfirmLeave(false)} style={styles.cancelAction}>
-                  <Text style={styles.cancelActionText}>Bekor qilish</Text>
+                <Pressable onPress={() => setConfirmLeave(false)} style={lumoStyles.cancelAction}>
+                  <Text style={lumoStyles.cancelActionText}>Bekor qilish</Text>
                 </Pressable>
               )}
             </>
@@ -473,16 +476,16 @@ export default function ChannelSettings() {
           {/* Delete channel (owner only) */}
           {isOwner && (
             <>
-              <View style={styles.dangerSection}>
-                <Text style={styles.dangerLabel}>XAVFLI HUDUD</Text>
+              <View style={lumoStyles.dangerSection}>
+                <Text style={lumoStyles.dangerLabel}>XAVFLI HUDUD</Text>
 
                 <Pressable
-                  style={styles.deleteButton}
+                  style={lumoStyles.deleteButton}
                   onPress={() => void handleDelete()}
                   disabled={saving}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#FF6478" />
-                  <Text style={styles.deleteText}>
+                  <Ionicons name="trash-outline" size={18} color={resolveThemeColor("#FF6478", "color")} />
+                  <Text style={lumoStyles.deleteText}>
                     {confirmDelete
                       ? "O'chirishni tasdiqlash uchun qayta bosing"
                       : "Kanalni o'chirish"}
@@ -491,15 +494,15 @@ export default function ChannelSettings() {
 
                 {confirmDelete && (
                   <>
-                    <Text style={styles.deleteWarning}>
+                    <Text style={lumoStyles.deleteWarning}>
                       Bu amalni ortga qaytarib bo'lmaydi. Barcha postlar, obunachilari va ma'lumotlar
                       butunlay o'chiriladi.
                     </Text>
                     <Pressable
                       onPress={() => setConfirmDelete(false)}
-                      style={styles.cancelAction}
+                      style={lumoStyles.cancelAction}
                     >
-                      <Text style={styles.cancelActionText}>Bekor qilish</Text>
+                      <Text style={lumoStyles.cancelActionText}>Bekor qilish</Text>
                     </Pressable>
                   </>
                 )}

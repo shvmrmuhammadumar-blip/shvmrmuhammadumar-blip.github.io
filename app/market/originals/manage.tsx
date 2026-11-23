@@ -11,6 +11,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
   TextInput,
@@ -34,6 +35,8 @@ import {
   type PlatformRole,
 } from "../../../lib/market-official";
 import { colors } from "../../../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../../../lib/theme-styles";
+
 
 type VariantDraft = {
   id?: string;
@@ -117,6 +120,7 @@ function toVariantDraft(variant: NonNullable<OfficialProduct["variants"]>[number
 }
 
 export default function OfficialCatalogManagerScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -141,7 +145,7 @@ export default function OfficialCatalogManagerScreen() {
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [fieldErrors, setFieldErrors] = useState<ProductFieldErrors>({ variants: {} });
   const [formMessage, setFormMessage] = useState<string | null>(null);
-  const formScrollRef = useRef<ScrollView>(null);
+  const formScrollRef = useRef<ScrollViewInstance | null>(null);
 
   const isManager = canManageOfficialCatalog(roles);
 
@@ -443,187 +447,187 @@ export default function OfficialCatalogManagerScreen() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={styles.muted}>Loading official catalog...</Text></View>;
+    return <View style={lumoStyles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={lumoStyles.muted}>Loading official catalog...</Text></View>;
   }
 
   if (!isManager) {
     return (
-      <View style={styles.center}>
-        <View style={styles.lockIcon}><Ionicons name="lock-closed-outline" size={26} color={colors.accentStrong} /></View>
-        <Text style={styles.deniedTitle}>Access restricted</Text>
-        <Text style={styles.muted}>Lumo Originals boshqaruvi Owner, Admin va Developer uchun.</Text>
-        <Pressable onPress={() => router.back()} style={styles.primaryButton}><Text style={styles.primaryButtonText}>Go back</Text></Pressable>
+      <View style={lumoStyles.center}>
+        <View style={lumoStyles.lockIcon}><Ionicons name="lock-closed-outline" size={26} color={colors.accentStrong} /></View>
+        <Text style={lumoStyles.deniedTitle}>Access restricted</Text>
+        <Text style={lumoStyles.muted}>Lumo Originals boshqaruvi Owner, Admin va Developer uchun.</Text>
+        <Pressable onPress={() => router.back()} style={lumoStyles.primaryButton}><Text style={lumoStyles.primaryButtonText}>Go back</Text></Pressable>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
+    <KeyboardAvoidingView style={lumoStyles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={lumoStyles.page} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={lumoStyles.topBar}>
+          <Pressable onPress={() => router.back()} style={lumoStyles.backButton} hitSlop={8}>
             <Ionicons name="arrow-back" size={19} color={colors.text} />
           </Pressable>
-          <View style={styles.titleBlock}>
-            <Text style={styles.eyebrow}>LUMO / ORIGINALS</Text>
-            <Text style={styles.pageTitle}>Catalog management</Text>
+          <View style={lumoStyles.titleBlock}>
+            <Text style={lumoStyles.eyebrow}>LUMO / ORIGINALS</Text>
+            <Text style={lumoStyles.pageTitle}>Catalog management</Text>
           </View>
-          <Pressable onPress={() => void load(true)} style={styles.iconButton} accessibilityLabel="Refresh catalog">
+          <Pressable onPress={() => void load(true)} style={lumoStyles.iconButton} accessibilityLabel="Refresh catalog">
             {refreshing ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="refresh" size={18} color={colors.accentStrong} />}
           </Pressable>
         </View>
 
-        <View style={styles.accessPanel}>
-          <View style={styles.accessIcon}><Ionicons name="shield-checkmark-outline" size={20} color={colors.accentStrong} /></View>
-          <View style={styles.accessCopy}>
-            <Text style={styles.accessTitle}>Manager access verified</Text>
-            <Text style={styles.accessText}>{roles.filter((role) => role === "owner" || role === "developer" || role === "admin").join(" · ").toUpperCase()} · Members can browse and order</Text>
+        <View style={lumoStyles.accessPanel}>
+          <View style={lumoStyles.accessIcon}><Ionicons name="shield-checkmark-outline" size={20} color={colors.accentStrong} /></View>
+          <View style={lumoStyles.accessCopy}>
+            <Text style={lumoStyles.accessTitle}>Manager access verified</Text>
+            <Text style={lumoStyles.accessText}>{roles.filter((role) => role === "owner" || role === "developer" || role === "admin").join(" · ").toUpperCase()} · Members can browse and order</Text>
           </View>
-          <View style={[styles.statusPill, isPublished ? styles.statusPublished : styles.statusDraft]}>
-            <View style={[styles.statusDot, isPublished ? styles.dotPublished : styles.dotDraft]} />
-            <Text style={styles.statusText}>{isPublished ? "PUBLIC" : "PRIVATE"}</Text>
+          <View style={[lumoStyles.statusPill, isPublished ? lumoStyles.statusPublished : lumoStyles.statusDraft]}>
+            <View style={[lumoStyles.statusDot, isPublished ? lumoStyles.dotPublished : lumoStyles.dotDraft]} />
+            <Text style={lumoStyles.statusText}>{isPublished ? "PUBLIC" : "PRIVATE"}</Text>
           </View>
         </View>
 
-        {error ? <View style={styles.errorPanel}><Text style={styles.errorTitle}>Could not load catalog</Text><Text style={styles.errorText}>{error}</Text><Pressable onPress={() => void load(true)}><Text style={styles.retryText}>Try again</Text></Pressable></View> : null}
+        {error ? <View style={lumoStyles.errorPanel}><Text style={lumoStyles.errorTitle}>Could not load catalog</Text><Text style={lumoStyles.errorText}>{error}</Text><Pressable onPress={() => void load(true)}><Text style={lumoStyles.retryText}>Try again</Text></Pressable></View> : null}
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}><Text style={styles.statValue}>{products.length}</Text><Text style={styles.statLabel}>TOTAL</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{publishedCount}</Text><Text style={styles.statLabel}>ACTIVE</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{draftCount}</Text><Text style={styles.statLabel}>DRAFTS</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{archivedCount}</Text><Text style={styles.statLabel}>ARCHIVED</Text></View>
+        <View style={lumoStyles.statsRow}>
+          <View style={lumoStyles.statCard}><Text style={lumoStyles.statValue}>{products.length}</Text><Text style={lumoStyles.statLabel}>TOTAL</Text></View>
+          <View style={lumoStyles.statCard}><Text style={lumoStyles.statValue}>{publishedCount}</Text><Text style={lumoStyles.statLabel}>ACTIVE</Text></View>
+          <View style={lumoStyles.statCard}><Text style={lumoStyles.statValue}>{draftCount}</Text><Text style={lumoStyles.statLabel}>DRAFTS</Text></View>
+          <View style={lumoStyles.statCard}><Text style={lumoStyles.statValue}>{archivedCount}</Text><Text style={lumoStyles.statLabel}>ARCHIVED</Text></View>
         </View>
 
-        <Pressable onPress={() => router.push("/market/originals/orders" as never)} style={styles.ordersShortcut}>
-          <View style={styles.ordersShortcutIcon}><Ionicons name="receipt-outline" size={19} color={colors.accentStrong} /></View>
-          <View style={styles.ordersShortcutCopy}>
-            <Text style={styles.ordersShortcutTitle}>Order management</Text>
-            <Text style={styles.ordersShortcutText}>New orders, active orders and completed purchases</Text>
+        <Pressable onPress={() => router.push("/market/originals/orders" as never)} style={lumoStyles.ordersShortcut}>
+          <View style={lumoStyles.ordersShortcutIcon}><Ionicons name="receipt-outline" size={19} color={colors.accentStrong} /></View>
+          <View style={lumoStyles.ordersShortcutCopy}>
+            <Text style={lumoStyles.ordersShortcutTitle}>Order management</Text>
+            <Text style={lumoStyles.ordersShortcutText}>New orders, active orders and completed purchases</Text>
           </View>
           <Ionicons name="arrow-forward" size={17} color={colors.accentStrong} />
         </Pressable>
 
-        <View style={styles.panel}>
-          <View style={styles.panelHeading}>
-            <View style={styles.panelHeadingCopy}><Text style={styles.panelEyebrow}>PUBLIC VISIBILITY</Text><Text style={styles.panelTitle}>Lumo Originals catalog</Text></View>
-            <Pressable onPress={changePublication} disabled={savingStore} style={[styles.publishButton, isPublished ? styles.unpublishButton : null, savingStore && styles.disabled]}>
+        <View style={lumoStyles.panel}>
+          <View style={lumoStyles.panelHeading}>
+            <View style={lumoStyles.panelHeadingCopy}><Text style={lumoStyles.panelEyebrow}>PUBLIC VISIBILITY</Text><Text style={lumoStyles.panelTitle}>Lumo Originals catalog</Text></View>
+            <Pressable onPress={changePublication} disabled={savingStore} style={[lumoStyles.publishButton, isPublished ? lumoStyles.unpublishButton : null, savingStore && lumoStyles.disabled]}>
               <Ionicons name={isPublished ? "eye-off-outline" : "eye-outline"} size={15} color={isPublished ? colors.text : colors.bg} />
-              <Text style={[styles.publishButtonText, isPublished ? styles.unpublishButtonText : null]}>{savingStore ? "Saving..." : isPublished ? "Unpublish" : "Publish catalog"}</Text>
+              <Text style={[lumoStyles.publishButtonText, isPublished ? lumoStyles.unpublishButtonText : null]}>{savingStore ? "Saving..." : isPublished ? "Unpublish" : "Publish catalog"}</Text>
             </Pressable>
           </View>
-          <Text style={styles.panelDescription}>Katalogni publish qilish Memberlarga faqat Active mahsulotlarni ko‘rsatadi. Draft va Archived mahsulotlar ko‘rinmaydi.</Text>
-          <Text style={styles.fieldLabel}>Catalog description</Text>
-          <TextInput value={storeDescription} onChangeText={setStoreDescription} placeholder="Lumo Originals haqida qisqacha..." placeholderTextColor={colors.dim} multiline style={[styles.input, styles.multiline]} />
-          <View style={styles.twoColumns}>
-            <View style={styles.columnField}>
-              <Text style={styles.fieldLabel}>City</Text>
-              <TextInput value={storeCity} onChangeText={setStoreCity} placeholder="City" placeholderTextColor={colors.dim} style={styles.input} />
+          <Text style={lumoStyles.panelDescription}>Katalogni publish qilish Memberlarga faqat Active mahsulotlarni ko‘rsatadi. Draft va Archived mahsulotlar ko‘rinmaydi.</Text>
+          <Text style={lumoStyles.fieldLabel}>Catalog description</Text>
+          <TextInput value={storeDescription} onChangeText={setStoreDescription} placeholder="Lumo Originals haqida qisqacha..." placeholderTextColor={colors.dim} multiline style={[lumoStyles.input, lumoStyles.multiline]} />
+          <View style={lumoStyles.twoColumns}>
+            <View style={lumoStyles.columnField}>
+              <Text style={lumoStyles.fieldLabel}>City</Text>
+              <TextInput value={storeCity} onChangeText={setStoreCity} placeholder="City" placeholderTextColor={colors.dim} style={lumoStyles.input} />
             </View>
-            <View style={styles.columnField}>
-              <Text style={styles.fieldLabel}>Region</Text>
-              <TextInput value={storeRegion} onChangeText={setStoreRegion} placeholder="Region / State" placeholderTextColor={colors.dim} style={styles.input} />
+            <View style={lumoStyles.columnField}>
+              <Text style={lumoStyles.fieldLabel}>Region</Text>
+              <TextInput value={storeRegion} onChangeText={setStoreRegion} placeholder="Region / State" placeholderTextColor={colors.dim} style={lumoStyles.input} />
             </View>
           </View>
-          <Text style={styles.fieldLabel}>Street address / Pickup point</Text>
-          <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Street, building, landmark..." placeholderTextColor={colors.dim} style={styles.input} />
-          <Text style={styles.helperText}>Country: Uzbekistan. The product page combines this with the city and region.</Text>
-          <Text style={styles.fieldLabel}>Purchase information / Contact</Text>
-          <TextInput value={contactText} onChangeText={setContactText} placeholder="Sotib olish bo‘yicha aloqa va yo‘riqnoma..." placeholderTextColor={colors.dim} multiline style={[styles.input, styles.multiline]} />
-          <Pressable onPress={saveStoreSettings} disabled={savingStore} style={[styles.secondaryAction, savingStore && styles.disabled]}>
+          <Text style={lumoStyles.fieldLabel}>Street address / Pickup point</Text>
+          <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Street, building, landmark..." placeholderTextColor={colors.dim} style={lumoStyles.input} />
+          <Text style={lumoStyles.helperText}>Country: Uzbekistan. The product page combines this with the city and region.</Text>
+          <Text style={lumoStyles.fieldLabel}>Purchase information / Contact</Text>
+          <TextInput value={contactText} onChangeText={setContactText} placeholder="Sotib olish bo‘yicha aloqa va yo‘riqnoma..." placeholderTextColor={colors.dim} multiline style={[lumoStyles.input, lumoStyles.multiline]} />
+          <Pressable onPress={saveStoreSettings} disabled={savingStore} style={[lumoStyles.secondaryAction, savingStore && lumoStyles.disabled]}>
             {savingStore ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="save-outline" size={15} color={colors.accentStrong} />}
-            <Text style={styles.secondaryActionText}>Save catalog information</Text>
+            <Text style={lumoStyles.secondaryActionText}>Save catalog information</Text>
           </Pressable>
         </View>
 
-        <View style={styles.productsHeading}>
-          <View><Text style={styles.panelEyebrow}>OFFICIAL INVENTORY</Text><Text style={styles.panelTitle}>Products</Text></View>
-          <Pressable onPress={startCreate} style={styles.addButton}><Ionicons name="add" size={17} color={colors.bg} /><Text style={styles.addButtonText}>Add product</Text></Pressable>
+        <View style={lumoStyles.productsHeading}>
+          <View><Text style={lumoStyles.panelEyebrow}>OFFICIAL INVENTORY</Text><Text style={lumoStyles.panelTitle}>Products</Text></View>
+          <Pressable onPress={startCreate} style={lumoStyles.addButton}><Ionicons name="add" size={17} color={colors.bg} /><Text style={lumoStyles.addButtonText}>Add product</Text></Pressable>
         </View>
 
         {products.length ? products.map((product) => (
-          <View key={product.id} style={styles.productRow}>
-            {product.images[0] ? <Image source={{ uri: product.images[0] }} style={styles.productThumb} /> : <View style={[styles.productThumb, styles.thumbPlaceholder]}><Ionicons name="image-outline" size={22} color={colors.dim} /></View>}
-            <View style={styles.productRowInfo}>
-              <Text style={styles.productCategory}>{product.category}</Text>
-              <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-              <Text style={styles.productPrice}>{formatPrice(product.price, product.currency)}</Text>
-              <Text style={styles.productMeta}>{product.variants.length} variants · {product.media.length} images</Text>
+          <View key={product.id} style={lumoStyles.productRow}>
+            {product.images[0] ? <Image source={{ uri: product.images[0] }} style={lumoStyles.productThumb} /> : <View style={[lumoStyles.productThumb, lumoStyles.thumbPlaceholder]}><Ionicons name="image-outline" size={22} color={colors.dim} /></View>}
+            <View style={lumoStyles.productRowInfo}>
+              <Text style={lumoStyles.productCategory}>{product.category}</Text>
+              <Text style={lumoStyles.productName} numberOfLines={1}>{product.name}</Text>
+              <Text style={lumoStyles.productPrice}>{formatPrice(product.price, product.currency)}</Text>
+              <Text style={lumoStyles.productMeta}>{product.variants.length} variants · {product.media.length} images</Text>
             </View>
-            <View style={styles.productRowActions}>
-              <View style={[styles.smallStatus, product.status === "active" ? styles.smallStatusActive : product.status === "draft" ? styles.smallStatusDraft : styles.smallStatusArchived]}><Text style={styles.smallStatusText}>{product.status.toUpperCase()}</Text></View>
-              <Pressable onPress={() => startEdit(product)} style={styles.rowIconButton} hitSlop={6}><Ionicons name="create-outline" size={17} color={colors.accentStrong} /></Pressable>
-              {product.status !== "archived" ? <Pressable onPress={() => confirmArchive(product)} style={styles.rowIconButton} hitSlop={6}><Ionicons name="archive-outline" size={17} color={colors.muted} /></Pressable> : null}
+            <View style={lumoStyles.productRowActions}>
+              <View style={[lumoStyles.smallStatus, product.status === "active" ? lumoStyles.smallStatusActive : product.status === "draft" ? lumoStyles.smallStatusDraft : lumoStyles.smallStatusArchived]}><Text style={lumoStyles.smallStatusText}>{product.status.toUpperCase()}</Text></View>
+              <Pressable onPress={() => startEdit(product)} style={lumoStyles.rowIconButton} hitSlop={6}><Ionicons name="create-outline" size={17} color={colors.accentStrong} /></Pressable>
+              {product.status !== "archived" ? <Pressable onPress={() => confirmArchive(product)} style={lumoStyles.rowIconButton} hitSlop={6}><Ionicons name="archive-outline" size={17} color={colors.muted} /></Pressable> : null}
             </View>
           </View>
         )) : (
-          <View style={styles.emptyProducts}>
-            <View style={styles.emptyIcon}><Ionicons name="cube-outline" size={25} color={colors.muted} /></View>
-            <Text style={styles.emptyTitle}>No official products yet</Text>
-            <Text style={styles.emptyText}>Bu yerda faqat sen qo‘shgan haqiqiy Lumo mahsulotlari ko‘rinadi. Demo mahsulotlar yo‘q.</Text>
-            <Pressable onPress={startCreate} style={styles.addButton}><Ionicons name="add" size={17} color={colors.bg} /><Text style={styles.addButtonText}>Add first product</Text></Pressable>
+          <View style={lumoStyles.emptyProducts}>
+            <View style={lumoStyles.emptyIcon}><Ionicons name="cube-outline" size={25} color={colors.muted} /></View>
+            <Text style={lumoStyles.emptyTitle}>No official products yet</Text>
+            <Text style={lumoStyles.emptyText}>Bu yerda faqat sen qo‘shgan haqiqiy Lumo mahsulotlari ko‘rinadi. Demo mahsulotlar yo‘q.</Text>
+            <Pressable onPress={startCreate} style={lumoStyles.addButton}><Ionicons name="add" size={17} color={colors.bg} /><Text style={lumoStyles.addButtonText}>Add first product</Text></Pressable>
           </View>
         )}
       </ScrollView>
 
       <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditorVisible(false)}>
-        <KeyboardAvoidingView style={styles.modalRoot} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View style={styles.modalHeader}>
-            <View><Text style={styles.eyebrow}>LUMO ORIGINALS / INVENTORY</Text><Text style={styles.modalTitle}>{editingProduct ? "Edit product" : "New product"}</Text></View>
-            <Pressable onPress={() => setEditorVisible(false)} style={styles.iconButton}><Ionicons name="close" size={20} color={colors.text} /></Pressable>
+        <KeyboardAvoidingView style={lumoStyles.modalRoot} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={lumoStyles.modalHeader}>
+            <View><Text style={lumoStyles.eyebrow}>LUMO ORIGINALS / INVENTORY</Text><Text style={lumoStyles.modalTitle}>{editingProduct ? "Edit product" : "New product"}</Text></View>
+            <Pressable onPress={() => setEditorVisible(false)} style={lumoStyles.iconButton}><Ionicons name="close" size={20} color={colors.text} /></Pressable>
           </View>
-          <ScrollView ref={formScrollRef} contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            {formMessage ? <View style={styles.formMessage}><Ionicons name="alert-circle-outline" size={15} color={colors.like} /><Text style={styles.formMessageText}>{formMessage}</Text></View> : null}
-            <Text style={styles.fieldLabel}>Product name *</Text>
-            <TextInput value={form.name} onChangeText={(value) => { setForm((current) => ({ ...current, name: value })); setFieldErrors((current) => ({ ...current, name: undefined })); }} placeholder="Product name" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.name && styles.inputInvalid]} />
-            {fieldErrors.name ? <Text style={styles.inlineError}>{fieldErrors.name}</Text> : null}
-            <Text style={styles.fieldLabel}>Category *</Text>
-            <TextInput value={form.category} onChangeText={(value) => { setForm((current) => ({ ...current, category: value })); setFieldErrors((current) => ({ ...current, category: undefined })); }} placeholder="Apparel, Accessories, Footwear..." placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.category && styles.inputInvalid]} />
-            {fieldErrors.category ? <Text style={styles.inlineError}>{fieldErrors.category}</Text> : null}
-            <Text style={styles.fieldLabel}>Short description</Text>
-            <TextInput value={form.shortDescription} onChangeText={(value) => setForm((current) => ({ ...current, shortDescription: value }))} placeholder="Short product summary" placeholderTextColor={colors.dim} maxLength={240} style={styles.input} />
-            <Text style={styles.fieldLabel}>Full description</Text>
-            <TextInput value={form.description} onChangeText={(value) => setForm((current) => ({ ...current, description: value }))} placeholder="Materials, features, care instructions..." placeholderTextColor={colors.dim} multiline maxLength={5000} style={[styles.input, styles.multiline]} />
+          <ScrollView ref={formScrollRef} contentContainerStyle={lumoStyles.formContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {formMessage ? <View style={lumoStyles.formMessage}><Ionicons name="alert-circle-outline" size={15} color={colors.like} /><Text style={lumoStyles.formMessageText}>{formMessage}</Text></View> : null}
+            <Text style={lumoStyles.fieldLabel}>Product name *</Text>
+            <TextInput value={form.name} onChangeText={(value) => { setForm((current) => ({ ...current, name: value })); setFieldErrors((current) => ({ ...current, name: undefined })); }} placeholder="Product name" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.name && lumoStyles.inputInvalid]} />
+            {fieldErrors.name ? <Text style={lumoStyles.inlineError}>{fieldErrors.name}</Text> : null}
+            <Text style={lumoStyles.fieldLabel}>Category *</Text>
+            <TextInput value={form.category} onChangeText={(value) => { setForm((current) => ({ ...current, category: value })); setFieldErrors((current) => ({ ...current, category: undefined })); }} placeholder="Apparel, Accessories, Footwear..." placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.category && lumoStyles.inputInvalid]} />
+            {fieldErrors.category ? <Text style={lumoStyles.inlineError}>{fieldErrors.category}</Text> : null}
+            <Text style={lumoStyles.fieldLabel}>Short description</Text>
+            <TextInput value={form.shortDescription} onChangeText={(value) => setForm((current) => ({ ...current, shortDescription: value }))} placeholder="Short product summary" placeholderTextColor={colors.dim} maxLength={240} style={lumoStyles.input} />
+            <Text style={lumoStyles.fieldLabel}>Full description</Text>
+            <TextInput value={form.description} onChangeText={(value) => setForm((current) => ({ ...current, description: value }))} placeholder="Materials, features, care instructions..." placeholderTextColor={colors.dim} multiline maxLength={5000} style={[lumoStyles.input, lumoStyles.multiline]} />
 
-            <View style={styles.twoColumns}>
-              <View style={styles.columnField}><Text style={styles.fieldLabel}>Price *</Text><TextInput value={form.price} onChangeText={(value) => { setForm((current) => ({ ...current, price: value.replace(/[^0-9.]/g, "") })); setFieldErrors((current) => ({ ...current, price: undefined })); }} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.price && styles.inputInvalid]} />{fieldErrors.price ? <Text style={styles.inlineError}>{fieldErrors.price}</Text> : null}</View>
-              <View style={styles.columnField}><Text style={styles.fieldLabel}>Currency</Text><View style={styles.segmentRow}><Pressable onPress={() => setForm((current) => ({ ...current, currency: "UZS" }))} style={[styles.segment, form.currency === "UZS" && styles.segmentActive]}><Text style={[styles.segmentText, form.currency === "UZS" && styles.segmentTextActive]}>UZS</Text></Pressable><Pressable onPress={() => setForm((current) => ({ ...current, currency: "USD" }))} style={[styles.segment, form.currency === "USD" && styles.segmentActive]}><Text style={[styles.segmentText, form.currency === "USD" && styles.segmentTextActive]}>USD</Text></Pressable></View></View>
+            <View style={lumoStyles.twoColumns}>
+              <View style={lumoStyles.columnField}><Text style={lumoStyles.fieldLabel}>Price *</Text><TextInput value={form.price} onChangeText={(value) => { setForm((current) => ({ ...current, price: value.replace(/[^0-9.]/g, "") })); setFieldErrors((current) => ({ ...current, price: undefined })); }} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.price && lumoStyles.inputInvalid]} />{fieldErrors.price ? <Text style={lumoStyles.inlineError}>{fieldErrors.price}</Text> : null}</View>
+              <View style={lumoStyles.columnField}><Text style={lumoStyles.fieldLabel}>Currency</Text><View style={lumoStyles.segmentRow}><Pressable onPress={() => setForm((current) => ({ ...current, currency: "UZS" }))} style={[lumoStyles.segment, form.currency === "UZS" && lumoStyles.segmentActive]}><Text style={[lumoStyles.segmentText, form.currency === "UZS" && lumoStyles.segmentTextActive]}>UZS</Text></Pressable><Pressable onPress={() => setForm((current) => ({ ...current, currency: "USD" }))} style={[lumoStyles.segment, form.currency === "USD" && lumoStyles.segmentActive]}><Text style={[lumoStyles.segmentText, form.currency === "USD" && lumoStyles.segmentTextActive]}>USD</Text></Pressable></View></View>
             </View>
-            <Text style={styles.fieldLabel}>Compare-at price (optional)</Text>
-            <TextInput value={form.compareAtPrice} onChangeText={(value) => { setForm((current) => ({ ...current, compareAtPrice: value.replace(/[^0-9.]/g, "") })); setFieldErrors((current) => ({ ...current, compareAtPrice: undefined })); }} keyboardType="decimal-pad" placeholder="Old price" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.compareAtPrice && styles.inputInvalid]} />
-            {fieldErrors.compareAtPrice ? <Text style={styles.inlineError}>{fieldErrors.compareAtPrice}</Text> : null}
-            <Text style={styles.fieldLabel}>SKU (optional)</Text>
-            <TextInput value={form.sku} onChangeText={(value) => setForm((current) => ({ ...current, sku: value }))} placeholder="Internal product code" placeholderTextColor={colors.dim} style={styles.input} />
+            <Text style={lumoStyles.fieldLabel}>Compare-at price (optional)</Text>
+            <TextInput value={form.compareAtPrice} onChangeText={(value) => { setForm((current) => ({ ...current, compareAtPrice: value.replace(/[^0-9.]/g, "") })); setFieldErrors((current) => ({ ...current, compareAtPrice: undefined })); }} keyboardType="decimal-pad" placeholder="Old price" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.compareAtPrice && lumoStyles.inputInvalid]} />
+            {fieldErrors.compareAtPrice ? <Text style={lumoStyles.inlineError}>{fieldErrors.compareAtPrice}</Text> : null}
+            <Text style={lumoStyles.fieldLabel}>SKU (optional)</Text>
+            <TextInput value={form.sku} onChangeText={(value) => setForm((current) => ({ ...current, sku: value }))} placeholder="Internal product code" placeholderTextColor={colors.dim} style={lumoStyles.input} />
 
-            <Text style={styles.fieldLabel}>Publication status</Text>
-            <View style={styles.segmentRow}>
-              {(["draft", "active", "archived"] as OfficialProductStatus[]).map((status) => <Pressable key={status} onPress={() => setForm((current) => ({ ...current, status }))} style={[styles.segment, form.status === status && styles.segmentActive]}><Text style={[styles.segmentText, form.status === status && styles.segmentTextActive]}>{status.toUpperCase()}</Text></Pressable>)}
+            <Text style={lumoStyles.fieldLabel}>Publication status</Text>
+            <View style={lumoStyles.segmentRow}>
+              {(["draft", "active", "archived"] as OfficialProductStatus[]).map((status) => <Pressable key={status} onPress={() => setForm((current) => ({ ...current, status }))} style={[lumoStyles.segment, form.status === status && lumoStyles.segmentActive]}><Text style={[lumoStyles.segmentText, form.status === status && lumoStyles.segmentTextActive]}>{status.toUpperCase()}</Text></Pressable>)}
             </View>
-            <Pressable onPress={() => setForm((current) => ({ ...current, isFeatured: !current.isFeatured }))} style={styles.checkRow}><Ionicons name={form.isFeatured ? "checkbox" : "square-outline"} size={19} color={form.isFeatured ? colors.accentStrong : colors.muted} /><Text style={styles.checkLabel}>Feature this product in the collection</Text></Pressable>
+            <Pressable onPress={() => setForm((current) => ({ ...current, isFeatured: !current.isFeatured }))} style={lumoStyles.checkRow}><Ionicons name={form.isFeatured ? "checkbox" : "square-outline"} size={19} color={form.isFeatured ? colors.accentStrong : colors.muted} /><Text style={lumoStyles.checkLabel}>Feature this product in the collection</Text></Pressable>
 
-            <View style={styles.formSectionHeading}><View><Text style={styles.panelEyebrow}>PRODUCT GALLERY</Text><Text style={styles.sectionTitle}>Images</Text></View><Text style={styles.imageLimit}>{keptMedia.length + newImages.length}/8</Text></View>
-            <View style={styles.imageGrid}>
-              {keptMedia.map((media) => <View key={media.id} style={styles.imageTile}><Image source={{ uri: media.url }} style={styles.imageTileImage} /><Pressable onPress={() => removeKeptImage(media.id)} style={styles.removeImage}><Ionicons name="close" size={13} color="#FFFFFF" /></Pressable></View>)}
-              {newImages.map((image, index) => <View key={`${image.uri}-${index}`} style={styles.imageTile}><Image source={{ uri: image.uri }} style={styles.imageTileImage} /><Pressable onPress={() => removeNewImage(index)} style={styles.removeImage}><Ionicons name="close" size={13} color="#FFFFFF" /></Pressable></View>)}
-              <Pressable onPress={() => void chooseImages()} style={styles.addImageTile}><Ionicons name="add" size={23} color={colors.accentStrong} /><Text style={styles.addImageText}>Add images</Text></Pressable>
+            <View style={lumoStyles.formSectionHeading}><View><Text style={lumoStyles.panelEyebrow}>PRODUCT GALLERY</Text><Text style={lumoStyles.sectionTitle}>Images</Text></View><Text style={lumoStyles.imageLimit}>{keptMedia.length + newImages.length}/8</Text></View>
+            <View style={lumoStyles.imageGrid}>
+              {keptMedia.map((media) => <View key={media.id} style={lumoStyles.imageTile}><Image source={{ uri: media.url }} style={lumoStyles.imageTileImage} /><Pressable onPress={() => removeKeptImage(media.id)} style={lumoStyles.removeImage}><Ionicons name="close" size={13} color={resolveThemeColor(colors.mediaText, "color")} /></Pressable></View>)}
+              {newImages.map((image, index) => <View key={`${image.uri}-${index}`} style={lumoStyles.imageTile}><Image source={{ uri: image.uri }} style={lumoStyles.imageTileImage} /><Pressable onPress={() => removeNewImage(index)} style={lumoStyles.removeImage}><Ionicons name="close" size={13} color={resolveThemeColor(colors.mediaText, "color")} /></Pressable></View>)}
+              <Pressable onPress={() => void chooseImages()} style={lumoStyles.addImageTile}><Ionicons name="add" size={23} color={colors.accentStrong} /><Text style={lumoStyles.addImageText}>Add images</Text></Pressable>
             </View>
-            <Text style={styles.helperText}>JPEG, PNG yoki WebP. Har bir fayl 10 MB dan oshmasin.</Text>
+            <Text style={lumoStyles.helperText}>JPEG, PNG yoki WebP. Har bir fayl 10 MB dan oshmasin.</Text>
 
-            <View style={styles.formSectionHeading}><View><Text style={styles.panelEyebrow}>SIZE / COLOR / STOCK</Text><Text style={styles.sectionTitle}>Variants</Text></View><Pressable onPress={addVariant} style={styles.addVariantButton}><Ionicons name="add" size={15} color={colors.accentStrong} /><Text style={styles.addVariantText}>Add variant</Text></Pressable></View>
-            {variants.map((variant, index) => <View key={variant.key} style={styles.variantCard}>
-              <View style={styles.variantTop}><Text style={styles.variantTitle}>Variant {index + 1}</Text><Pressable onPress={() => removeVariant(variant.key)} hitSlop={6}><Ionicons name="trash-outline" size={16} color={colors.like} /></Pressable></View>
-              <TextInput value={variant.name} onChangeText={(value) => { updateVariant(variant.key, { name: value }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], name: undefined } } })); }} placeholder="Variant name (e.g. Black / M) *" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.variants[variant.key]?.name && styles.inputInvalid]} />
-              {fieldErrors.variants[variant.key]?.name ? <Text style={styles.inlineError}>{fieldErrors.variants[variant.key].name}</Text> : null}
-              <View style={styles.twoColumns}><View style={styles.columnField}><TextInput value={variant.color} onChangeText={(value) => updateVariant(variant.key, { color: value })} placeholder="Color" placeholderTextColor={colors.dim} style={styles.input} /></View><View style={styles.columnField}><TextInput value={variant.size} onChangeText={(value) => updateVariant(variant.key, { size: value })} placeholder="Size" placeholderTextColor={colors.dim} style={styles.input} /></View></View>
-              <View style={styles.twoColumns}><View style={styles.columnField}><TextInput value={variant.stock_quantity} onChangeText={(value) => { updateVariant(variant.key, { stock_quantity: value.replace(/[^0-9]/g, "") }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], stock_quantity: undefined } } })); }} keyboardType="number-pad" placeholder="Stock quantity" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.variants[variant.key]?.stock_quantity && styles.inputInvalid]} />{fieldErrors.variants[variant.key]?.stock_quantity ? <Text style={styles.inlineError}>{fieldErrors.variants[variant.key].stock_quantity}</Text> : null}</View><View style={styles.columnField}><TextInput value={variant.price_override} onChangeText={(value) => { updateVariant(variant.key, { price_override: value.replace(/[^0-9.]/g, "") }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], price_override: undefined } } })); }} keyboardType="decimal-pad" placeholder="Price override" placeholderTextColor={colors.dim} style={[styles.input, fieldErrors.variants[variant.key]?.price_override && styles.inputInvalid]} />{fieldErrors.variants[variant.key]?.price_override ? <Text style={styles.inlineError}>{fieldErrors.variants[variant.key].price_override}</Text> : null}</View></View>
-              <Pressable onPress={() => updateVariant(variant.key, { is_active: !variant.is_active })} style={styles.checkRow}><Ionicons name={variant.is_active ? "checkbox" : "square-outline"} size={18} color={variant.is_active ? colors.accentStrong : colors.muted} /><Text style={styles.checkLabel}>Available variant</Text></Pressable>
+            <View style={lumoStyles.formSectionHeading}><View><Text style={lumoStyles.panelEyebrow}>SIZE / COLOR / STOCK</Text><Text style={lumoStyles.sectionTitle}>Variants</Text></View><Pressable onPress={addVariant} style={lumoStyles.addVariantButton}><Ionicons name="add" size={15} color={colors.accentStrong} /><Text style={lumoStyles.addVariantText}>Add variant</Text></Pressable></View>
+            {variants.map((variant, index) => <View key={variant.key} style={lumoStyles.variantCard}>
+              <View style={lumoStyles.variantTop}><Text style={lumoStyles.variantTitle}>Variant {index + 1}</Text><Pressable onPress={() => removeVariant(variant.key)} hitSlop={6}><Ionicons name="trash-outline" size={16} color={colors.like} /></Pressable></View>
+              <TextInput value={variant.name} onChangeText={(value) => { updateVariant(variant.key, { name: value }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], name: undefined } } })); }} placeholder="Variant name (e.g. Black / M) *" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.variants[variant.key]?.name && lumoStyles.inputInvalid]} />
+              {fieldErrors.variants[variant.key]?.name ? <Text style={lumoStyles.inlineError}>{fieldErrors.variants[variant.key].name}</Text> : null}
+              <View style={lumoStyles.twoColumns}><View style={lumoStyles.columnField}><TextInput value={variant.color} onChangeText={(value) => updateVariant(variant.key, { color: value })} placeholder="Color" placeholderTextColor={colors.dim} style={lumoStyles.input} /></View><View style={lumoStyles.columnField}><TextInput value={variant.size} onChangeText={(value) => updateVariant(variant.key, { size: value })} placeholder="Size" placeholderTextColor={colors.dim} style={lumoStyles.input} /></View></View>
+              <View style={lumoStyles.twoColumns}><View style={lumoStyles.columnField}><TextInput value={variant.stock_quantity} onChangeText={(value) => { updateVariant(variant.key, { stock_quantity: value.replace(/[^0-9]/g, "") }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], stock_quantity: undefined } } })); }} keyboardType="number-pad" placeholder="Stock quantity" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.variants[variant.key]?.stock_quantity && lumoStyles.inputInvalid]} />{fieldErrors.variants[variant.key]?.stock_quantity ? <Text style={lumoStyles.inlineError}>{fieldErrors.variants[variant.key].stock_quantity}</Text> : null}</View><View style={lumoStyles.columnField}><TextInput value={variant.price_override} onChangeText={(value) => { updateVariant(variant.key, { price_override: value.replace(/[^0-9.]/g, "") }); setFieldErrors((current) => ({ ...current, variants: { ...current.variants, [variant.key]: { ...current.variants[variant.key], price_override: undefined } } })); }} keyboardType="decimal-pad" placeholder="Price override" placeholderTextColor={colors.dim} style={[lumoStyles.input, fieldErrors.variants[variant.key]?.price_override && lumoStyles.inputInvalid]} />{fieldErrors.variants[variant.key]?.price_override ? <Text style={lumoStyles.inlineError}>{fieldErrors.variants[variant.key].price_override}</Text> : null}</View></View>
+              <Pressable onPress={() => updateVariant(variant.key, { is_active: !variant.is_active })} style={lumoStyles.checkRow}><Ionicons name={variant.is_active ? "checkbox" : "square-outline"} size={18} color={variant.is_active ? colors.accentStrong : colors.muted} /><Text style={lumoStyles.checkLabel}>Available variant</Text></Pressable>
             </View>)}
-            <View style={styles.formBottomSpace} />
+            <View style={lumoStyles.formBottomSpace} />
           </ScrollView>
-          <View style={styles.modalFooter}>
-            <Pressable onPress={() => setEditorVisible(false)} style={styles.cancelButton}><Text style={styles.cancelButtonText}>Cancel</Text></Pressable>
-            <Pressable onPress={() => void saveProduct()} disabled={savingProduct} style={[styles.saveButton, savingProduct && styles.disabled]}>
+          <View style={lumoStyles.modalFooter}>
+            <Pressable onPress={() => setEditorVisible(false)} style={lumoStyles.cancelButton}><Text style={lumoStyles.cancelButtonText}>Cancel</Text></Pressable>
+            <Pressable onPress={() => void saveProduct()} disabled={savingProduct} style={[lumoStyles.saveButton, savingProduct && lumoStyles.disabled]}>
               {savingProduct ? <ActivityIndicator color={colors.bg} size="small" /> : <Ionicons name="checkmark" size={17} color={colors.bg} />}
-              <Text style={styles.saveButtonText}>{savingProduct ? "Saving..." : editingProduct ? "Save changes" : "Create product"}</Text>
+              <Text style={lumoStyles.saveButtonText}>{savingProduct ? "Saving..." : editingProduct ? "Save changes" : "Create product"}</Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>

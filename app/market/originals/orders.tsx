@@ -23,6 +23,7 @@ import {
   type OfficialOrder,
 } from "../../../lib/market-orders";
 import { colors } from "../../../lib/theme";
+import { useThemedStyles } from "../../../lib/theme-styles";
 
 type OrderTab = "new" | "orders";
 
@@ -45,6 +46,7 @@ function dateLabel(value: string) {
 }
 
 export default function OfficialOrdersScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -192,164 +194,164 @@ export default function OfficialOrdersScreen() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={styles.muted}>Loading orders...</Text></View>;
+    return <View style={lumoStyles.center}><ActivityIndicator size="large" color={colors.accentStrong} /><Text style={lumoStyles.muted}>Loading orders...</Text></View>;
   }
 
   if (!isManager) {
     return (
-      <View style={styles.center}>
+      <View style={lumoStyles.center}>
         <Ionicons name="lock-closed-outline" size={28} color={colors.accentStrong} />
-        <Text style={styles.title}>Access restricted</Text>
-        <Text style={styles.muted}>Order management is available to LUMO Owners, Admins and Developers.</Text>
-        <Pressable onPress={() => router.back()} style={styles.primaryButton}><Text style={styles.primaryButtonText}>Go back</Text></Pressable>
+        <Text style={lumoStyles.title}>Access restricted</Text>
+        <Text style={lumoStyles.muted}>Order management is available to LUMO Owners, Admins and Developers.</Text>
+        <Pressable onPress={() => router.back()} style={lumoStyles.primaryButton}><Text style={lumoStyles.primaryButtonText}>Go back</Text></Pressable>
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
+    <View style={lumoStyles.root}>
+      <View style={lumoStyles.header}>
+        <Pressable onPress={() => router.back()} style={lumoStyles.headerIcon} hitSlop={8}>
           <Ionicons name="arrow-back" size={19} color={colors.text} />
         </Pressable>
-        <View style={styles.headerCopy}>
-          <Text style={styles.eyebrow}>LUMO ORIGINALS</Text>
-          <Text style={styles.title}>Order management</Text>
+        <View style={lumoStyles.headerCopy}>
+          <Text style={lumoStyles.eyebrow}>LUMO ORIGINALS</Text>
+          <Text style={lumoStyles.title}>Order management</Text>
         </View>
-        <Pressable onPress={() => void load(true)} style={styles.headerIcon} accessibilityLabel="Refresh orders">
+        <Pressable onPress={() => void load(true)} style={lumoStyles.headerIcon} accessibilityLabel="Refresh orders">
           {refreshing ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="refresh" size={18} color={colors.accentStrong} />}
         </Pressable>
       </View>
 
-      <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{newOrders.length}</Text>
-          <Text style={styles.summaryLabel}>NEW ORDERS</Text>
+      <View style={lumoStyles.summaryRow}>
+        <View style={lumoStyles.summaryCard}>
+          <Text style={lumoStyles.summaryValue}>{newOrders.length}</Text>
+          <Text style={lumoStyles.summaryLabel}>NEW ORDERS</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{pastOrders.length}</Text>
-          <Text style={styles.summaryLabel}>ORDERS</Text>
+        <View style={lumoStyles.summaryCard}>
+          <Text style={lumoStyles.summaryValue}>{pastOrders.length}</Text>
+          <Text style={lumoStyles.summaryLabel}>ORDERS</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{orders.filter((item) => item.status === "completed").length}</Text>
-          <Text style={styles.summaryLabel}>COMPLETED</Text>
+        <View style={lumoStyles.summaryCard}>
+          <Text style={lumoStyles.summaryValue}>{orders.filter((item) => item.status === "completed").length}</Text>
+          <Text style={lumoStyles.summaryLabel}>COMPLETED</Text>
         </View>
       </View>
 
       <Pressable
         onPress={() => void setupTelegramBot()}
         disabled={settingUpTelegram}
-        style={[styles.telegramTestButton, settingUpTelegram && styles.disabled]}
+        style={[lumoStyles.telegramTestButton, settingUpTelegram && lumoStyles.disabled]}
       >
         {settingUpTelegram ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="settings-outline" size={15} color={colors.accentStrong} />}
-        <Text style={styles.telegramTestText}>{settingUpTelegram ? "INSTALLING BOT COMMANDS..." : "INSTALL / REFRESH TELEGRAM BUTTONS"}</Text>
+        <Text style={lumoStyles.telegramTestText}>{settingUpTelegram ? "INSTALLING BOT COMMANDS..." : "INSTALL / REFRESH TELEGRAM BUTTONS"}</Text>
       </Pressable>
 
       <Pressable
         onPress={() => void sendTelegramTest()}
         disabled={testingTelegram}
-        style={[styles.telegramTestButton, styles.telegramTestSecondary, testingTelegram && styles.disabled]}
+        style={[lumoStyles.telegramTestButton, lumoStyles.telegramTestSecondary, testingTelegram && lumoStyles.disabled]}
       >
         {testingTelegram ? <ActivityIndicator size="small" color={colors.muted} /> : <Ionicons name="paper-plane-outline" size={14} color={colors.muted} />}
-        <Text style={styles.telegramTestSecondaryText}>{testingTelegram ? "CHECKING..." : "TEST TELEGRAM NOTIFICATION"}</Text>
+        <Text style={lumoStyles.telegramTestSecondaryText}>{testingTelegram ? "CHECKING..." : "TEST TELEGRAM NOTIFICATION"}</Text>
       </Pressable>
 
-      <View style={styles.tabs}>
-        <Pressable onPress={() => setTab("new")} style={[styles.tab, tab === "new" && styles.tabActive]}>
-          <Text style={[styles.tabText, tab === "new" && styles.tabTextActive]}>NEW ORDERS</Text>
-          {newOrders.length > 0 ? <View style={styles.countPill}><Text style={styles.countText}>{newOrders.length}</Text></View> : null}
+      <View style={lumoStyles.tabs}>
+        <Pressable onPress={() => setTab("new")} style={[lumoStyles.tab, tab === "new" && lumoStyles.tabActive]}>
+          <Text style={[lumoStyles.tabText, tab === "new" && lumoStyles.tabTextActive]}>NEW ORDERS</Text>
+          {newOrders.length > 0 ? <View style={lumoStyles.countPill}><Text style={lumoStyles.countText}>{newOrders.length}</Text></View> : null}
         </Pressable>
-        <Pressable onPress={() => setTab("orders")} style={[styles.tab, tab === "orders" && styles.tabActive]}>
-          <Text style={[styles.tabText, tab === "orders" && styles.tabTextActive]}>ORDERS</Text>
+        <Pressable onPress={() => setTab("orders")} style={[lumoStyles.tab, tab === "orders" && lumoStyles.tabActive]}>
+          <Text style={[lumoStyles.tabText, tab === "orders" && lumoStyles.tabTextActive]}>ORDERS</Text>
         </Pressable>
       </View>
 
       {error ? (
-        <View style={styles.errorPanel}>
-          <Text style={styles.errorTitle}>Could not load orders</Text>
-          <Text style={styles.muted}>{error}</Text>
-          <Pressable onPress={() => void load(true)} style={styles.retryButton}><Text style={styles.retryText}>Try again</Text></Pressable>
+        <View style={lumoStyles.errorPanel}>
+          <Text style={lumoStyles.errorTitle}>Could not load orders</Text>
+          <Text style={lumoStyles.muted}>{error}</Text>
+          <Pressable onPress={() => void load(true)} style={lumoStyles.retryButton}><Text style={lumoStyles.retryText}>Try again</Text></Pressable>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={lumoStyles.listContent} showsVerticalScrollIndicator={false}>
           {visibleOrders.length ? visibleOrders.map((order) => (
-            <Pressable key={order.id} onPress={() => void openOrder(order)} style={({ pressed }) => [styles.orderCard, pressed && styles.cardPressed]}>
-              <View style={styles.orderTop}>
-                <Text style={styles.orderNumber}>ORDER #{order.id}</Text>
-                <View style={[styles.statusPill, order.status === "completed" ? styles.statusCompleted : order.status === "processing" ? styles.statusProcessing : styles.statusNew]}>
-                  <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
+            <Pressable key={order.id} onPress={() => void openOrder(order)} style={({ pressed }) => [lumoStyles.orderCard, pressed && lumoStyles.cardPressed]}>
+              <View style={lumoStyles.orderTop}>
+                <Text style={lumoStyles.orderNumber}>ORDER #{order.id}</Text>
+                <View style={[lumoStyles.statusPill, order.status === "completed" ? lumoStyles.statusCompleted : order.status === "processing" ? lumoStyles.statusProcessing : lumoStyles.statusNew]}>
+                  <Text style={lumoStyles.statusText}>{order.status.toUpperCase()}</Text>
                 </View>
               </View>
-              <Text style={styles.productName} numberOfLines={1}>{order.product_name}</Text>
-              <Text style={styles.customerName}>{order.customer_name} · {order.customer_phone}</Text>
-              <View style={styles.orderBottom}>
-                <Text style={styles.orderDate}>{dateLabel(order.created_at)}</Text>
-                <Text style={styles.orderPrice}>{price(order.subtotal, order.currency)}</Text>
+              <Text style={lumoStyles.productName} numberOfLines={1}>{order.product_name}</Text>
+              <Text style={lumoStyles.customerName}>{order.customer_name} · {order.customer_phone}</Text>
+              <View style={lumoStyles.orderBottom}>
+                <Text style={lumoStyles.orderDate}>{dateLabel(order.created_at)}</Text>
+                <Text style={lumoStyles.orderPrice}>{price(order.subtotal, order.currency)}</Text>
               </View>
             </Pressable>
           )) : (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}><Ionicons name={tab === "new" ? "mail-open-outline" : "receipt-outline"} size={28} color={colors.muted} /></View>
-              <Text style={styles.emptyTitle}>{tab === "new" ? "No new orders yet" : "No orders yet"}</Text>
-              <Text style={styles.emptyText}>{tab === "new" ? "New customer orders will appear here automatically." : "Orders you have opened will be listed here."}</Text>
+            <View style={lumoStyles.emptyState}>
+              <View style={lumoStyles.emptyIcon}><Ionicons name={tab === "new" ? "mail-open-outline" : "receipt-outline"} size={28} color={colors.muted} /></View>
+              <Text style={lumoStyles.emptyTitle}>{tab === "new" ? "No new orders yet" : "No orders yet"}</Text>
+              <Text style={lumoStyles.emptyText}>{tab === "new" ? "New customer orders will appear here automatically." : "Orders you have opened will be listed here."}</Text>
             </View>
           )}
         </ScrollView>
       )}
 
       <Modal visible={detailVisible} transparent animationType="slide" onRequestClose={() => setDetailVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.detailSheet}>
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeader}>
+        <View style={lumoStyles.modalBackdrop}>
+          <View style={lumoStyles.detailSheet}>
+            <View style={lumoStyles.sheetHandle} />
+            <View style={lumoStyles.sheetHeader}>
               <View>
-                <Text style={styles.eyebrow}>LUMO / ORDER</Text>
-                <Text style={styles.sheetTitle}>#{selectedOrder?.id ?? "—"}</Text>
+                <Text style={lumoStyles.eyebrow}>LUMO / ORDER</Text>
+                <Text style={lumoStyles.sheetTitle}>#{selectedOrder?.id ?? "—"}</Text>
               </View>
-              <Pressable onPress={() => setDetailVisible(false)} style={styles.headerIcon}>
+              <Pressable onPress={() => setDetailVisible(false)} style={lumoStyles.headerIcon}>
                 <Ionicons name="close" size={19} color={colors.text} />
               </Pressable>
             </View>
             {selectedOrder ? (
-              <ScrollView contentContainerStyle={styles.detailContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.detailProduct}>
-                  <Text style={styles.detailLabel}>PRODUCT</Text>
-                  <Text style={styles.detailProductName}>{selectedOrder.product_name}</Text>
-                  <Text style={styles.detailMuted}>{selectedOrder.product_sku || "No SKU"} · {selectedOrder.variant_name || "Standard option"}</Text>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.detailMuted}>{selectedOrder.quantity} × {price(selectedOrder.unit_price, selectedOrder.currency)}</Text>
-                    <Text style={styles.totalPrice}>{price(selectedOrder.subtotal, selectedOrder.currency)}</Text>
+              <ScrollView contentContainerStyle={lumoStyles.detailContent} showsVerticalScrollIndicator={false}>
+                <View style={lumoStyles.detailProduct}>
+                  <Text style={lumoStyles.detailLabel}>PRODUCT</Text>
+                  <Text style={lumoStyles.detailProductName}>{selectedOrder.product_name}</Text>
+                  <Text style={lumoStyles.detailMuted}>{selectedOrder.product_sku || "No SKU"} · {selectedOrder.variant_name || "Standard option"}</Text>
+                  <View style={lumoStyles.priceRow}>
+                    <Text style={lumoStyles.detailMuted}>{selectedOrder.quantity} × {price(selectedOrder.unit_price, selectedOrder.currency)}</Text>
+                    <Text style={lumoStyles.totalPrice}>{price(selectedOrder.subtotal, selectedOrder.currency)}</Text>
                   </View>
                 </View>
 
-                <View style={styles.detailPanel}>
-                  <Text style={styles.detailLabel}>CUSTOMER</Text>
-                  <Text style={styles.detailPrimary}>{selectedOrder.customer_name}</Text>
-                  <Text style={styles.detailPhone}>{selectedOrder.customer_phone}</Text>
-                  {selectedOrder.customer_address ? <Text style={styles.detailMuted}>{selectedOrder.customer_address}</Text> : null}
-                  {selectedOrder.customer_note ? <Text style={styles.detailNote}>“{selectedOrder.customer_note}”</Text> : null}
-                  <Pressable onPress={callCustomer} style={styles.callCustomer}>
+                <View style={lumoStyles.detailPanel}>
+                  <Text style={lumoStyles.detailLabel}>CUSTOMER</Text>
+                  <Text style={lumoStyles.detailPrimary}>{selectedOrder.customer_name}</Text>
+                  <Text style={lumoStyles.detailPhone}>{selectedOrder.customer_phone}</Text>
+                  {selectedOrder.customer_address ? <Text style={lumoStyles.detailMuted}>{selectedOrder.customer_address}</Text> : null}
+                  {selectedOrder.customer_note ? <Text style={lumoStyles.detailNote}>“{selectedOrder.customer_note}”</Text> : null}
+                  <Pressable onPress={callCustomer} style={lumoStyles.callCustomer}>
                     <Ionicons name="call-outline" size={16} color={colors.bg} />
-                    <Text style={styles.callCustomerText}>CALL CUSTOMER</Text>
+                    <Text style={lumoStyles.callCustomerText}>CALL CUSTOMER</Text>
                   </Pressable>
                 </View>
 
-                <View style={styles.detailPanel}>
-                  <Text style={styles.detailLabel}>ORDER DETAILS</Text>
-                  <View style={styles.detailLine}><Text style={styles.detailMuted}>Placed</Text><Text style={styles.detailValue}>{dateLabel(selectedOrder.created_at)}</Text></View>
-                  <View style={styles.detailLine}><Text style={styles.detailMuted}>Status</Text><Text style={styles.detailValue}>{selectedOrder.status.toUpperCase()}</Text></View>
-                  <View style={styles.detailLine}><Text style={styles.detailMuted}>Telegram</Text><Text style={styles.detailValue}>{selectedOrder.notification_status.toUpperCase()}</Text></View>
+                <View style={lumoStyles.detailPanel}>
+                  <Text style={lumoStyles.detailLabel}>ORDER DETAILS</Text>
+                  <View style={lumoStyles.detailLine}><Text style={lumoStyles.detailMuted}>Placed</Text><Text style={lumoStyles.detailValue}>{dateLabel(selectedOrder.created_at)}</Text></View>
+                  <View style={lumoStyles.detailLine}><Text style={lumoStyles.detailMuted}>Status</Text><Text style={lumoStyles.detailValue}>{selectedOrder.status.toUpperCase()}</Text></View>
+                  <View style={lumoStyles.detailLine}><Text style={lumoStyles.detailMuted}>Telegram</Text><Text style={lumoStyles.detailValue}>{selectedOrder.notification_status.toUpperCase()}</Text></View>
                 </View>
 
                 {selectedOrder.status !== "completed" ? (
-                  <Pressable onPress={() => void markCompleted()} disabled={busy} style={[styles.completeButton, busy && styles.disabled]}>
+                  <Pressable onPress={() => void markCompleted()} disabled={busy} style={[lumoStyles.completeButton, busy && lumoStyles.disabled]}>
                     {busy ? <ActivityIndicator size="small" color={colors.bg} /> : <Ionicons name="checkmark-circle-outline" size={18} color={colors.bg} />}
-                    <Text style={styles.completeButtonText}>MARK AS COMPLETED</Text>
+                    <Text style={lumoStyles.completeButtonText}>MARK AS COMPLETED</Text>
                   </Pressable>
                 ) : (
-                  <Pressable onPress={removeOrder} disabled={busy} style={[styles.deleteButton, busy && styles.disabled]}>
+                  <Pressable onPress={removeOrder} disabled={busy} style={[lumoStyles.deleteButton, busy && lumoStyles.disabled]}>
                     <Ionicons name="trash-outline" size={17} color={colors.like} />
-                    <Text style={styles.deleteButtonText}>DELETE ORDER</Text>
+                    <Text style={lumoStyles.deleteButtonText}>DELETE ORDER</Text>
                   </Pressable>
                 )}
               </ScrollView>

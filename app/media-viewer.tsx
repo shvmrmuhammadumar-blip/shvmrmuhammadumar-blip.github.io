@@ -14,9 +14,12 @@ import LumoVideoPlayer from "../components/LumoVideoPlayer";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 
 export default function MediaViewer() {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const [imageLoading, setImageLoading] = useState(true);
@@ -37,7 +40,7 @@ export default function MediaViewer() {
   const goBack = () => router.back();
 
   return (
-    <View style={styles.screen}>
+    <View style={lumoStyles.screen}>
       <StatusBar hidden />
       <Stack.Screen
         options={{
@@ -48,7 +51,7 @@ export default function MediaViewer() {
         }}
       />
 
-      <View style={styles.mediaStage}>
+      <View style={lumoStyles.mediaStage}>
         {url && isValidType && !mediaError ? (
           isVideo ? (
             <LumoVideoPlayer uri={url} style={{ width, height }} topInset={90} bottomInset={24} />
@@ -56,7 +59,7 @@ export default function MediaViewer() {
             <>
               <Image
                 source={{ uri: url }}
-                style={styles.image}
+                style={lumoStyles.image}
                 contentFit="contain"
                 transition={220}
                 onLoad={() => setImageLoading(false)}
@@ -66,64 +69,64 @@ export default function MediaViewer() {
                 }}
               />
               {imageLoading && (
-                <View style={styles.loader} pointerEvents="none">
+                <View style={lumoStyles.loader} pointerEvents="none">
                   <ActivityIndicator size="large" color={colors.lime} />
                 </View>
               )}
             </>
           )
         ) : (
-          <View style={styles.errorState}>
-            <View style={styles.errorIcon}>
+          <View style={lumoStyles.errorState}>
+            <View style={lumoStyles.errorIcon}>
               <Ionicons name="image-outline" size={30} color={colors.lime} />
             </View>
-            <Text style={styles.errorTitle}>Media ochilmadi</Text>
-            <Text style={styles.errorDescription}>
+            <Text style={lumoStyles.errorTitle}>Media ochilmadi</Text>
+            <Text style={lumoStyles.errorDescription}>
               {url && isValidType
                 ? "Faylni yuklab bo‘lmadi. Internet aloqasini tekshiring va qayta urinib ko‘ring."
                 : "Media manzili yoki turi topilmadi. Chatdan qayta ochib ko‘ring."}
             </Text>
-            <Pressable onPress={goBack} style={styles.backButton}>
-              <Text style={styles.backButtonText}>Orqaga qaytish</Text>
+            <Pressable onPress={goBack} style={lumoStyles.backButton}>
+              <Text style={lumoStyles.backButtonText}>Orqaga qaytish</Text>
             </Pressable>
           </View>
         )}
       </View>
 
-      <SafeAreaView edges={["top"]} pointerEvents="box-none" style={styles.topOverlay}>
-        <View style={styles.topBar}>
+      <SafeAreaView edges={["top"]} pointerEvents="box-none" style={lumoStyles.topOverlay}>
+        <View style={lumoStyles.topBar}>
           <Pressable
             onPress={goBack}
             accessibilityRole="button"
             accessibilityLabel="Yopish"
             hitSlop={12}
-            style={({ pressed }) => [styles.closeButton, pressed && styles.buttonPressed]}
+            style={({ pressed }) => [lumoStyles.closeButton, pressed && lumoStyles.buttonPressed]}
           >
-            <Ionicons name="close" size={23} color="#FFFFFF" />
+            <Ionicons name="close" size={23} color={resolveThemeColor(colors.mediaText, "color")} />
           </Pressable>
 
-          <View style={styles.titleContainer}>
-            <View style={styles.brandRow}>
+          <View style={lumoStyles.titleContainer}>
+            <View style={lumoStyles.brandRow}>
               <Image
                 source={require('../assets/lumo-mark.png')}
-                style={styles.brandLogo}
+                style={lumoStyles.brandLogo}
                 contentFit="contain"
               />
-              <Text style={styles.brand}>LUMO</Text>
+              <Text style={lumoStyles.brand}>LUMO</Text>
             </View>
-            <Text style={styles.subtitle}>{isVideo ? "VIDEO" : "PHOTO"}</Text>
+            <Text style={lumoStyles.subtitle}>{isVideo ? "VIDEO" : "PHOTO"}</Text>
           </View>
 
-          <View style={styles.mediaBadge}>
+          <View style={lumoStyles.mediaBadge}>
             <Ionicons name={isVideo ? "videocam" : "image"} size={17} color={colors.lime} />
           </View>
         </View>
       </SafeAreaView>
 
       {!isVideo && (
-        <SafeAreaView edges={["bottom"]} pointerEvents="none" style={styles.bottomOverlay}>
-          <View style={styles.bottomContent}>
-            <View style={styles.bottomLine} />
+        <SafeAreaView edges={["bottom"]} pointerEvents="none" style={lumoStyles.bottomOverlay}>
+          <View style={lumoStyles.bottomContent}>
+            <View style={lumoStyles.bottomLine} />
           </View>
         </SafeAreaView>
       )}
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   mediaStage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.bg,
@@ -151,7 +154,7 @@ const styles = StyleSheet.create({
     height: "80%",
   },
   loader: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.bg,
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   brand: {
-    color: "#FFFFFF",
+    color: colors.mediaText,
     fontSize: 16,
     fontWeight: "900",
     letterSpacing: 2.5,
@@ -252,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   errorTitle: {
-    color: "#FFFFFF",
+    color: colors.mediaText,
     fontSize: 20,
     fontWeight: "800",
   },
@@ -270,7 +273,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   backButtonText: {
-    color: "#FFFFFF",
+    color: colors.mediaText,
     fontSize: 13,
     fontWeight: "800",
   },

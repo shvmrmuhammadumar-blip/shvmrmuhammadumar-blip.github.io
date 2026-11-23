@@ -12,6 +12,7 @@ import ChatMediaAttachment from '../ChatMediaAttachment';
 import MessageActionSurface from '../MessageActionSurface';
 import { colors } from '../../lib/theme';
 import type { GroupMessageWithSender } from '../../lib/groups';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 export type GroupReaction = {
   group_message_id: string;
@@ -58,6 +59,7 @@ export default function GroupMessageItem({
   onOpenMedia,
   onOpenAttachment,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const mine = message.sender_id === currentUserId;
   const type = message.message_type ?? 'text';
 
@@ -76,7 +78,7 @@ export default function GroupMessageItem({
   }));
 
   return (
-    <View style={[styles.line, mine ? styles.mineLine : styles.otherLine]}>
+    <View style={[lumoStyles.line, mine ? lumoStyles.mineLine : lumoStyles.otherLine]}>
       {!mine && (
         <Avatar
           uri={message.sender?.avatar_url}
@@ -85,9 +87,9 @@ export default function GroupMessageItem({
         />
       )}
 
-      <View style={styles.content}>
+      <View style={lumoStyles.content}>
         {!mine && (
-          <Text style={styles.sender} numberOfLines={1}>
+          <Text style={lumoStyles.sender} numberOfLines={1}>
             {message.sender?.full_name ||
               message.sender?.username ||
               'Member'}
@@ -102,16 +104,16 @@ export default function GroupMessageItem({
           onLongPress={() => onLongPress(message)}
           delayLongPress={300}
           style={[
-            styles.bubble,
-            mine ? styles.mineBubble : styles.otherBubble,
-            type !== 'text' && styles.bubbleWithMedia,
-            highlighted && styles.highlightedBubble,
+            lumoStyles.bubble,
+            mine ? lumoStyles.mineBubble : lumoStyles.otherBubble,
+            type !== 'text' && lumoStyles.bubbleWithMedia,
+            highlighted && lumoStyles.highlightedBubble,
           ]}
           accessibilityRole="button"
           accessibilityHint="Long press to open message actions"
         >
           {!!(message as any).forwarded_from_type && (
-            <Text style={styles.forwardedLabel} numberOfLines={1}>
+            <Text style={lumoStyles.forwardedLabel} numberOfLines={1}>
               FORWARDED
               {(message as any).forwarded_from_sender
                 ? ` · ${(message as any).forwarded_from_sender}`
@@ -126,8 +128,8 @@ export default function GroupMessageItem({
           {!!message.reply_to && (
             <Pressable
               style={({ pressed }) => [
-                styles.reply,
-                pressed && styles.replyPressed,
+                lumoStyles.reply,
+                pressed && lumoStyles.replyPressed,
               ]}
               disabled={!replyMessage}
               onPress={() => {
@@ -138,14 +140,14 @@ export default function GroupMessageItem({
               accessibilityRole="button"
               accessibilityLabel="Go to replied message"
             >
-              <Text style={styles.replyTitle} numberOfLines={1}>
+              <Text style={lumoStyles.replyTitle} numberOfLines={1}>
                 {replyMessage?.sender_id === currentUserId
                   ? 'You'
                   : replyMessage?.sender?.full_name ||
                     replyMessage?.sender?.username ||
                     'Reply'}
               </Text>
-              <Text style={styles.replyBody} numberOfLines={1}>
+              <Text style={lumoStyles.replyBody} numberOfLines={1}>
                 {replyMessage?.body?.trim() ||
                   (replyMessage?.media_path ? 'Attachment' : 'Message')}
               </Text>
@@ -175,19 +177,19 @@ export default function GroupMessageItem({
             />
           )}
           {!!message.body?.trim() && (
-            <Text style={[styles.body, mine ? styles.ownText : styles.otherText]}>
+            <Text style={[lumoStyles.body, mine ? lumoStyles.ownText : lumoStyles.otherText]}>
               {message.body}
             </Text>
           )}
 
           {!!message.edited_at && (
-            <Text style={[styles.edited, mine && styles.ownText]}>
+            <Text style={[lumoStyles.edited, mine && lumoStyles.ownText]}>
               edited
             </Text>
           )}
 
-          <View style={styles.meta}>
-            <Text style={[styles.time, mine && styles.ownText]}>
+          <View style={lumoStyles.meta}>
+            <Text style={[lumoStyles.time, mine && lumoStyles.ownText]}>
               {formatTime(message.created_at)}
             </Text>
             {mine && (
@@ -197,17 +199,17 @@ export default function GroupMessageItem({
         </Pressable>
         </MessageActionSurface>
 
-        <View style={styles.reactionRow}>
+        <View style={lumoStyles.reactionRow}>
           {reactions.map((item) => (
             <Pressable
               key={item.reaction}
               onPress={() => onToggleReaction(message, item.reaction)}
               style={[
-                styles.reaction,
-                item.mine && styles.reactionActive,
+                lumoStyles.reaction,
+                item.mine && lumoStyles.reactionActive,
               ]}
             >
-              <Text style={styles.reactionText}>
+              <Text style={lumoStyles.reactionText}>
                 {item.reaction} {item.count}
               </Text>
             </Pressable>
@@ -215,7 +217,7 @@ export default function GroupMessageItem({
 
           <Pressable
             onPress={() => onToggleReaction(message, '❤️')}
-            style={styles.addReaction}
+            style={lumoStyles.addReaction}
             accessibilityLabel="React with heart"
           >
             <Ionicons name="heart-outline" size={14} color={colors.muted} />

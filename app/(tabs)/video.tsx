@@ -18,10 +18,12 @@ import { supabase } from '../../lib/supabase';
 import { POST_SELECT, setLike, toggleLikeLocally } from '../../lib/api';
 import { colors } from '../../lib/theme';
 import type { Post } from '../../lib/types';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type VideoFilter = 'For You' | 'Following' | 'Latest';
 
 export default function VideoScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const me = session?.user?.id ?? '';
   const router = useRouter();
@@ -113,35 +115,35 @@ export default function VideoScreen() {
       description="Short clips and videos shared by people on Lumo. Your feed is ordered by recent posts until personalized recommendations are available."
       iconName="play-circle-outline"
     >
-      <LumoPanel style={styles.filterPanel}>
+      <LumoPanel style={lumoStyles.filterPanel}>
         {(['For You', 'Following', 'Latest'] as VideoFilter[]).map((item) => {
           const selected = filter === item;
           return (
             <Pressable
               key={item}
               onPress={() => setFilter(item)}
-              style={[styles.filterButton, selected && styles.filterButtonSelected]}
+              style={[lumoStyles.filterButton, selected && lumoStyles.filterButtonSelected]}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
             >
-              <Text style={[styles.filterText, selected && styles.filterTextSelected]}>{item}</Text>
+              <Text style={[lumoStyles.filterText, selected && lumoStyles.filterTextSelected]}>{item}</Text>
             </Pressable>
           );
         })}
       </LumoPanel>
 
       {filter === 'For You' ? (
-        <Text style={styles.helperText}>Recommendation signals are not connected yet; recent videos are shown instead.</Text>
+        <Text style={lumoStyles.helperText}>Recommendation signals are not connected yet; recent videos are shown instead.</Text>
       ) : null}
 
       {loading ? (
-        <View style={styles.state}><ActivityIndicator color={colors.accent} /><Text style={styles.stateText}>Loading videos…</Text></View>
+        <View style={lumoStyles.state}><ActivityIndicator color={colors.accent} /><Text style={lumoStyles.stateText}>Loading videos…</Text></View>
       ) : posts.length ? (
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
           scrollEnabled={false}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={lumoStyles.list}
           renderItem={({ item, index }) => (
             <PostCard
               post={item}
@@ -156,12 +158,12 @@ export default function VideoScreen() {
           )}
         />
       ) : (
-        <LumoPanel style={styles.emptyPanel}>
-          <View style={styles.emptyIcon}><Ionicons name="videocam-outline" size={26} color={colors.muted} /></View>
-          <Text style={styles.emptyTitle}>{filter === 'Following' ? 'No videos from followed accounts' : 'No videos yet'}</Text>
-          <Text style={styles.stateText}>{errorText || 'Published video posts will appear here.'}</Text>
-          <Pressable style={styles.primaryButton} onPress={() => router.push('/create')} accessibilityRole="button">
-            <Ionicons name="add" size={18} color={colors.bg} /><Text style={styles.primaryButtonText}>Create a video post</Text>
+        <LumoPanel style={lumoStyles.emptyPanel}>
+          <View style={lumoStyles.emptyIcon}><Ionicons name="videocam-outline" size={26} color={colors.muted} /></View>
+          <Text style={lumoStyles.emptyTitle}>{filter === 'Following' ? 'No videos from followed accounts' : 'No videos yet'}</Text>
+          <Text style={lumoStyles.stateText}>{errorText || 'Published video posts will appear here.'}</Text>
+          <Pressable style={lumoStyles.primaryButton} onPress={() => router.push('/create')} accessibilityRole="button">
+            <Ionicons name="add" size={18} color={colors.bg} /><Text style={lumoStyles.primaryButtonText}>Create a video post</Text>
           </Pressable>
         </LumoPanel>
       )}

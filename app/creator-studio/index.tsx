@@ -8,6 +8,8 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { formatStudioNumber, getPeriodStart, loadStudioOverview, type StudioOverview } from '../../lib/studio-data';
 import { colors } from '../../lib/theme';
+import { getStudioBodyWidth } from '../../lib/responsive';
+import { useThemedStyles } from "../../lib/theme-styles";
 
 type Period = '7d' | '30d' | '90d';
 type Person = {
@@ -90,6 +92,7 @@ function buildBuckets(events: EventRow[], followers: { created_at: string }[], p
 }
 
 export default function StudioOverviewScreen() {
+  const lumoStyles = useThemedStyles(styles);
   const { session } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -276,255 +279,256 @@ export default function StudioOverviewScreen() {
   const chartMax = Math.max(1, ...chart.map((bucket) => Math.max(bucket.opens, bucket.followers)));
   const uniqueViewers = new Set(events.map((event) => event.viewer_id)).size;
   const interactions = periodLikes + periodComments;
-  const isWide = width >= 1180;
+  const contentWidth = getStudioBodyWidth(width);
+  const isWide = contentWidth >= 980;
   const accountLabel = overview.accountType === 'business' ? 'BUSINESS' : overview.accountType === 'creator' ? 'CREATOR' : 'PERSONAL';
   const firstDay = startOfPeriod(period).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   return (
     <StudioFrame title="Dashboard" subtitle={accountLabel + ' workspace'} icon="grid-outline" wide>
-      <View style={styles.commandRow}>
-        <View style={styles.commandLeft}>
-          <View style={styles.liveMark} />
-          <Text style={styles.commandTitle}>Performance overview</Text>
-          <View style={styles.accountTypePill}>
-            <Text style={styles.accountTypeText}>{accountLabel}</Text>
+      <View style={lumoStyles.commandRow}>
+        <View style={lumoStyles.commandLeft}>
+          <View style={lumoStyles.liveMark} />
+          <Text style={lumoStyles.commandTitle}>Performance overview</Text>
+          <View style={lumoStyles.accountTypePill}>
+            <Text style={lumoStyles.accountTypeText}>{accountLabel}</Text>
           </View>
         </View>
-        <View style={styles.commandActions}>
-          <View style={styles.periodControl}>
+        <View style={lumoStyles.commandActions}>
+          <View style={lumoStyles.periodControl}>
             {periodOptions.map((item) => (
               <Pressable
                 key={item.key}
                 onPress={() => setPeriod(item.key)}
-                style={[styles.periodButton, period === item.key && styles.periodButtonActive]}
+                style={[lumoStyles.periodButton, period === item.key && lumoStyles.periodButtonActive]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: period === item.key }}
               >
-                <Text style={[styles.periodText, period === item.key && styles.periodTextActive]}>{item.label}</Text>
+                <Text style={[lumoStyles.periodText, period === item.key && lumoStyles.periodTextActive]}>{item.label}</Text>
               </Pressable>
             ))}
           </View>
-          <Pressable onPress={() => void refresh()} style={styles.refreshButton} accessibilityRole="button" accessibilityLabel="Refresh dashboard">
+          <Pressable onPress={() => void refresh()} style={lumoStyles.refreshButton} accessibilityRole="button" accessibilityLabel="Refresh dashboard">
             {refreshing ? <ActivityIndicator size="small" color={colors.accentStrong} /> : <Ionicons name="refresh-outline" size={17} color={colors.text} />}
           </Pressable>
         </View>
       </View>
 
       {error ? (
-        <StudioPanel style={styles.errorPanel}>
+        <StudioPanel style={lumoStyles.errorPanel}>
           <Ionicons name="alert-circle-outline" size={17} color={colors.danger} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={lumoStyles.errorText}>{error}</Text>
         </StudioPanel>
       ) : null}
 
-      <View style={styles.metricGrid}>
-        <StudioPanel style={styles.metricCard}>
-          <View style={styles.metricTop}>
-            <View style={styles.metricIcon}><Ionicons name="people-outline" size={18} color={colors.accentStrong} /></View>
-            <Text style={styles.metricHint}>AUDIENCE</Text>
+      <View style={lumoStyles.metricGrid}>
+        <StudioPanel style={lumoStyles.metricCard}>
+          <View style={lumoStyles.metricTop}>
+            <View style={lumoStyles.metricIcon}><Ionicons name="people-outline" size={18} color={colors.accentStrong} /></View>
+            <Text style={lumoStyles.metricHint}>AUDIENCE</Text>
             <Ionicons name="trending-up-outline" size={16} color={colors.success} />
           </View>
-          <Text style={styles.metricValue}>{formatStudioNumber(overview.followers)}</Text>
-          <View style={styles.metricBottom}>
-            <Text style={styles.metricLabel}>Followers</Text>
-            <Text style={styles.metricDelta}>+{formatStudioNumber(newFollowers)} in range</Text>
+          <Text style={lumoStyles.metricValue}>{formatStudioNumber(overview.followers)}</Text>
+          <View style={lumoStyles.metricBottom}>
+            <Text style={lumoStyles.metricLabel}>Followers</Text>
+            <Text style={lumoStyles.metricDelta}>+{formatStudioNumber(newFollowers)} in range</Text>
           </View>
         </StudioPanel>
-        <StudioPanel style={styles.metricCard}>
-          <View style={styles.metricTop}>
-            <View style={styles.metricIcon}><Ionicons name="eye-outline" size={18} color={colors.accentStrong} /></View>
-            <Text style={styles.metricHint}>DISCOVERY</Text>
+        <StudioPanel style={lumoStyles.metricCard}>
+          <View style={lumoStyles.metricTop}>
+            <View style={lumoStyles.metricIcon}><Ionicons name="eye-outline" size={18} color={colors.accentStrong} /></View>
+            <Text style={lumoStyles.metricHint}>DISCOVERY</Text>
             <Ionicons name="pulse-outline" size={16} color={colors.accentStrong} />
           </View>
-          <Text style={styles.metricValue}>{formatStudioNumber(eventTotal)}</Text>
-          <View style={styles.metricBottom}>
-            <Text style={styles.metricLabel}>Views</Text>
-            <Text style={styles.metricSub}>{formatStudioNumber(uniqueViewers)} unique viewers · post, story + video activity</Text>
+          <Text style={lumoStyles.metricValue}>{formatStudioNumber(eventTotal)}</Text>
+          <View style={lumoStyles.metricBottom}>
+            <Text style={lumoStyles.metricLabel}>Views</Text>
+            <Text style={lumoStyles.metricSub}>{formatStudioNumber(uniqueViewers)} unique viewers · post, story + video activity</Text>
           </View>
         </StudioPanel>
-        <StudioPanel style={styles.metricCard}>
-          <View style={styles.metricTop}>
-            <View style={styles.metricIcon}><Ionicons name="heart-outline" size={18} color={colors.accentStrong} /></View>
-            <Text style={styles.metricHint}>INTERACTIONS</Text>
+        <StudioPanel style={lumoStyles.metricCard}>
+          <View style={lumoStyles.metricTop}>
+            <View style={lumoStyles.metricIcon}><Ionicons name="heart-outline" size={18} color={colors.accentStrong} /></View>
+            <Text style={lumoStyles.metricHint}>INTERACTIONS</Text>
             <Ionicons name="chatbubble-ellipses-outline" size={16} color={colors.accentStrong} />
           </View>
-          <Text style={styles.metricValue}>{formatStudioNumber(interactions)}</Text>
-          <View style={styles.metricBottom}>
-            <Text style={styles.metricLabel}>Likes + comments</Text>
-            <Text style={styles.metricSub}>{formatStudioNumber(periodLikes)} likes В· {formatStudioNumber(periodComments)} comments</Text>
+          <Text style={lumoStyles.metricValue}>{formatStudioNumber(interactions)}</Text>
+          <View style={lumoStyles.metricBottom}>
+            <Text style={lumoStyles.metricLabel}>Likes + comments</Text>
+            <Text style={lumoStyles.metricSub}>{formatStudioNumber(periodLikes)} likes · {formatStudioNumber(periodComments)} comments</Text>
           </View>
         </StudioPanel>
-        <StudioPanel style={styles.metricCard}>
-          <View style={styles.metricTop}>
-            <View style={styles.metricIcon}><Ionicons name="images-outline" size={18} color={colors.accentStrong} /></View>
-            <Text style={styles.metricHint}>PUBLISHING</Text>
+        <StudioPanel style={lumoStyles.metricCard}>
+          <View style={lumoStyles.metricTop}>
+            <View style={lumoStyles.metricIcon}><Ionicons name="images-outline" size={18} color={colors.accentStrong} /></View>
+            <Text style={lumoStyles.metricHint}>PUBLISHING</Text>
             <Ionicons name="albums-outline" size={16} color={colors.accentStrong} />
           </View>
-          <Text style={styles.metricValue}>{formatStudioNumber(overview.posts)}</Text>
-          <View style={styles.metricBottom}>
-            <Text style={styles.metricLabel}>Published posts</Text>
-            <Text style={styles.metricSub}>{formatStudioNumber(publishedInPeriod)} posts & stories in range</Text>
+          <Text style={lumoStyles.metricValue}>{formatStudioNumber(overview.posts)}</Text>
+          <View style={lumoStyles.metricBottom}>
+            <Text style={lumoStyles.metricLabel}>Published posts</Text>
+            <Text style={lumoStyles.metricSub}>{formatStudioNumber(publishedInPeriod)} posts & stories in range</Text>
           </View>
         </StudioPanel>
       </View>
 
-      <View style={[styles.mainGrid, isWide && styles.mainGridWide]}>
-        <View style={[styles.primaryColumn, isWide && styles.primaryColumnWide]}>
-          <StudioPanel style={styles.chartPanel}>
-            <View style={styles.panelHeader}>
-              <View style={styles.panelTitleRow}>
-                <View style={styles.panelIcon}><Ionicons name="analytics-outline" size={18} color={colors.accentStrong} /></View>
-                <View style={styles.panelHeading}>
-                  <Text style={styles.panelTitle}>Account activity</Text>
-                  <Text style={styles.panelMeta}>{firstDay} вЂ” today</Text>
+      <View style={[lumoStyles.mainGrid, isWide && lumoStyles.mainGridWide]}>
+        <View style={[lumoStyles.primaryColumn, isWide && lumoStyles.primaryColumnWide]}>
+          <StudioPanel style={lumoStyles.chartPanel}>
+            <View style={lumoStyles.panelHeader}>
+              <View style={lumoStyles.panelTitleRow}>
+                <View style={lumoStyles.panelIcon}><Ionicons name="analytics-outline" size={18} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.panelHeading}>
+                  <Text style={lumoStyles.panelTitle}>Account activity</Text>
+                  <Text style={lumoStyles.panelMeta}>{firstDay} — today</Text>
                 </View>
               </View>
-              <Pressable onPress={() => router.push('/creator-studio/analytics')} style={styles.viewAllButton} accessibilityRole="button">
-                <Text style={styles.viewAllText}>Details</Text>
+              <Pressable onPress={() => router.push('/creator-studio/analytics')} style={lumoStyles.viewAllButton} accessibilityRole="button">
+                <Text style={lumoStyles.viewAllText}>Details</Text>
                 <Ionicons name="arrow-forward" size={13} color={colors.accentStrong} />
               </Pressable>
             </View>
             {loading ? (
-              <View style={styles.chartLoading}><ActivityIndicator color={colors.accentStrong} /></View>
+              <View style={lumoStyles.chartLoading}><ActivityIndicator color={colors.accentStrong} /></View>
             ) : (
               <>
-                <View style={styles.chartLegend}>
-                  <View style={styles.legendItem}><View style={styles.legendOpen} /><Text style={styles.legendText}>Content opens</Text></View>
-                  <View style={styles.legendItem}><View style={styles.legendFollower} /><Text style={styles.legendText}>New followers</Text></View>
+                <View style={lumoStyles.chartLegend}>
+                  <View style={lumoStyles.legendItem}><View style={lumoStyles.legendOpen} /><Text style={lumoStyles.legendText}>Content opens</Text></View>
+                  <View style={lumoStyles.legendItem}><View style={lumoStyles.legendFollower} /><Text style={lumoStyles.legendText}>New followers</Text></View>
                 </View>
-                <View style={styles.chartArea}>
-                  <View style={styles.chartGuides}>
-                    <View style={styles.chartGuide} />
-                    <View style={styles.chartGuide} />
-                    <View style={styles.chartGuide} />
-                    <View style={styles.chartGuide} />
+                <View style={lumoStyles.chartArea}>
+                  <View style={lumoStyles.chartGuides}>
+                    <View style={lumoStyles.chartGuide} />
+                    <View style={lumoStyles.chartGuide} />
+                    <View style={lumoStyles.chartGuide} />
+                    <View style={lumoStyles.chartGuide} />
                   </View>
-                  <View style={styles.chartBars}>
+                  <View style={lumoStyles.chartBars}>
                     {chart.map((bucket, index) => (
-                      <View key={index} style={styles.chartColumn}>
-                        <View style={styles.chartBarGroup}>
-                          <View style={[styles.chartBarOpen, { height: Math.max(3, (bucket.opens / chartMax) * 168) }]} />
-                          <View style={[styles.chartBarFollower, { height: Math.max(3, (bucket.followers / chartMax) * 168) }]} />
+                      <View key={index} style={lumoStyles.chartColumn}>
+                        <View style={lumoStyles.chartBarGroup}>
+                          <View style={[lumoStyles.chartBarOpen, { height: Math.max(3, (bucket.opens / chartMax) * 168) }]} />
+                          <View style={[lumoStyles.chartBarFollower, { height: Math.max(3, (bucket.followers / chartMax) * 168) }]} />
                         </View>
                       </View>
                     ))}
                   </View>
                 </View>
-                <View style={styles.chartAxis}>
-                  <Text style={styles.axisText}>{period === '7d' ? '7 days ago' : period === '30d' ? '30 days ago' : '90 days ago'}</Text>
-                  <Text style={styles.axisText}>Today</Text>
+                <View style={lumoStyles.chartAxis}>
+                  <Text style={lumoStyles.axisText}>{period === '7d' ? '7 days ago' : period === '30d' ? '30 days ago' : '90 days ago'}</Text>
+                  <Text style={lumoStyles.axisText}>Today</Text>
                 </View>
                 {eventTotal === 0 && newFollowers === 0 ? (
-                  <View style={styles.chartEmpty}>
-                    <Text style={styles.chartEmptyText}>Activity will appear as people view content and follow your profile.</Text>
+                  <View style={lumoStyles.chartEmpty}>
+                    <Text style={lumoStyles.chartEmptyText}>Activity will appear as people view content and follow your profile.</Text>
                   </View>
                 ) : null}
               </>
             )}
           </StudioPanel>
 
-          <StudioPanel style={styles.contentPanel}>
-            <View style={styles.panelHeader}>
-              <View style={styles.panelTitleRow}>
-                <View style={styles.panelIcon}><Ionicons name="trophy-outline" size={18} color={colors.accentStrong} /></View>
-                <View style={styles.panelHeading}>
-                  <Text style={styles.panelTitle}>Top content</Text>
-                  <Text style={styles.panelMeta}>{eventTotal > 0 ? 'Ranked by recorded views' : 'Recent posts В· early activity data'}</Text>
+          <StudioPanel style={lumoStyles.contentPanel}>
+            <View style={lumoStyles.panelHeader}>
+              <View style={lumoStyles.panelTitleRow}>
+                <View style={lumoStyles.panelIcon}><Ionicons name="trophy-outline" size={18} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.panelHeading}>
+                  <Text style={lumoStyles.panelTitle}>Top content</Text>
+                  <Text style={lumoStyles.panelMeta}>{eventTotal > 0 ? 'Ranked by recorded views' : 'Recent posts · early activity data'}</Text>
                 </View>
               </View>
-              <Pressable onPress={() => router.push('/creator-studio/content')} style={styles.viewAllButton} accessibilityRole="button">
-                <Text style={styles.viewAllText}>Library</Text>
+              <Pressable onPress={() => router.push('/creator-studio/content')} style={lumoStyles.viewAllButton} accessibilityRole="button">
+                <Text style={lumoStyles.viewAllText}>Library</Text>
                 <Ionicons name="arrow-forward" size={13} color={colors.accentStrong} />
               </Pressable>
             </View>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeading, styles.postHeading]}>CONTENT</Text>
-              <Text style={styles.tableHeading}>VIEWS</Text>
-              <Text style={styles.tableHeading}>LIKES</Text>
-              <Text style={styles.tableHeading}>COMMENTS</Text>
+            <View style={lumoStyles.tableHeader}>
+              <Text style={[lumoStyles.tableHeading, lumoStyles.postHeading]}>CONTENT</Text>
+              <Text style={lumoStyles.tableHeading}>VIEWS</Text>
+              <Text style={lumoStyles.tableHeading}>LIKES</Text>
+              <Text style={lumoStyles.tableHeading}>COMMENTS</Text>
             </View>
             {loading ? <ActivityIndicator color={colors.accentStrong} style={{ marginVertical: 18 }} /> : null}
             {!loading && !topPosts.length ? (
-              <View style={styles.tableEmpty}>
+              <View style={lumoStyles.tableEmpty}>
                 <Ionicons name="images-outline" size={20} color={colors.dim} />
-                <Text style={styles.tableEmptyText}>Your published content will appear here.</Text>
-                <Pressable onPress={() => router.push('/create')} style={styles.createInline}>
+                <Text style={lumoStyles.tableEmptyText}>Your published content will appear here.</Text>
+                <Pressable onPress={() => router.push('/create')} style={lumoStyles.createInline}>
                   <Ionicons name="add" size={15} color={colors.bg} />
-                  <Text style={styles.createInlineText}>Create</Text>
+                  <Text style={lumoStyles.createInlineText}>Create</Text>
                 </Pressable>
               </View>
             ) : null}
             {topPosts.map((post, index) => (
-              <Pressable key={post.id} onPress={() => router.push((post.media_type === 'video' || post.video_url ? '/creator-studio/video/' : '/post/') + post.id)} style={styles.contentRow} accessibilityRole="button">
-                <Text style={styles.rank}>{index + 1}</Text>
+              <Pressable key={post.id} onPress={() => router.push((post.media_type === 'video' || post.video_url ? '/creator-studio/video/' : '/post/') + post.id)} style={lumoStyles.contentRow} accessibilityRole="button">
+                <Text style={lumoStyles.rank}>{index + 1}</Text>
                 {post.image_url ? (
-                  <Image source={{ uri: post.image_url }} style={styles.thumbnail} contentFit="cover" />
+                  <Image source={{ uri: post.image_url }} style={lumoStyles.thumbnail} contentFit="cover" />
                 ) : (
-                  <View style={styles.thumbnailFallback}>
+                  <View style={lumoStyles.thumbnailFallback}>
                     <Ionicons name={post.media_type === 'video' ? 'play' : 'image-outline'} size={17} color={colors.muted} />
                   </View>
                 )}
-                <View style={styles.contentCopy}>
-                  <Text style={styles.contentName} numberOfLines={1}>{post.caption?.trim() || (post.media_type === 'video' ? 'Video post' : 'Photo post')}</Text>
-                  <Text style={styles.contentMeta}>{post.media_type === 'video' ? 'VIDEO' : 'POST'} В· {new Date(post.created_at).toLocaleDateString()}</Text>
+                <View style={lumoStyles.contentCopy}>
+                  <Text style={lumoStyles.contentName} numberOfLines={1}>{post.caption?.trim() || (post.media_type === 'video' ? 'Video post' : 'Photo post')}</Text>
+                  <Text style={lumoStyles.contentMeta}>{post.media_type === 'video' ? 'VIDEO' : 'POST'} · {new Date(post.created_at).toLocaleDateString()}</Text>
                 </View>
-                <Text style={styles.contentNumber}>{formatStudioNumber(post.opens)}</Text>
-                <Text style={styles.contentNumber}>{formatStudioNumber(post.likes)}</Text>
-                <Text style={styles.contentNumber}>{formatStudioNumber(post.comments)}</Text>
+                <Text style={lumoStyles.contentNumber}>{formatStudioNumber(post.opens)}</Text>
+                <Text style={lumoStyles.contentNumber}>{formatStudioNumber(post.likes)}</Text>
+                <Text style={lumoStyles.contentNumber}>{formatStudioNumber(post.comments)}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.dim} />
               </Pressable>
             ))}
-            <Text style={styles.tableFootnote}>Views include Home-feed photo impressions (55% visible for 250 ms), photo post opens and video playback sessions.</Text>
+            <Text style={lumoStyles.tableFootnote}>Views include Home-feed photo impressions (55% visible for 250 ms), photo post opens and video playback sessions.</Text>
           </StudioPanel>
         </View>
 
-        <View style={[styles.sideColumn, isWide && styles.sideColumnWide]}>
-          <StudioPanel style={styles.audiencePanel}>
-            <View style={styles.panelHeader}>
-              <View style={styles.panelTitleRow}>
-                <View style={styles.panelIcon}><Ionicons name="people-outline" size={18} color={colors.accentStrong} /></View>
-                <View style={styles.panelHeading}>
-                  <Text style={styles.panelTitle}>Audience pulse</Text>
-                  <Text style={styles.panelMeta}>Recent follower activity</Text>
+        <View style={[lumoStyles.sideColumn, isWide && lumoStyles.sideColumnWide]}>
+          <StudioPanel style={lumoStyles.audiencePanel}>
+            <View style={lumoStyles.panelHeader}>
+              <View style={lumoStyles.panelTitleRow}>
+                <View style={lumoStyles.panelIcon}><Ionicons name="people-outline" size={18} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.panelHeading}>
+                  <Text style={lumoStyles.panelTitle}>Audience pulse</Text>
+                  <Text style={lumoStyles.panelMeta}>Recent follower activity</Text>
                 </View>
               </View>
               <Pressable onPress={() => router.push('/creator-studio/audience')} hitSlop={8}>
                 <Ionicons name="arrow-forward" size={16} color={colors.accentStrong} />
               </Pressable>
             </View>
-            <View style={styles.audienceSummary}>
-              <Text style={styles.audienceValue}>+{formatStudioNumber(newFollowers)}</Text>
-              <Text style={styles.audienceCaption}>new followers В· {period.toUpperCase()}</Text>
+            <View style={lumoStyles.audienceSummary}>
+              <Text style={lumoStyles.audienceValue}>+{formatStudioNumber(newFollowers)}</Text>
+              <Text style={lumoStyles.audienceCaption}>new followers · {period.toUpperCase()}</Text>
             </View>
             {recentFollowers.length ? recentFollowers.slice(0, 4).map((row, index) => (
-              <Pressable key={row.person?.id ?? row.created_at + index} onPress={() => row.person?.id && router.push('/user/' + row.person.id)} style={styles.personRow}>
+              <Pressable key={row.person?.id ?? row.created_at + index} onPress={() => row.person?.id && router.push('/user/' + row.person.id)} style={lumoStyles.personRow}>
                 {row.person?.avatar_url ? (
-                  <Image source={{ uri: row.person.avatar_url }} style={styles.personAvatar} contentFit="cover" />
+                  <Image source={{ uri: row.person.avatar_url }} style={lumoStyles.personAvatar} contentFit="cover" />
                 ) : (
-                  <View style={styles.personAvatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>
+                  <View style={lumoStyles.personAvatarFallback}><Ionicons name="person" size={15} color={colors.muted} /></View>
                 )}
-                <View style={styles.personCopy}>
-                  <Text style={styles.personName} numberOfLines={1}>{row.person?.full_name || row.person?.username || 'Lumo member'}</Text>
-                  <Text style={styles.personHandle}>@{row.person?.username ?? 'member'}</Text>
+                <View style={lumoStyles.personCopy}>
+                  <Text style={lumoStyles.personName} numberOfLines={1}>{row.person?.full_name || row.person?.username || 'Lumo member'}</Text>
+                  <Text style={lumoStyles.personHandle}>@{row.person?.username ?? 'member'}</Text>
                 </View>
-                <Text style={styles.personTime}>{new Date(row.created_at).toLocaleDateString()}</Text>
+                <Text style={lumoStyles.personTime}>{new Date(row.created_at).toLocaleDateString()}</Text>
               </Pressable>
             )) : (
-              <Text style={styles.sideEmpty}>New followers will appear here.</Text>
+              <Text style={lumoStyles.sideEmpty}>New followers will appear here.</Text>
             )}
-            <Pressable onPress={() => router.push('/creator-studio/audience')} style={styles.panelFooterButton}>
-              <Text style={styles.panelFooterText}>View audience</Text>
+            <Pressable onPress={() => router.push('/creator-studio/audience')} style={lumoStyles.panelFooterButton}>
+              <Text style={lumoStyles.panelFooterText}>View audience</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.accentStrong} />
             </Pressable>
           </StudioPanel>
 
-          <StudioPanel style={styles.activityPanel}>
-            <View style={styles.panelHeader}>
-              <View style={styles.panelTitleRow}>
-                <View style={styles.panelIcon}><Ionicons name="flash-outline" size={18} color={colors.accentStrong} /></View>
-                <View style={styles.panelHeading}>
-                  <Text style={styles.panelTitle}>Recent activity</Text>
-                  <Text style={styles.panelMeta}>Around your content</Text>
+          <StudioPanel style={lumoStyles.activityPanel}>
+            <View style={lumoStyles.panelHeader}>
+              <View style={lumoStyles.panelTitleRow}>
+                <View style={lumoStyles.panelIcon}><Ionicons name="flash-outline" size={18} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.panelHeading}>
+                  <Text style={lumoStyles.panelTitle}>Recent activity</Text>
+                  <Text style={lumoStyles.panelMeta}>Around your content</Text>
                 </View>
               </View>
               <Pressable onPress={() => router.push('/creator-studio/community')} hitSlop={8}>
@@ -532,29 +536,29 @@ export default function StudioOverviewScreen() {
               </Pressable>
             </View>
             {recentComments.length ? recentComments.slice(0, 4).map((comment) => (
-              <Pressable key={comment.id} onPress={() => router.push('/post/' + comment.post_id)} style={styles.activityRow}>
-                <View style={styles.activityIcon}><Ionicons name="chatbubble-outline" size={15} color={colors.accentStrong} /></View>
-                <View style={styles.activityCopy}>
-                  <Text style={styles.activityName}>@{comment.person?.username ?? 'user'}</Text>
-                  <Text style={styles.activityBody} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
+              <Pressable key={comment.id} onPress={() => router.push('/post/' + comment.post_id)} style={lumoStyles.activityRow}>
+                <View style={lumoStyles.activityIcon}><Ionicons name="chatbubble-outline" size={15} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.activityCopy}>
+                  <Text style={lumoStyles.activityName}>@{comment.person?.username ?? 'user'}</Text>
+                  <Text style={lumoStyles.activityBody} numberOfLines={2}>{comment.body?.trim() || 'Media comment'}</Text>
                 </View>
               </Pressable>
             )) : (
-              <Text style={styles.sideEmpty}>Comments on your posts will appear here.</Text>
+              <Text style={lumoStyles.sideEmpty}>Comments on your posts will appear here.</Text>
             )}
-            <Pressable onPress={() => router.push('/creator-studio/community')} style={styles.panelFooterButton}>
-              <Text style={styles.panelFooterText}>Open community</Text>
+            <Pressable onPress={() => router.push('/creator-studio/community')} style={lumoStyles.panelFooterButton}>
+              <Text style={lumoStyles.panelFooterText}>Open community</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.accentStrong} />
             </Pressable>
           </StudioPanel>
 
-          <StudioPanel style={styles.plannerPanel}>
-            <View style={styles.panelHeader}>
-              <View style={styles.panelTitleRow}>
-                <View style={styles.panelIcon}><Ionicons name="calendar-outline" size={18} color={colors.accentStrong} /></View>
-                <View style={styles.panelHeading}>
-                  <Text style={styles.panelTitle}>Publishing queue</Text>
-                  <Text style={styles.panelMeta}>Your next plans</Text>
+          <StudioPanel style={lumoStyles.plannerPanel}>
+            <View style={lumoStyles.panelHeader}>
+              <View style={lumoStyles.panelTitleRow}>
+                <View style={lumoStyles.panelIcon}><Ionicons name="calendar-outline" size={18} color={colors.accentStrong} /></View>
+                <View style={lumoStyles.panelHeading}>
+                  <Text style={lumoStyles.panelTitle}>Publishing queue</Text>
+                  <Text style={lumoStyles.panelMeta}>Your next plans</Text>
                 </View>
               </View>
               <Pressable onPress={() => router.push('/creator-studio/planner')} hitSlop={8}>
@@ -562,39 +566,39 @@ export default function StudioOverviewScreen() {
               </Pressable>
             </View>
             {upcomingPlans.length ? upcomingPlans.map((plan) => (
-              <View key={plan.id} style={styles.planRow}>
-                <View style={styles.planDateBox}>
-                  <Text style={styles.planDay}>{plan.scheduled_at ? new Date(plan.scheduled_at).getDate() : 'вЂ”'}</Text>
-                  <Text style={styles.planMonth}>{plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString(undefined, { month: 'short' }).toUpperCase() : 'DATE'}</Text>
+              <View key={plan.id} style={lumoStyles.planRow}>
+                <View style={lumoStyles.planDateBox}>
+                  <Text style={lumoStyles.planDay}>{plan.scheduled_at ? new Date(plan.scheduled_at).getDate() : '—'}</Text>
+                  <Text style={lumoStyles.planMonth}>{plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString(undefined, { month: 'short' }).toUpperCase() : 'DATE'}</Text>
                 </View>
-                <View style={styles.planCopy}>
-                  <Text style={styles.planName} numberOfLines={1}>{plan.title}</Text>
-                  <Text style={styles.planMeta}>PLANNED</Text>
+                <View style={lumoStyles.planCopy}>
+                  <Text style={lumoStyles.planName} numberOfLines={1}>{plan.title}</Text>
+                  <Text style={lumoStyles.planMeta}>PLANNED</Text>
                 </View>
               </View>
             )) : (
-              <Text style={styles.sideEmpty}>No upcoming plans.</Text>
+              <Text style={lumoStyles.sideEmpty}>No upcoming plans.</Text>
             )}
-            <Pressable onPress={() => router.push('/creator-studio/planner')} style={styles.panelFooterButton}>
-              <Text style={styles.panelFooterText}>Open planner</Text>
+            <Pressable onPress={() => router.push('/creator-studio/planner')} style={lumoStyles.panelFooterButton}>
+              <Text style={lumoStyles.panelFooterText}>Open planner</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.accentStrong} />
             </Pressable>
           </StudioPanel>
         </View>
       </View>
 
-      <View style={styles.quickActions}>
-        <Pressable onPress={() => router.push('/create')} style={styles.quickActionPrimary}>
+      <View style={lumoStyles.quickActions}>
+        <Pressable onPress={() => router.push('/create')} style={lumoStyles.quickActionPrimary}>
           <Ionicons name="add" size={17} color={colors.bg} />
-          <Text style={styles.quickActionPrimaryText}>Create content</Text>
+          <Text style={lumoStyles.quickActionPrimaryText}>Create content</Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/creator-studio/planner')} style={styles.quickAction}>
+        <Pressable onPress={() => router.push('/creator-studio/planner')} style={lumoStyles.quickAction}>
           <Ionicons name="calendar-outline" size={16} color={colors.accentStrong} />
-          <Text style={styles.quickActionText}>Plan content</Text>
+          <Text style={lumoStyles.quickActionText}>Plan content</Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/messages')} style={styles.quickAction}>
+        <Pressable onPress={() => router.push('/messages')} style={lumoStyles.quickAction}>
           <Ionicons name="mail-outline" size={16} color={colors.accentStrong} />
-          <Text style={styles.quickActionText}>Open inbox</Text>
+          <Text style={lumoStyles.quickActionText}>Open inbox</Text>
         </Pressable>
       </View>
     </StudioFrame>
@@ -648,7 +652,7 @@ const styles = StyleSheet.create({
   legendFollower: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#64717D' },
   legendText: { color: colors.muted, fontSize: 9 },
   chartArea: { height: 176, position: 'relative', justifyContent: 'flex-end', borderBottomWidth: 1, borderBottomColor: colors.border },
-  chartGuides: { ...StyleSheet.absoluteFillObject, justifyContent: 'space-between', paddingVertical: 5 },
+  chartGuides: { ...StyleSheet.absoluteFill, justifyContent: 'space-between', paddingVertical: 5 },
   chartGuide: { height: 1, backgroundColor: 'rgba(148, 163, 184, 0.10)', borderStyle: 'dashed', borderWidth: 0.5, borderColor: 'rgba(148, 163, 184, 0.08)' },
   chartBars: { height: '100%', flexDirection: 'row', alignItems: 'flex-end', gap: 3, paddingHorizontal: 2 },
   chartColumn: { flex: 1, height: '100%', justifyContent: 'flex-end' },

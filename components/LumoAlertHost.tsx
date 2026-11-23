@@ -4,8 +4,11 @@ import type { AlertButton } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { subscribeAlert, type AlertPayload } from "../lib/alert";
 import { colors } from "../lib/theme";
+import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+
 
 export default function LumoAlertHost() {
+  const lumoStyles = useThemedStyles(styles);
   const [queue, setQueue] = useState<AlertPayload[]>([]);
 
   useEffect(() => subscribeAlert((p) => setQueue((q) => [...q, p])), []);
@@ -22,21 +25,21 @@ export default function LumoAlertHost() {
 
   return (
     <Modal visible={!!current} transparent animationType="fade" onRequestClose={close}>
-      <View style={styles.overlay}>
+      <View style={lumoStyles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
         {current && (
-          <View style={styles.card}>
-            <View style={[styles.icon, isError && styles.iconError]}>
+          <View style={lumoStyles.card}>
+            <View style={[lumoStyles.icon, isError && lumoStyles.iconError]}>
               <Ionicons
                 name={isError ? "alert-circle-outline" : "sparkles-outline"}
                 size={24}
                 color={isError ? colors.danger : colors.lime}
               />
             </View>
-            <Text style={styles.eyebrow}>LUMO</Text>
-            <Text style={styles.title}>{current.title}</Text>
-            {!!current.message && <Text style={styles.body}>{current.message}</Text>}
-            <View style={styles.buttons}>
+            <Text style={lumoStyles.eyebrow}>LUMO</Text>
+            <Text style={lumoStyles.title}>{current.title}</Text>
+            {!!current.message && <Text style={lumoStyles.body}>{current.message}</Text>}
+            <View style={lumoStyles.buttons}>
               {buttons.map((b, i) => {
                 const cancel = b.style === "cancel";
                 const destructive = b.style === "destructive";
@@ -48,12 +51,12 @@ export default function LumoAlertHost() {
                       b.onPress?.();
                     }}
                     style={({ pressed }) => [
-                      styles.btn,
-                      cancel ? styles.btnCancel : destructive ? styles.btnDanger : styles.btnMain,
+                      lumoStyles.btn,
+                      cancel ? lumoStyles.btnCancel : destructive ? lumoStyles.btnDanger : lumoStyles.btnMain,
                       pressed && { opacity: 0.8 },
                     ]}
                   >
-                    <Text style={[styles.btnText, cancel && { color: colors.text }, destructive && { color: "#fff" }]}>
+                    <Text style={[lumoStyles.btnText, cancel && { color: colors.text }, destructive && { color: colors.text }]}>
                       {b.text ?? "OK"}
                     </Text>
                   </Pressable>

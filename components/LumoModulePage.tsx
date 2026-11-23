@@ -8,8 +8,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { colors } from '../lib/theme';
+import { usePreferences } from '../lib/preferences';
+import { getAppContentWidth } from '../lib/responsive';
+import { useThemedStyles } from "../lib/theme-styles";
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -22,7 +25,9 @@ type Props = {
 };
 
 export function LumoPanel({ children, style }: { children: React.ReactNode; style?: object }) {
-  return <View style={[styles.panel, style]}>{children}</View>;
+  const lumoStyles = useThemedStyles(styles);
+  const { palette } = usePreferences();
+  return <View style={[lumoStyles.panel, { backgroundColor: palette.surface, borderColor: palette.border }, style]}>{children}</View>;
 }
 
 export function LumoModulePage({
@@ -32,38 +37,42 @@ export function LumoModulePage({
   iconName,
   children,
 }: Props) {
+  const lumoStyles = useThemedStyles(styles);
   const router = useRouter();
+  const { palette } = usePreferences();
   const { width } = useWindowDimensions();
-  const horizontalPadding = width < 520 ? 16 : width < 900 ? 24 : 36;
+  const segments = useSegments();
+  const contentWidth = getAppContentWidth(width, segments[0] === '(tabs)');
+  const horizontalPadding = contentWidth < 520 ? 16 : contentWidth < 900 ? 24 : 36;
 
   return (
     <ScrollView
-      style={styles.root}
+      style={[lumoStyles.root, { backgroundColor: palette.bg }]}
       contentContainerStyle={[
-        styles.content,
+        lumoStyles.content,
         { paddingHorizontal: horizontalPadding },
       ]}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.maxWidth}>
+      <View style={lumoStyles.maxWidth}>
         <Pressable
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[lumoStyles.backButton, { backgroundColor: palette.surface, borderColor: palette.border }]}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={18} color={colors.muted} />
-          <Text style={styles.backText}>Back</Text>
+          <Ionicons name="arrow-back" size={18} color={palette.muted} />
+          <Text style={[lumoStyles.backText, { color: palette.muted }]}>Back</Text>
         </Pressable>
 
-        <View style={styles.headingRow}>
-          <View style={styles.iconWrap}>
-            <Ionicons name={iconName} size={22} color={colors.accentStrong} />
+        <View style={lumoStyles.headingRow}>
+          <View style={[lumoStyles.iconWrap, { backgroundColor: palette.glass, borderColor: palette.glassBorder }]}>
+            <Ionicons name={iconName} size={22} color={palette.accentStrong} />
           </View>
-          <View style={styles.headingCopy}>
-            <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
+          <View style={lumoStyles.headingCopy}>
+            <Text style={[lumoStyles.eyebrow, { color: palette.muted }]}>{eyebrow.toUpperCase()}</Text>
+            <Text style={[lumoStyles.title, { color: palette.text }]}>{title}</Text>
+            <Text style={[lumoStyles.description, { color: palette.muted }]}>{description}</Text>
           </View>
         </View>
         {children}
@@ -79,6 +88,8 @@ export function UnavailableModule({
   iconName,
   requirements,
 }: Props & { requirements: string[] }) {
+  const lumoStyles = useThemedStyles(styles);
+  const { palette } = usePreferences();
   return (
     <LumoModulePage
       eyebrow={eyebrow}
@@ -86,26 +97,26 @@ export function UnavailableModule({
       description={description}
       iconName={iconName}
     >
-      <LumoPanel style={styles.statusPanel}>
-        <View style={styles.statusIcon}>
-          <Ionicons name="construct-outline" size={22} color={colors.muted} />
+      <LumoPanel style={lumoStyles.statusPanel}>
+        <View style={lumoStyles.statusIcon}>
+          <Ionicons name="construct-outline" size={22} color={palette.muted} />
         </View>
-        <View style={styles.statusCopy}>
-          <Text style={styles.statusTitle}>Not connected yet</Text>
-          <Text style={styles.statusBody}>
+        <View style={lumoStyles.statusCopy}>
+          <Text style={lumoStyles.statusTitle}>Not connected yet</Text>
+          <Text style={lumoStyles.statusBody}>
             This module is not backed by a live service in the supplied project. No demo transactions or placeholder records are shown.
           </Text>
         </View>
       </LumoPanel>
 
-      <Text style={styles.sectionLabel}>REQUIRED BEFORE ACTIVATION</Text>
-      <LumoPanel style={styles.requirementsPanel}>
+      <Text style={lumoStyles.sectionLabel}>REQUIRED BEFORE ACTIVATION</Text>
+      <LumoPanel style={lumoStyles.requirementsPanel}>
         {requirements.map((requirement, index) => (
-          <View key={`${index}-${requirement}`} style={styles.requirementRow}>
-            <View style={styles.requirementIndex}>
-              <Text style={styles.requirementIndexText}>{index + 1}</Text>
+          <View key={`${index}-${requirement}`} style={lumoStyles.requirementRow}>
+            <View style={lumoStyles.requirementIndex}>
+              <Text style={lumoStyles.requirementIndexText}>{index + 1}</Text>
             </View>
-            <Text style={styles.requirementText}>{requirement}</Text>
+            <Text style={lumoStyles.requirementText}>{requirement}</Text>
           </View>
         ))}
       </LumoPanel>
