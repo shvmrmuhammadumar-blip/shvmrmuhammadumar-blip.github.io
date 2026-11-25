@@ -5,6 +5,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   RefreshControl,
@@ -23,6 +24,7 @@ import { useFocusEffect, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import Avatar from "./Avatar";
+import LumoLikeIcon from "./LumoLikeIcon";
 import PostCommentsSheet from "./PostCommentsSheet";
 import LumoVideoPlayer from "./LumoVideoPlayer";
 import UniversalForwardModal from './UniversalForwardModal';
@@ -34,7 +36,10 @@ import type { Profile } from "../lib/types";
 import { getPlatformRoles, type PlatformRole } from "../lib/market-official";
 import { isUserPremium } from "../lib/membership";
 import { colors } from "../lib/theme";
+import { getProfileLayoutMetrics } from "../lib/responsive";
 import { useThemedStyles, resolveThemeColor } from "../lib/theme-styles";
+import { usePreferences } from "../lib/preferences";
+import { t } from "../lib/localization";
 
 
 const C = {
@@ -105,6 +110,7 @@ function formatNumber(value: number) {
 
 export default function ProfileView({ userId }: { userId: string }) {
   const lumoStyles = useThemedStyles(styles);
+  const { locale, palette } = usePreferences();
   const { session, signOut } = useAuth();
   const me = session?.user?.id;
   const isMe = !!me && userId === me;
@@ -131,6 +137,7 @@ export default function ProfileView({ userId }: { userId: string }) {
   const [postVisible, setPostVisible] = useState(false);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [postDetailsLoading, setPostDetailsLoading] = useState(false);
+  const [postDeleteLoading, setPostDeleteLoading] = useState(false);
   const [commentsSheetVisible, setCommentsSheetVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(0);
 
@@ -176,6 +183,115 @@ export default function ProfileView({ userId }: { userId: string }) {
   const lastTapRef = useRef(0);
   const postScrollRef = useRef<ScrollViewInstance | null>(null);
   const commentInputRef = useRef<TextInputInstance | null>(null);
+  const imagePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const zoomScale = useRef(new Animated.Value(1)).current;
+  const zoomTranslateX = useRef(new Animated.Value(0)).current;
+  const zoomTranslateY = useRef(new Animated.Value(0)).current;
+  const zoomScaleValue = useRef(1);
+  const zoomTranslateValue = useRef({ x: 0, y: 0 });
+  const pinchStartDistance = useRef(0);
+  const pinchStartScale = useRef(1);
+  const lastTouchCount = useRef(0);
+  const panStart = useRef({ x: 0, y: 0 });
+  const panGestureOrigin = useRef({ x: 0, y: 0 });
+
+  const resetImageZoom = () => {
+    zoomScaleValue.current = 1;
+    zoomTranslateValue.current = { x: 0, y: 0 };
+    pinchStartDistance.current = 0;
+    pinchStartScale.current = 1;
+    lastTouchCount.current = 0;
+    zoomScale.setValue(1);
+    zoomTranslateX.setValue(0);
+    zoomTranslateY.setValue(0);
+  };
+
+  const openImageViewer = () => {
+    if (imagePressTimerRef.current) clearTimeout(imagePressTimerRef.current);
+    imagePressTimerRef.current = null;
+    resetImageZoom();
+    setImageViewerVisible(true);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    resetImageZoom();
+  };
+
+  const imageZoomResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponderCapture: (event) =>
+      (event.nativeEvent.touches?.length ?? 0) >= 2,
+    onStartShouldSetPanResponder: (event) =>
+      (event.nativeEvent.touches?.length ?? 0) >= 2 || zoomScaleValue.current > 1.01,
+    onMoveShouldSetPanResponder: (event, gesture) =>
+      (event.nativeEvent.touches?.length ?? 0) >= 2 ||
+      (zoomScaleValue.current > 1.01 &&
+        (Math.abs(gesture.dx) > 2 || Math.abs(gesture.dy) > 2)),
+    onPanResponderGrant: (event) => {
+      const touches = event.nativeEvent.touches ?? [];
+      lastTouchCount.current = touches.length;
+      if (touches.length >= 2) {
+        const [first, second] = touches;
+        pinchStartDistance.current = Math.hypot(
+          second.pageX - first.pageX,
+          second.pageY - first.pageY,
+        );
+        pinchStartScale.current = zoomScaleValue.current;
+      } else {
+        panStart.current = { ...zoomTranslateValue.current };
+        panGestureOrigin.current = { x: 0, y: 0 };
+      }
+    },
+    onPanResponderMove: (event, gesture) => {
+      const touches = event.nativeEvent.touches ?? [];
+      if (touches.length >= 2) {
+        const [first, second] = touches;
+        const distance = Math.hypot(
+          second.pageX - first.pageX,
+          second.pageY - first.pageY,
+        );
+        if (lastTouchCount.current < 2 || !pinchStartDistance.current) {
+          pinchStartDistance.current = distance;
+          pinchStartScale.current = zoomScaleValue.current;
+        }
+        const nextScale = Math.max(
+          1,
+          Math.min(4, pinchStartScale.current * distance / Math.max(1, pinchStartDistance.current)),
+        );
+        zoomScaleValue.current = nextScale;
+        zoomScale.setValue(nextScale);
+        if (nextScale <= 1.01) {
+          zoomTranslateValue.current = { x: 0, y: 0 };
+          zoomTranslateX.setValue(0);
+          zoomTranslateY.setValue(0);
+        }
+      } else {
+        if (lastTouchCount.current >= 2) {
+          panStart.current = { ...zoomTranslateValue.current };
+          panGestureOrigin.current = { x: gesture.dx, y: gesture.dy };
+        }
+        if (zoomScaleValue.current > 1.01) {
+          const limitX = Math.max(0, width * (zoomScaleValue.current - 1) / 2);
+          const limitY = Math.max(0, height * (zoomScaleValue.current - 1) / 2);
+          const x = Math.max(-limitX, Math.min(limitX, panStart.current.x + gesture.dx - panGestureOrigin.current.x));
+          const y = Math.max(-limitY, Math.min(limitY, panStart.current.y + gesture.dy - panGestureOrigin.current.y));
+          zoomTranslateValue.current = { x, y };
+          zoomTranslateX.setValue(x);
+          zoomTranslateY.setValue(y);
+        }
+      }
+      lastTouchCount.current = touches.length;
+    },
+    onPanResponderRelease: () => {
+      pinchStartDistance.current = 0;
+      lastTouchCount.current = 0;
+      if (zoomScaleValue.current <= 1.01) resetImageZoom();
+    },
+    onPanResponderTerminate: () => {
+      pinchStartDistance.current = 0;
+      lastTouchCount.current = 0;
+    },
+  }), [height, width, zoomScale, zoomTranslateX, zoomTranslateY]);
 
   const pressScale = (value: Animated.Value, to: number) => {
     Animated.spring(value, {
@@ -411,6 +527,10 @@ export default function ProfileView({ userId }: { userId: string }) {
   };
 
   const openPost = async (post: Thumb) => {
+    if (imagePressTimerRef.current) clearTimeout(imagePressTimerRef.current);
+    imagePressTimerRef.current = null;
+    setImageViewerVisible(false);
+    resetImageZoom();
     setSelectedPost(post);
     setPostVisible(true);
     setLikersVisible(false);
@@ -426,10 +546,58 @@ export default function ProfileView({ userId }: { userId: string }) {
   };
 
   const closePost = () => {
+    if (imagePressTimerRef.current) clearTimeout(imagePressTimerRef.current);
+    imagePressTimerRef.current = null;
     setCommentsSheetVisible(false);
     setPostVisible(false);
     setLikersVisible(false);
     setSelectedPost(null);
+  };
+
+  const deleteSelectedPost = async () => {
+    if (!selectedPost || !me || selectedPost.user_id !== me || postDeleteLoading) return;
+
+    setPostDeleteLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", selectedPost.id)
+        .eq("user_id", me)
+        .select("id")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error(t(locale, "Could not delete the post. Check your permissions and try again."));
+
+      setPosts((current) => current.filter((item) => item.id !== selectedPost.id));
+      setSavedPosts((current) => current.filter((item) => item.id !== selectedPost.id));
+      setImageViewerVisible(false);
+      setCommentsSheetVisible(false);
+      setLikersVisible(false);
+      setPostVisible(false);
+      setSelectedPost(null);
+    } catch {
+      Alert.alert(
+        t(locale, "Post could not be deleted"),
+        t(locale, "Could not delete the post. Check your permissions and try again."),
+      );
+    } finally {
+      setPostDeleteLoading(false);
+    }
+  };
+
+  const requestDeleteSelectedPost = () => {
+    if (!selectedPost || selectedPost.user_id !== me || postDeleteLoading) return;
+
+    Alert.alert(
+      t(locale, "Delete this post?"),
+      t(locale, "This post will be permanently deleted. This action cannot be undone."),
+      [
+        { text: t(locale, "Cancel"), style: "cancel" },
+        { text: t(locale, "Delete"), style: "destructive", onPress: () => void deleteSelectedPost() },
+      ],
+    );
   };
 
   const toggleLike = async () => {
@@ -462,7 +630,7 @@ export default function ProfileView({ userId }: { userId: string }) {
     }
   };
 
-  const burstHeart = () => {
+  const burstLike = () => {
     heartScale.setValue(0.3);
     heartOpacity.setValue(1);
     Animated.parallel([
@@ -484,14 +652,23 @@ export default function ProfileView({ userId }: { userId: string }) {
   const handleImagePress = () => {
     const now = Date.now();
     const isDoubleTap = now - lastTapRef.current < 280;
-    lastTapRef.current = now;
 
-    if (!isDoubleTap) return;
-
-    burstHeart();
-    if (!liked) {
-      void toggleLike();
+    if (isDoubleTap) {
+      if (imagePressTimerRef.current) clearTimeout(imagePressTimerRef.current);
+      imagePressTimerRef.current = null;
+      lastTapRef.current = 0;
+      burstLike();
+      if (!liked) void toggleLike();
+      return;
     }
+
+    lastTapRef.current = now;
+    if (imagePressTimerRef.current) clearTimeout(imagePressTimerRef.current);
+    imagePressTimerRef.current = setTimeout(() => {
+      imagePressTimerRef.current = null;
+      lastTapRef.current = 0;
+      openImageViewer();
+    }, 280);
   };
 
   const sendComment = async () => {
@@ -790,15 +967,12 @@ export default function ProfileView({ userId }: { userId: string }) {
     return rows;
   }, [currentPosts]);
 
-  const appShellInset = segments[0] === "(tabs)"
-    ? width >= 1040 ? 236 : width >= 760 ? 76 : 0
-    : 0;
-  const contentWidth = Math.max(0, width - appShellInset);
-  const isDesktopProfile = contentWidth >= 1100;
-  const isWidePost = contentWidth >= 1100 && height >= 640;
-  const tileWidth = isDesktopProfile
-    ? Math.min((Math.min(contentWidth, 1440) - 400) / 2, 480)
-    : Math.min((Math.min(contentWidth, 1280) - 48) / 2, 480);
+  const profileLayout = getProfileLayoutMetrics(
+    width,
+    height,
+    segments[0] === "(tabs)",
+  );
+  const { desktopProfile: isDesktopProfile, widePost: isWidePost, tileWidth } = profileLayout;
 
   const identityPanel = (
     <View style={lumoStyles.desktopIdentityPanel}>
@@ -1387,10 +1561,8 @@ export default function ProfileView({ userId }: { userId: string }) {
     );
   };
 
-  const postMediaHeight = isWidePost
-    ? Math.max(340, Math.min(height - 210, 820))
-    : Math.min(Math.round((width - 32) * 0.88), 380);
-  const mediaWidth = isWidePost ? "100%" : width - 32;
+  const postMediaHeight = profileLayout.postMediaHeight;
+  const mediaWidth = profileLayout.postMediaWidth;
   const selectedIsVideo = selectedPost?.media_type === "video" || Boolean(selectedPost?.video_url);
 
   const postOwnerContent = selectedPost ? (
@@ -1433,7 +1605,7 @@ export default function ProfileView({ userId }: { userId: string }) {
           </View>
           <Pressable
             style={lumoStyles.mediaExpandButton}
-            onPress={() => setImageViewerVisible(true)}
+            onPress={openImageViewer}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Open full-screen video"
@@ -1476,21 +1648,12 @@ export default function ProfileView({ userId }: { userId: string }) {
           <Animated.View
             pointerEvents="none"
             style={[
-              lumoStyles.heartBurst,
+              lumoStyles.likeBurst,
               { opacity: heartOpacity, transform: [{ scale: heartScale }] },
             ]}
           >
-            <Text style={lumoStyles.heartBurstIcon}>♥</Text>
+            <LumoLikeIcon size={92} active color="#E7EDF4" />
           </Animated.View>
-        </Pressable>
-        <Pressable
-          style={lumoStyles.mediaExpandButton}
-          onPress={() => setImageViewerVisible(true)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Open full-screen image"
-        >
-          <Ionicons name="expand-outline" size={19} color={C.text} />
         </Pressable>
       </View>
     ) : (
@@ -1508,50 +1671,69 @@ export default function ProfileView({ userId }: { userId: string }) {
   ) : null;
 
   const postActionsContent = (
-    <View style={[lumoStyles.postActions, lumoStyles.premiumPostActions]}>
+    <View style={[lumoStyles.postActions, lumoStyles.premiumPostActions, lumoStyles.postViewerActionsGrid]}>
       <Pressable
-        style={[lumoStyles.postAction, lumoStyles.premiumPostAction, liked && lumoStyles.postActionLikeActive]}
+        style={[
+          lumoStyles.postAction,
+          lumoStyles.premiumPostAction,
+          lumoStyles.postViewerActionCard,
+          {
+            backgroundColor: liked ? palette.dangerSoft : palette.surfaceRaised,
+            borderWidth: 1,
+            borderColor: liked ? palette.like : palette.border,
+          },
+        ]}
         onPress={() => void toggleLike()}
         disabled={likeLoading}
         accessibilityRole="button"
         accessibilityLabel={liked ? "Unlike post" : "Like post"}
       >
-        <Ionicons name={liked ? "heart" : "heart-outline"} size={19} color={liked ? resolveThemeColor("#FF7888", "color") : C.text} />
-        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel, liked && lumoStyles.postActionLabelLikeActive]}>
-          {liked ? "Liked" : "Like"}
-        </Text>
+        <LumoLikeIcon size={23} active={liked} color={liked ? palette.like : palette.text} />
       </Pressable>
       <Pressable
-        style={[lumoStyles.postAction, lumoStyles.premiumPostAction]}
+        style={[
+          lumoStyles.postAction,
+          lumoStyles.premiumPostAction,
+          lumoStyles.postViewerActionCard,
+          { backgroundColor: palette.surfaceRaised, borderWidth: 1, borderColor: palette.border },
+        ]}
         onPress={() => setCommentsSheetVisible(true)}
         accessibilityRole="button"
-        accessibilityLabel="Go to comments"
+        accessibilityLabel={commentsCount > 0 ? `Open ${commentsCount} comments` : "Open comments"}
       >
-        <Ionicons name="chatbubble-outline" size={19} color={C.text} />
-        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel]}>
-          {commentsCount > 0 ? `Comment · ${formatNumber(commentsCount)}` : "Comment"}
-        </Text>
+        <Ionicons name="chatbubble-outline" size={20} color={palette.text} />
       </Pressable>
       <Pressable
-        style={[lumoStyles.postAction, lumoStyles.premiumPostAction]}
+        style={[
+          lumoStyles.postAction,
+          lumoStyles.premiumPostAction,
+          lumoStyles.postViewerActionCard,
+          { backgroundColor: palette.surfaceRaised, borderWidth: 1, borderColor: palette.border },
+        ]}
         onPress={sharePost}
         accessibilityRole="button"
         accessibilityLabel="Forward post"
       >
-        <Ionicons name="arrow-redo-outline" size={19} color={C.text} />
-        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel]}>Forward</Text>
+        <Ionicons name="arrow-redo-outline" size={21} color={palette.text} />
       </Pressable>
       <Pressable
-        style={[lumoStyles.postAction, lumoStyles.premiumPostAction, saved && lumoStyles.postActionSaveActive]}
+        style={[
+          lumoStyles.postAction,
+          lumoStyles.premiumPostAction,
+          lumoStyles.postViewerActionCard,
+          lumoStyles.postViewerSaveAction,
+          {
+            backgroundColor: saved ? palette.accentSoft : palette.surfaceRaised,
+            borderWidth: 1,
+            borderColor: saved ? palette.accent : palette.border,
+          },
+        ]}
         onPress={() => void toggleSave()}
         disabled={saveLoading}
         accessibilityRole="button"
         accessibilityLabel={saved ? "Remove saved post" : "Save post"}
       >
-        <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={19} color={saved ? resolveThemeColor("#E6C77D", "color") : C.text} />
-        <Text style={[lumoStyles.postActionLabel, lumoStyles.premiumActionLabel, saved && lumoStyles.postActionLabelSaveActive]}>
-          {saved ? "Saved" : "Save"}
-        </Text>
+        <Ionicons name={saved ? "bookmark" : "bookmark-outline"} size={20} color={saved ? palette.accentStrong : palette.text} />
       </Pressable>
     </View>
   );
@@ -1584,8 +1766,8 @@ export default function ProfileView({ userId }: { userId: string }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => void refresh()}
-              tintColor={C.lime}
-              colors={[C.lime]}
+              tintColor={palette.accent}
+              colors={[palette.accent]}
               progressBackgroundColor={C.panel}
             />
           }
@@ -1643,8 +1825,8 @@ export default function ProfileView({ userId }: { userId: string }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => void refresh()}
-            tintColor={C.lime}
-            colors={[C.lime]}
+            tintColor={palette.accent}
+            colors={[palette.accent]}
             progressBackgroundColor={C.panel}
           />
         }
@@ -1665,101 +1847,129 @@ export default function ProfileView({ userId }: { userId: string }) {
           style={lumoStyles.modalScreen}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={[lumoStyles.modalHeader, lumoStyles.premiumModalHeader]}>
-            <Pressable
-              onPress={closePost}
-              hitSlop={12}
-              style={[lumoStyles.backButton, lumoStyles.premiumBackButton]}
-            >
-              <Text style={lumoStyles.backButtonText}>←</Text>
-            </Pressable>
-
-            <View style={lumoStyles.modalHeaderCenter}>
-              <Text style={lumoStyles.modalOverline}>LUMO / PROFILE</Text>
-              <Text style={lumoStyles.modalTitle}>POST</Text>
+          <View style={[lumoStyles.modalHeader, lumoStyles.postViewerHeader]}>
+            <View style={lumoStyles.postViewerHeaderLeft}>
+              <Pressable
+                onPress={closePost}
+                hitSlop={10}
+                style={[
+                  lumoStyles.backButton,
+                  lumoStyles.postViewerBackButton,
+                  {
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: palette.surfaceRaised,
+                    borderWidth: 1,
+                    borderColor: palette.border,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Close post"
+              >
+                <Ionicons name="close" size={21} color={palette.text} />
+              </Pressable>
+              <View style={lumoStyles.postViewerHeaderCopy}>
+                <Text style={lumoStyles.postViewerOverline}>LUMO / PROFILE</Text>
+                <Text style={lumoStyles.postViewerTitle}>
+                  {selectedIsVideo ? "Video publication" : "Photo publication"}
+                </Text>
+              </View>
             </View>
 
-            <View style={lumoStyles.modalHeaderIndex}>
-              <Text style={lumoStyles.modalHeaderIndexText}>L.</Text>
+            <View style={lumoStyles.postViewerHeaderRight}>
+              {selectedPost?.user_id === me ? (
+                <Pressable
+                  onPress={requestDeleteSelectedPost}
+                  disabled={postDeleteLoading}
+                  style={lumoStyles.postDeleteButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete post"
+                >
+                  {postDeleteLoading ? (
+                    <ActivityIndicator size="small" color={palette.danger} />
+                  ) : (
+                    <Ionicons name="trash-outline" size={19} color={palette.danger} />
+                  )}
+                </Pressable>
+              ) : (
+                <View style={lumoStyles.postViewerHeaderMark}>
+                  <Ionicons name="aperture-outline" size={19} color={palette.accent} />
+                </View>
+              )}
             </View>
           </View>
 
-          {selectedPost && (
+          {selectedPost ? (
             isWidePost ? (
-              <View style={lumoStyles.desktopPostLayout}>
-                <View style={lumoStyles.desktopPostMediaColumn}>
-                  <View style={lumoStyles.desktopMediaHeading}>
-                    <View>
-                      <Text style={lumoStyles.desktopMediaEyebrow}>LUMO / MEDIA STAGE</Text>
-                      <Text style={lumoStyles.desktopMediaTitle}>ORIGINAL CONTENT</Text>
+              <View style={lumoStyles.postViewerWideLayout}>
+                <View style={lumoStyles.postViewerMediaCard}>
+                  <View style={lumoStyles.postViewerMediaHeading}>
+                    <View style={lumoStyles.postViewerMediaHeadingCopy}>
+                      <Text style={lumoStyles.postViewerSectionLabel}>ORIGINAL MEDIA</Text>
+                      <Text style={lumoStyles.postViewerMediaTitle}>Your post, in full view</Text>
                     </View>
-                    <View style={lumoStyles.desktopMediaTypeBadge}>
-                      <Ionicons name={selectedIsVideo ? "videocam" : "image"} size={14} color={C.lime} />
-                      <Text style={lumoStyles.desktopMediaTypeText}>{selectedIsVideo ? "VIDEO" : "PHOTO"}</Text>
+                    <View style={lumoStyles.postViewerTypeBadge}>
+                      <Ionicons name={selectedIsVideo ? "videocam" : "image"} size={13} color={C.lime} />
+                      <Text style={lumoStyles.postViewerTypeText}>{selectedIsVideo ? "VIDEO" : "PHOTO"}</Text>
                     </View>
                   </View>
-                  <View style={[lumoStyles.desktopPostMediaStage, { height: postMediaHeight }]}>
+
+                  <View style={[lumoStyles.postViewerMediaCanvas, { height: postMediaHeight }]}>
                     {postMediaContent}
                   </View>
-                  <View style={lumoStyles.desktopMediaFooter}>
-                    <View style={lumoStyles.desktopMediaFooterDot} />
-                    <Text style={lumoStyles.desktopMediaFooterText}>ORIGINAL ASPECT RATIO · FULL MEDIA VIEW</Text>
+
+                  <View style={lumoStyles.postViewerMediaFooter}>
+                    <View style={lumoStyles.postViewerMediaFooterDot} />
+                    <Text style={lumoStyles.postViewerMediaFooterText}>ORIGINAL QUALITY · FIT TO SCREEN</Text>
                   </View>
                 </View>
 
-                <View style={[lumoStyles.desktopPostDetailsPanel, { height: postMediaHeight + 62 }]}>
-                  <View style={lumoStyles.desktopDetailsHeading}>
-                    <View>
-                      <Text style={lumoStyles.desktopDetailsEyebrow}>PROFILE / PUBLICATION</Text>
-                      <Text style={lumoStyles.desktopDetailsTitle}>Post details</Text>
-                    </View>
-                    <Text style={lumoStyles.desktopDetailsIndex}>L.</Text>
+                <View style={lumoStyles.postViewerDetailsCard}>
+                  <View style={lumoStyles.postViewerDetailsTop}>
+                    <Text style={lumoStyles.postViewerSectionLabel}>PUBLICATION DETAILS</Text>
+                    <Text style={lumoStyles.postViewerDetailsHeading}>Post activity</Text>
                   </View>
-                  {postOwnerContent}
                   <ScrollView
                     ref={postScrollRef}
-                    style={lumoStyles.desktopPostDetailsScroll}
-                    contentContainerStyle={lumoStyles.desktopPostDetailsContent}
+                    style={lumoStyles.postViewerDetailsScroll}
+                    contentContainerStyle={lumoStyles.postViewerDetailsContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                   >
+                    <View style={lumoStyles.postViewerOwnerBlock}>{postOwnerContent}</View>
                     {postActionsContent}
                     {postMetadataContent}
                   </ScrollView>
-                  <Pressable
-                    style={lumoStyles.desktopCommentEntry}
-                    onPress={() => setCommentsSheetVisible(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Open post comments"
-                  >
-                    <View style={lumoStyles.desktopCommentEntryIcon}>
-                      <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.lime} />
-                    </View>
-                    <View style={lumoStyles.desktopCommentEntryCopy}>
-                      <Text style={lumoStyles.desktopCommentEntryTitle}>COMMENTS & REPLIES</Text>
-                      <Text style={lumoStyles.desktopCommentEntrySubtitle}>
-                        {commentsCount > 0 ? `${formatNumber(commentsCount)} conversations` : "Start the conversation"}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={17} color={C.muted} />
-                  </Pressable>
                 </View>
               </View>
             ) : (
               <ScrollView
                 ref={postScrollRef}
-                style={lumoStyles.postScroll}
-                contentContainerStyle={lumoStyles.postScrollContent}
+                style={lumoStyles.postViewerCompactScroll}
+                contentContainerStyle={lumoStyles.postViewerCompactScrollContent}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                {postOwnerContent}
-                {postMediaContent}
-                {postActionsContent}
-                {postMetadataContent}
+                <View style={lumoStyles.postViewerCompactContent}>
+                  <View style={lumoStyles.postViewerCompactOwner}>{postOwnerContent}</View>
+                  <View style={lumoStyles.postViewerCompactMediaCard}>
+                    <View style={lumoStyles.postViewerCompactMediaHeading}>
+                      <Text style={lumoStyles.postViewerSectionLabel}>POST PREVIEW</Text>
+                      <Text style={lumoStyles.postViewerTypeText}>{selectedIsVideo ? "VIDEO" : "PHOTO"}</Text>
+                    </View>
+                    {postMediaContent}
+                  </View>
+                  <View style={lumoStyles.postViewerCompactDetailsCard}>
+                    {postActionsContent}
+                    {postMetadataContent}
+                  </View>
+                </View>
               </ScrollView>
             )
-          )}
+          ) : null}
 
           {selectedPost && (
             <PostCommentsSheet
@@ -1799,7 +2009,7 @@ export default function ProfileView({ userId }: { userId: string }) {
 
                 {likersLoading ? (
                   <View style={lumoStyles.sheetLoading}>
-                    <ActivityIndicator color={C.lime} />
+                    <ActivityIndicator color={palette.accent} />
                   </View>
                 ) : (
                   <ScrollView showsVerticalScrollIndicator={false}>
@@ -1837,7 +2047,7 @@ export default function ProfileView({ userId }: { userId: string }) {
         visible={imageViewerVisible && Boolean(selectedPost?.image_url || selectedPost?.video_url)}
         animationType="fade"
         presentationStyle="fullScreen"
-        onRequestClose={() => setImageViewerVisible(false)}
+        onRequestClose={closeImageViewer}
       >
         <View style={lumoStyles.imageViewerScreen}>
           {selectedIsVideo && selectedPost?.video_url ? (
@@ -1849,19 +2059,37 @@ export default function ProfileView({ userId }: { userId: string }) {
               bottomInset={24}
             />
           ) : selectedPost?.image_url ? (
-            <Image
-              source={{ uri: selectedPost.image_url }}
-              style={lumoStyles.imageViewerImage}
-              contentFit="contain"
-              transition={180}
-            />
+            <View
+              style={lumoStyles.imageViewerGestureArea}
+              {...imageZoomResponder.panHandlers}
+            >
+              <Animated.View
+                style={[
+                  lumoStyles.imageViewerZoomLayer,
+                  {
+                    transform: [
+                      { translateX: zoomTranslateX },
+                      { translateY: zoomTranslateY },
+                      { scale: zoomScale },
+                    ],
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: selectedPost.image_url }}
+                  style={lumoStyles.imageViewerImage}
+                  contentFit="contain"
+                  transition={180}
+                />
+              </Animated.View>
+            </View>
           ) : null}
 
           <Text style={lumoStyles.imageViewerLabel}>{selectedIsVideo ? "VIDEO / ORIGINAL" : "PHOTO / ORIGINAL"}</Text>
 
           <Pressable
             style={lumoStyles.imageViewerClose}
-            onPress={() => setImageViewerVisible(false)}
+            onPress={closeImageViewer}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Close full-screen image"
@@ -1904,7 +2132,7 @@ export default function ProfileView({ userId }: { userId: string }) {
 
             {connectionsLoading ? (
               <View style={lumoStyles.sheetLoading}>
-                <ActivityIndicator color={C.lime} />
+                <ActivityIndicator color={palette.accent} />
                 <Text style={lumoStyles.commentsLoadingText}>
                   Finding people...
                 </Text>
@@ -2047,7 +2275,10 @@ const styles = StyleSheet.create({
   },
   postMediaWrap: {
     position: "relative",
+    width: "100%",
+    maxWidth: 720,
     alignSelf: "center",
+    overflow: "hidden",
   },
   premiumPostImageFrame: {
     width: "100%",
@@ -2083,7 +2314,7 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   premiumActionLabel: {
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 0,
   },
   premiumLikeInfo: { paddingHorizontal: 16, paddingVertical: 8 },
@@ -2129,17 +2360,20 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     maxWidth: 1560,
+    minWidth: 0,
+    minHeight: 0,
     alignSelf: "center",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
     gap: 24,
     paddingHorizontal: 28,
     paddingVertical: 18,
-    minHeight: 0,
   },
   desktopPostMediaColumn: {
     flex: 1,
     minWidth: 0,
+    minHeight: 0,
+    overflow: "hidden",
     justifyContent: "center",
     padding: 14,
     borderRadius: 24,
@@ -2195,7 +2429,9 @@ const styles = StyleSheet.create({
   },
   desktopPostMediaWrap: {
     width: "100%",
+    maxWidth: "100%",
     alignSelf: "stretch",
+    overflow: "hidden",
   },
   desktopPostImageFrame: {
     width: "100%",
@@ -2226,10 +2462,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   desktopPostDetailsPanel: {
-    width: 410,
-    minWidth: 350,
+    width: "38%",
+    minWidth: 320,
     maxWidth: 440,
     flexShrink: 0,
+    minHeight: 0,
+    alignSelf: "stretch",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: C.border,
@@ -2316,6 +2554,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: C.mediaBg,
+  },
+  imageViewerGestureArea: {
+    flex: 1,
+    width: "100%",
+    minHeight: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  imageViewerZoomLayer: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   imageViewerImage: {
     width: "100%",
@@ -2512,7 +2764,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900",
   },
-  heartBurst: {
+  likeBurst: {
     position: "absolute",
     alignSelf: "center",
     top: "38%",
@@ -2961,12 +3213,18 @@ const styles = StyleSheet.create({
   },
 
   postPair: {
+    width: "100%",
+    minWidth: 0,
+    alignSelf: "stretch",
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 11,
   },
 
   smallPost: {
+    flexGrow: 0,
+    flexShrink: 0,
+    maxWidth: "100%",
     backgroundColor: C.panel,
     borderRadius: 13,
     padding: 4,
@@ -3100,11 +3358,17 @@ const styles = StyleSheet.create({
 
   modalScreen: {
     flex: 1,
-    backgroundColor: C.bg,
+    width: "100%",
+    minWidth: 0,
+    minHeight: 0,
+    overflow: "hidden",
+    backgroundColor: "#080B11",
   },
 
   modalHeader: {
     minHeight: 76,
+    width: "100%",
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -3162,11 +3426,310 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
-  postScroll: {
-    flex: 1,
+  postDeleteButton: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 13,
+    backgroundColor: "#1B1418",
+    borderWidth: 1,
+    borderColor: "rgba(255,100,120,0.32)",
   },
 
-  postScrollContent: { paddingBottom: 12 },
+  postViewerHeader: {
+    height: Platform.OS === "android" ? 100 : 76,
+    minHeight: Platform.OS === "android" ? 100 : 76,
+    width: "100%",
+    flexShrink: 0,
+    paddingTop: Platform.OS === "android" ? 24 : 0,
+    paddingHorizontal: 22,
+    backgroundColor: "#0B1018",
+    borderBottomColor: "rgba(176,190,208,0.12)",
+  },
+  postViewerHeaderLeft: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  postViewerBackButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "#151D28",
+    borderColor: "rgba(176,190,208,0.16)",
+  },
+  postViewerHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  postViewerOverline: {
+    color: "#8998AA",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.7,
+  },
+  postViewerTitle: {
+    color: "#F2F5F9",
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: -0.35,
+  },
+  postViewerHeaderRight: {
+    minWidth: 44,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  postViewerHeaderMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#151D28",
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.14)",
+  },
+  postViewerWideLayout: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 1440,
+    minWidth: 0,
+    minHeight: 0,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  postViewerMediaCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+    overflow: "hidden",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.15)",
+    backgroundColor: "#0C121B",
+  },
+  postViewerMediaHeading: {
+    minHeight: 58,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  postViewerMediaHeadingCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  postViewerSectionLabel: {
+    color: "#8B9AAD",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.35,
+  },
+  postViewerMediaTitle: {
+    color: "#EFF3F8",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: -0.15,
+  },
+  postViewerTypeBadge: {
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 11,
+    borderRadius: 10,
+    backgroundColor: "#182230",
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.14)",
+  },
+  postViewerTypeText: {
+    color: "#C6D1DE",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.9,
+  },
+  postViewerMediaCanvas: {
+    width: "100%",
+    minHeight: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    backgroundColor: "#05080D",
+  },
+  postViewerMediaFooter: {
+    height: 36,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(176,190,208,0.10)",
+  },
+  postViewerMediaFooterDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.lime,
+  },
+  postViewerMediaFooterText: {
+    color: "#8392A4",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.05,
+  },
+  postViewerDetailsCard: {
+    width: "36%",
+    minWidth: 320,
+    maxWidth: 420,
+    flexShrink: 0,
+    flexGrow: 0,
+    minHeight: 0,
+    overflow: "hidden",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.15)",
+    backgroundColor: "#111925",
+  },
+  postViewerDetailsTop: {
+    paddingHorizontal: 18,
+    paddingTop: 19,
+    paddingBottom: 12,
+    gap: 5,
+  },
+  postViewerDetailsHeading: {
+    color: "#F0F4F8",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+  },
+  postViewerDetailsScroll: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+  },
+  postViewerDetailsContent: {
+    paddingBottom: 16,
+  },
+  postViewerOwnerBlock: {
+    marginHorizontal: 12,
+    marginBottom: 10,
+    paddingVertical: 3,
+    borderRadius: 16,
+    backgroundColor: "#182230",
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.10)",
+    overflow: "hidden",
+  },
+  postViewerActionsGrid: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 18,
+    paddingHorizontal: 17,
+    paddingTop: 3,
+    paddingBottom: 3,
+  },
+  postViewerActionCard: {
+    flex: 0,
+    width: 42,
+    minWidth: 42,
+    minHeight: 42,
+    height: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderRadius: 21,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderColor: "transparent",
+  },
+  postViewerSaveAction: {
+    marginLeft: "auto",
+  },
+  postViewerCompactScroll: {
+    flex: 1,
+    width: "100%",
+    minWidth: 0,
+    minHeight: 0,
+  },
+  postViewerCompactScrollContent: {
+    flexGrow: 1,
+    width: "100%",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  postViewerCompactContent: {
+    width: "100%",
+    maxWidth: 860,
+    alignSelf: "center",
+    gap: 14,
+    paddingBottom: 28,
+  },
+  postViewerCompactOwner: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.14)",
+    backgroundColor: "#111925",
+  },
+  postViewerCompactMediaCard: {
+    width: "100%",
+    padding: 14,
+    alignItems: "center",
+    overflow: "hidden",
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.15)",
+    backgroundColor: "#0C121B",
+  },
+  postViewerCompactMediaHeading: {
+    width: "100%",
+    minHeight: 31,
+    paddingHorizontal: 5,
+    paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  postViewerCompactDetailsCard: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(176,190,208,0.15)",
+    backgroundColor: "#111925",
+  },
+
+  postScroll: {
+    flex: 1,
+    width: "100%",
+    minWidth: 0,
+    minHeight: 0,
+  },
+
+  postScrollContent: {
+    width: "100%",
+    minWidth: 0,
+    alignItems: "stretch",
+    paddingBottom: 24,
+  },
 
   postOwner: {
     flexDirection: "row",
@@ -3207,7 +3770,9 @@ const styles = StyleSheet.create({
   },
 
   postImageFrame: {
-    marginHorizontal: 16,
+    width: "100%",
+    marginHorizontal: 0,
+    alignSelf: "stretch",
     backgroundColor: C.mediaBg,
     borderRadius: 21,
     overflow: "hidden",
@@ -3267,8 +3832,8 @@ const styles = StyleSheet.create({
   },
 
   postActionLikeActive: {
-    backgroundColor: "#251418",
-    borderColor: "#65313B",
+    backgroundColor: "#1A222C",
+    borderColor: "#3A4A5D",
   },
 
   postActionSaveActive: {
@@ -3336,7 +3901,7 @@ const styles = StyleSheet.create({
 
   postMediaUnavailable: {
     height: 320,
-    marginHorizontal: 16,
+    marginHorizontal: 0,
     borderRadius: 21,
     borderWidth: 1,
     borderColor: "#30372C",

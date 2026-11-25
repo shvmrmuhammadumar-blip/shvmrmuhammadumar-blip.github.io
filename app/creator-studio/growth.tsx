@@ -8,12 +8,12 @@ import { loadStudioOverview, formatStudioNumber, type StudioOverview } from '../
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type Profile = { username: string | null; full_name: string | null; bio: string | null; avatar_url: string | null };
 
 export default function StudioGrowthScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -115,14 +115,14 @@ export default function StudioGrowthScreen() {
 
 const styles = StyleSheet.create({
   headingBlock: { gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   error: { color: colors.danger, fontSize: 11 },
   readinessPanel: { gap: 14 },
   readinessTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   readinessCopy: { gap: 4 },
   readinessTitle: { color: colors.text, fontSize: 13, fontWeight: '800' },
-  readinessSub: { color: colors.muted, fontSize: 10 },
+  readinessSub: { color: colors.muted, fontSize: 11 },
   readinessValue: { color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.8 },
   progressTrack: { height: 7, borderRadius: 5, backgroundColor: colors.surfaceRaised, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 5, backgroundColor: colors.accent },
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   actionIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.surfaceRaised },
   actionCopy: { gap: 4 },
   actionTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
-  actionDetail: { color: colors.muted, fontSize: 10, lineHeight: 15 },
-  actionButton: { minHeight: 34, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
-  actionButtonText: { color: colors.accentStrong, fontSize: 10, fontWeight: '800' },
-  note: { color: colors.dim, fontSize: 9, lineHeight: 14 },
+  actionDetail: { color: colors.muted, fontSize: 11, lineHeight: 15 },
+  actionButton: { minHeight: 40, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
+  actionButtonText: { color: colors.accentStrong, fontSize: 11, fontWeight: '800' },
+  note: { color: colors.dim, fontSize: 10.5, lineHeight: 14 },
 });

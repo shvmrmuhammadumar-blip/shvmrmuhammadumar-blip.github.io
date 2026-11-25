@@ -25,10 +25,13 @@ import { trackContentOpen } from '../../lib/studio-analytics';
 import { colors } from '../../lib/theme';
 import type { Comment, Post } from '../../lib/types';
 import { useThemedStyles, resolveThemeColor } from "../../lib/theme-styles";
+import { usePreferences } from "../../lib/preferences";
+import { t } from "../../lib/localization";
 
 
 export default function PostScreen() {
   const lumoStyles = useThemedStyles(styles);
+  const { locale } = usePreferences();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const me = session!.user.id;
@@ -217,13 +220,13 @@ export default function PostScreen() {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) throw new Error('Postni o‘chirib bo‘lmadi. Qayta urinib ko‘ring.');
+      if (!data) throw new Error(t(locale, "Could not delete the post. Check your permissions and try again."));
 
       setPostDeleteVisible(false);
       goBack();
-    } catch (error) {
+    } catch {
       setPostDeleteError(
-        error instanceof Error ? error.message : 'Postni o‘chirib bo‘lmadi. Qayta urinib ko‘ring.'
+        t(locale, "Could not delete the post. Check your permissions and try again.")
       );
     } finally {
       setDeletingPost(false);
@@ -404,7 +407,7 @@ export default function PostScreen() {
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
-            accessibilityLabel="O‘chirishni bekor qilish"
+            accessibilityLabel={t(locale, "Cancel delete action")}
             onPress={() => {
               if (!deletingPost) setPostDeleteVisible(false);
             }}
@@ -413,10 +416,10 @@ export default function PostScreen() {
             <View style={lumoStyles.deleteIcon}>
               <Ionicons name="trash-outline" size={22} color={colors.like} />
             </View>
-            <Text style={lumoStyles.confirmEyebrow}>TASDIQLASH</Text>
-            <Text style={lumoStyles.confirmTitle}>Postni o‘chirmoqchimisiz?</Text>
+            <Text style={lumoStyles.confirmEyebrow}>{t(locale, "CONFIRMATION")}</Text>
+            <Text style={lumoStyles.confirmTitle}>{t(locale, "Delete this post?")}</Text>
             <Text style={lumoStyles.confirmMessage}>
-              Post butunlay o‘chiriladi. Bu amalni ortga qaytarib bo‘lmaydi.
+              {t(locale, "This post will be permanently deleted. This action cannot be undone.")}
             </Text>
             {!!postDeleteError && (
               <Text style={lumoStyles.confirmError}>{postDeleteError}</Text>
@@ -428,7 +431,7 @@ export default function PostScreen() {
                 style={lumoStyles.cancelButton}
                 accessibilityRole="button"
               >
-                <Text style={lumoStyles.cancelButtonText}>Bekor qilish</Text>
+                <Text style={lumoStyles.cancelButtonText}>{t(locale, "Cancel")}</Text>
               </Pressable>
               <Pressable
                 onPress={() => void confirmDeletePost()}
@@ -439,7 +442,7 @@ export default function PostScreen() {
                 {deletingPost ? (
                   <ActivityIndicator color={colors.inverseText} size="small" />
                 ) : (
-                  <Text style={lumoStyles.confirmDeleteText}>O‘chirish</Text>
+                  <Text style={lumoStyles.confirmDeleteText}>{t(locale, "Delete")}</Text>
                 )}
               </Pressable>
             </View>

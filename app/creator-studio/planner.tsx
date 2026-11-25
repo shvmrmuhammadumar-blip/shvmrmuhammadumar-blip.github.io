@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { StudioFrame, StudioPanel } from '../../components/studio/StudioFrame';
@@ -7,7 +7,7 @@ import { StudioChip, StudioEmpty, StudioSection } from '../../components/studio/
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type ContentType = 'post' | 'video' | 'story' | 'live';
 type PlanStatus = 'idea' | 'planned' | 'published' | 'archived';
@@ -31,7 +31,7 @@ const types: { key: ContentType; label: string }[] = [
 type Filter = 'all' | 'idea' | 'planned' | 'published';
 
 export default function StudioPlannerScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -75,11 +75,26 @@ export default function StudioPlannerScreen() {
     if (!cleanTitle || saving || !userId) return;
     let scheduledAt: string | null = null;
     if (scheduledDate.trim()) {
-      const parsed = new Date(`${scheduledDate.trim()}T12:00:00`);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate.trim()) || Number.isNaN(parsed.getTime())) {
+      const dateText = scheduledDate.trim();
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
+      if (!match) {
         setError('Use the date format YYYY-MM-DD.');
         return;
       }
+
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+      const isRealDate = parsed.getFullYear() === year
+        && parsed.getMonth() === month - 1
+        && parsed.getDate() === day;
+
+      if (!isRealDate) {
+        setError('Enter a real calendar date.');
+        return;
+      }
+
       scheduledAt = parsed.toISOString();
     }
     setSaving(true);
@@ -108,24 +123,42 @@ export default function StudioPlannerScreen() {
   };
 
   const updateStatus = async (plan: Plan, status: PlanStatus) => {
-    const { error: updateError } = await supabase.from('creator_plans')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', plan.id)
-      .eq('user_id', userId);
-    if (updateError) {
-      setError(updateError.message);
-      return;
+    setError('');
+    try {
+      const { error: updateError } = await supabase.from('creator_plans')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', plan.id)
+        .eq('user_id', userId);
+      if (updateError) throw updateError;
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Plan could not be updated.');
     }
-    await load();
   };
 
   const removePlan = async (plan: Plan) => {
-    const { error: deleteError } = await supabase.from('creator_plans').delete().eq('id', plan.id).eq('user_id', userId);
-    if (deleteError) {
-      setError(deleteError.message);
-      return;
+    setError('');
+    try {
+      const { error: deleteError } = await supabase.from('creator_plans')
+        .delete()
+        .eq('id', plan.id)
+        .eq('user_id', userId);
+      if (deleteError) throw deleteError;
+      setPlans((current) => current.filter((item) => item.id !== plan.id));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Plan could not be deleted.');
     }
-    setPlans((current) => current.filter((item) => item.id !== plan.id));
+  };
+
+  const confirmRemovePlan = (plan: Plan) => {
+    Alert.alert(
+      'Delete this plan?',
+      'This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => void removePlan(plan) },
+      ],
+    );
   };
 
   return (
@@ -194,7 +227,7 @@ export default function StudioPlannerScreen() {
                   <Ionicons name="calendar-outline" size={14} color={colors.accentStrong} /><Text style={lumoStyles.actionText}>Plan</Text>
                 </Pressable>
               ) : null}
-              <Pressable onPress={() => void removePlan(plan)} hitSlop={8} style={lumoStyles.deleteButton} accessibilityRole="button" accessibilityLabel="Delete plan">
+              <Pressable onPress={() => confirmRemovePlan(plan)} hitSlop={8} style={lumoStyles.deleteButton} accessibilityRole="button" accessibilityLabel="Delete plan">
                 <Ionicons name="trash-outline" size={15} color={colors.danger} />
               </Pressable>
             </View>
@@ -206,36 +239,36 @@ export default function StudioPlannerScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  headingCopy: { flex: 1, gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+  headingCopy: { flex: 1, minWidth: 0, gap: 4 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   addButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 11, backgroundColor: colors.accent },
   addText: { color: colors.bg, fontSize: 11, fontWeight: '900' },
   form: { gap: 11 },
   formTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
-  input: { minHeight: 43, borderRadius: 11, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg, paddingHorizontal: 12, color: colors.text, fontSize: 12 },
+  input: { minHeight: 48, borderRadius: 11, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg, paddingHorizontal: 12, color: colors.text, fontSize: 12 },
   notesInput: { minHeight: 72, paddingTop: 11, textAlignVertical: 'top' },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  fieldLabel: { color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  helper: { color: colors.dim, fontSize: 9 },
+  fieldLabel: { color: colors.dim, fontSize: 10.5, fontWeight: '900', letterSpacing: 1 },
+  helper: { color: colors.dim, fontSize: 10.5 },
   saveButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.accent },
   saveText: { color: colors.bg, fontSize: 11, fontWeight: '900' },
   disabled: { opacity: 0.45 },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  error: { color: colors.danger, fontSize: 10 },
+  error: { color: colors.danger, fontSize: 11 },
   planCard: { gap: 10 },
   planTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   planType: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  planTypeText: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
-  status: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 7, backgroundColor: colors.surfaceRaised },
+  planTypeText: { color: colors.muted, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.8 },
+  status: { color: colors.muted, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.8, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 7, backgroundColor: colors.surfaceRaised },
   statusPublished: { color: colors.success },
   planTitle: { color: colors.text, fontSize: 14, fontWeight: '800' },
   planNotes: { color: colors.muted, fontSize: 11, lineHeight: 16 },
-  planBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
-  planDate: { color: colors.dim, fontSize: 10 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  actionButton: { minHeight: 31, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, borderRadius: 9, backgroundColor: colors.surfaceRaised },
-  actionText: { color: colors.accentStrong, fontSize: 9, fontWeight: '800' },
-  deleteButton: { minHeight: 31, width: 31, alignItems: 'center', justifyContent: 'center', borderRadius: 9, backgroundColor: colors.surfaceRaised },
+  planBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  planDate: { color: colors.dim, fontSize: 11, flexShrink: 1 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 7 },
+  actionButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, borderRadius: 10, backgroundColor: colors.surfaceRaised },
+  actionText: { color: colors.accentStrong, fontSize: 11, fontWeight: '800' },
+  deleteButton: { minHeight: 40, width: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.surfaceRaised },
 });

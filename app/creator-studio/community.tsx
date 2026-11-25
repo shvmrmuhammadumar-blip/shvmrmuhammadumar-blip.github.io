@@ -7,7 +7,7 @@ import { StudioEmpty, StudioSection } from '../../components/studio/StudioWidget
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type CommentRow = {
   id: string;
@@ -19,7 +19,7 @@ type CommentRow = {
 };
 
 export default function StudioCommunityScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -104,17 +104,17 @@ export default function StudioCommunityScreen() {
 }
 
 const styles = StyleSheet.create({
-  headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  headingCopy: { flex: 1, gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+  headingCopy: { flex: 1, minWidth: 0, gap: 4 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   inboxButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderRadius: 11, backgroundColor: colors.accent },
   inboxText: { color: colors.bg, fontSize: 11, fontWeight: '900' },
   shortcutGrid: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
-  shortcut: { flexGrow: 1, flexBasis: 190, minHeight: 118, gap: 7, padding: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16 },
+  shortcut: { flexGrow: 1, flexBasis: 190, minHeight: 132, gap: 7, padding: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16 },
   shortcutIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised, borderRadius: 11 },
   shortcutTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
-  shortcutMeta: { color: colors.muted, fontSize: 10 },
+  shortcutMeta: { color: colors.muted, fontSize: 11 },
   section: { gap: 10 },
   error: { color: colors.danger, fontSize: 11 },
   commentPanel: { paddingHorizontal: 10, paddingVertical: 3 },
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   avatarFallback: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
   commentCopy: { flex: 1, minWidth: 0, gap: 5 },
   commentTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  username: { color: colors.text, fontSize: 10, fontWeight: '800' },
-  date: { color: colors.dim, fontSize: 9 },
-  commentText: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  username: { color: colors.text, fontSize: 11, fontWeight: '800' },
+  date: { color: colors.dim, fontSize: 10.5 },
+  commentText: { color: colors.muted, fontSize: 11, lineHeight: 15 },
 });

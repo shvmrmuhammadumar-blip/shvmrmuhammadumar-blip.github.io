@@ -481,37 +481,50 @@ export default function SearchScreen() {
     </View>
   );
 
-  const renderPeople = (items: SearchItem[] = results) => (
-    <View style={lumoStyles.grid}>
-      {items.map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={() => openResult(item)}
-          style={({ pressed }) => [
-            lumoStyles.personCard,
-            { width: grid.cardWidth },
-            pressed && lumoStyles.cardPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${item.title}'s profile`}
-        >
-          <View style={lumoStyles.personCardTop}>
-            <Avatar uri={item.imageUrl} name={item.title} size={54} />
-            <View style={lumoStyles.personArrow}>
-              <Ionicons name="arrow-forward" size={15} color={colors.muted} />
+  const renderPeople = (items: SearchItem[] = results) => {
+    const removable = items === results && scope === 'People' && query.trim().length > 0;
+
+    return (
+      <View style={lumoStyles.grid}>
+        {items.map((item) => (
+          <View key={item.id} style={[lumoStyles.personCard, { width: grid.cardWidth }]}>
+            <View style={lumoStyles.personCardTop}>
+              <Avatar uri={item.imageUrl} name={item.title} size={54} />
+              {removable ? (
+                <Pressable
+                  onPress={() => setResults((current) => current.filter((result) => result.id !== item.id))}
+                  hitSlop={9}
+                  style={lumoStyles.removePersonButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${item.title} from search results`}
+                >
+                  <Ionicons name="close" size={16} color={colors.muted} />
+                </Pressable>
+              ) : (
+                <View style={lumoStyles.personArrow}>
+                  <Ionicons name="arrow-forward" size={15} color={colors.muted} />
+                </View>
+              )}
             </View>
+            <Pressable
+              style={lumoStyles.personCardMain}
+              onPress={() => openResult(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${item.title}'s profile`}
+            >
+              <Text style={lumoStyles.personName} numberOfLines={1}>{item.title}</Text>
+              <Text style={lumoStyles.personHandle} numberOfLines={1}>{item.subtitle}</Text>
+              {item.description ? (
+                <Text style={lumoStyles.personBio} numberOfLines={2}>{item.description}</Text>
+              ) : (
+                <Text style={lumoStyles.personBioMuted}>LUMO member</Text>
+              )}
+            </Pressable>
           </View>
-          <Text style={lumoStyles.personName} numberOfLines={1}>{item.title}</Text>
-          <Text style={lumoStyles.personHandle} numberOfLines={1}>{item.subtitle}</Text>
-          {item.description ? (
-            <Text style={lumoStyles.personBio} numberOfLines={2}>{item.description}</Text>
-          ) : (
-            <Text style={lumoStyles.personBioMuted}>LUMO member</Text>
-          )}
-        </Pressable>
-      ))}
-    </View>
-  );
+        ))}
+      </View>
+    );
+  };
 
   const renderMedia = (items: SearchItem[] = results) => (
     <View style={lumoStyles.grid}>
@@ -1040,10 +1053,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 7,
   },
+  personCardMain: {
+    flex: 1,
+    gap: 6,
+  },
   personArrow: {
     width: 29,
     height: 29,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceRaised,
+  },
+  removePersonButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',

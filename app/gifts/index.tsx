@@ -394,7 +394,7 @@ export default function GiftsStoreScreen({ embedded = false, onOpenWallet, initi
               ) : null}
             </View>
             <Text style={lumoStyles.modalTitle}>{selectedGift?.title}</Text>
-            <Text style={lumoStyles.modalDescription}>Rotate the gift with your finger or mouse, then add it to your collection.</Text>
+            <Text style={lumoStyles.modalDescription}>Swipe left or right to rotate the gift. Zoom and vertical rotation are locked.</Text>
             {isDeveloper ? (
               <>
                 <View style={lumoStyles.modalPrice}>

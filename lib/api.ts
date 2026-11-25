@@ -20,6 +20,7 @@ export type PickedChatMedia = {
 };
 
 export const CHAT_MEDIA_MAX_BYTES = 50 * 1024 * 1024;
+export const VOICE_MESSAGE_MAX_BYTES = 1.5 * 1024 * 1024;
 
 function inferMimeType(fileName: string | null, type: PickedChatMedia['type']): string {
   const extension = (fileName?.split('.').pop() ?? '').toLowerCase();
@@ -27,7 +28,7 @@ function inferMimeType(fileName: string | null, type: PickedChatMedia['type']): 
     jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
     heic: 'image/heic', heif: 'image/heif', avif: 'image/avif',
     mp4: 'video/mp4', m4v: 'video/x-m4v', mov: 'video/quicktime', webm: 'video/webm',
-    mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
+    mp3: 'audio/mpeg', m4a: 'audio/mp4', '3gp': 'audio/3gpp', aac: 'audio/aac', wav: 'audio/wav',
     ogg: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac',
     pdf: 'application/pdf', txt: 'text/plain', csv: 'text/csv',
     doc: 'application/msword',
@@ -141,13 +142,15 @@ export async function pickChatFile(): Promise<PickedChatMedia | null> {
 }
 
 /** Uploads to a private Supabase bucket. Returns the storage path, not a public URL. */
-export async function uploadChatMedia(media: PickedChatMedia, userId: string): Promise<string> {
+export async function uploadChatMedia(media: PickedChatMedia, userId: string, maxBytes = CHAT_MEDIA_MAX_BYTES): Promise<string> {
   const response = await fetch(media.uri);
   if (!response.ok) throw new Error('Could not read the selected media file.');
   const buffer = await response.arrayBuffer();
   if (buffer.byteLength === 0) throw new Error('The selected file is empty.');
-  if (buffer.byteLength > CHAT_MEDIA_MAX_BYTES) {
-    throw new Error('This file is over 50 MB. Select a smaller photo or video.');
+  if (buffer.byteLength > maxBytes) {
+    throw new Error(maxBytes < CHAT_MEDIA_MAX_BYTES
+      ? 'Voice message is too large. Keep it under 1.5 MB.'
+      : 'This file is over 50 MB. Select a smaller photo or video.');
   }
 
   const sourceName = media.fileName ?? media.uri.split('?')[0];

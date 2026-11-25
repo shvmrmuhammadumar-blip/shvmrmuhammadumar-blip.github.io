@@ -141,3 +141,41 @@ export function useThemedStyles<T extends StyleMap>(source: T): T {
     return result as T;
   }, [source, palette]);
 }
+
+/**
+ * Studio uses a stricter type scale than dense social-feed metadata.
+ * Keep its supporting labels readable across phones, tablets and desktop.
+ */
+export function useStudioStyles<T extends StyleMap>(source: T): T {
+  const themed = useThemedStyles(source);
+
+  return useMemo(() => {
+    const result: Record<string, unknown> = {};
+
+    for (const [name, registeredStyle] of Object.entries(themed)) {
+      if (!registeredStyle) {
+        result[name] = registeredStyle;
+        continue;
+      }
+
+      const flattened = StyleSheet.flatten(registeredStyle as never) as Record<string, unknown> | undefined;
+      if (!flattened) {
+        result[name] = registeredStyle;
+        continue;
+      }
+
+      const normalized: Record<string, unknown> = { ...flattened };
+      const fontSize = normalized.fontSize;
+      if (typeof fontSize === 'number' && fontSize < 10) {
+        normalized.fontSize = 10;
+        if (typeof normalized.lineHeight === 'number' && normalized.lineHeight < 14) {
+          normalized.lineHeight = 14;
+        }
+      }
+
+      result[name] = normalized;
+    }
+
+    return result as T;
+  }, [themed]);
+}

@@ -8,7 +8,7 @@ import { StudioChip, StudioEmpty, StudioSection } from '../../components/studio/
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type ContentFilter = 'all' | 'photos' | 'videos' | 'stories';
 type PostRow = { id: string; caption: string | null; media_type: string; created_at: string; image_url: string | null; video_url: string | null };
@@ -22,7 +22,7 @@ const filters: { key: ContentFilter; label: string }[] = [
 ];
 
 export default function StudioContentScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -140,24 +140,24 @@ export default function StudioContentScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  headingCopy: { flex: 1, gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+  headingCopy: { flex: 1, minWidth: 0, gap: 4 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   createButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 13, borderRadius: 11, backgroundColor: colors.accent },
   createText: { color: colors.bg, fontSize: 11, fontWeight: '900' },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   error: { color: colors.danger, fontSize: 11 },
   loading: { minHeight: 28, alignItems: 'center', justifyContent: 'center' },
   summaryPanel: { padding: 16, gap: 4 },
-  summaryLabel: { color: colors.dim, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
+  summaryLabel: { color: colors.dim, fontSize: 10.5, fontWeight: '900', letterSpacing: 1.3 },
   summaryValue: { color: colors.text, fontSize: 29, fontWeight: '900', letterSpacing: -0.9 },
-  summaryNote: { color: colors.muted, fontSize: 10 },
-  contentList: { overflow: 'hidden', borderWidth: 1, borderColor: colors.border, borderRadius: 17, backgroundColor: colors.surface },
+  summaryNote: { color: colors.muted, fontSize: 11 },
+  contentList: { overflow: 'hidden', borderWidth: 1, borderColor: colors.border, borderRadius: 20, backgroundColor: colors.surface },
   contentRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: colors.border },
   thumbnail: { width: 50, height: 50, borderRadius: 11, backgroundColor: colors.surfaceRaised },
   thumbnailFallback: { width: 50, height: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.surfaceRaised },
   contentCopy: { flex: 1, minWidth: 0, gap: 5 },
   contentTitle: { color: colors.text, fontSize: 11, fontWeight: '800' },
-  contentMeta: { color: colors.dim, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+  contentMeta: { color: colors.dim, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 },
 });

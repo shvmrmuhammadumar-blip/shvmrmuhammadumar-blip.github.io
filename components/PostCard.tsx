@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  Animated,
   Modal,
   Pressable,
   StyleSheet,
@@ -12,6 +13,7 @@ import { useSegments } from 'expo-router';
 import { getAppContentWidth } from '../lib/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from './Avatar';
+import LumoLikeIcon from './LumoLikeIcon';
 import LumoVideoPlayer from './LumoVideoPlayer';
 import { colors } from '../lib/theme';
 import { timeAgo } from '../lib/api';
@@ -53,6 +55,9 @@ export default function PostCard({
 }: Props) {
   const lumoStyles = useThemedStyles(styles);
   const [menuVisible, setMenuVisible] = useState(false);
+  const lastMediaTapRef = useRef(0);
+  const heartScale = useRef(new Animated.Value(0.3)).current;
+  const heartOpacity = useRef(new Animated.Value(0)).current;
   const { width: viewportWidth, height: viewportHeight } = useWindowDimensions();
   const segments = useSegments();
   const availableWidth = getAppContentWidth(viewportWidth, segments[0] === '(tabs)');
@@ -75,6 +80,40 @@ export default function PostCard({
   const isMine = post.user_id === myId;
 
   const handleShare = () => onShare(post);
+
+  const burstLike = () => {
+    heartScale.stopAnimation();
+    heartOpacity.stopAnimation();
+    heartScale.setValue(0.3);
+    heartOpacity.setValue(1);
+    Animated.parallel([
+      Animated.spring(heartScale, {
+        toValue: 1.12,
+        useNativeDriver: true,
+        speed: 15,
+        bounciness: 9,
+      }),
+      Animated.sequence([
+        Animated.delay(220),
+        Animated.timing(heartOpacity, {
+          toValue: 0,
+          duration: 460,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  };
+
+  const handleMediaPress = () => {
+    const now = Date.now();
+    if (now - lastMediaTapRef.current < 280) {
+      lastMediaTapRef.current = 0;
+      burstLike();
+      if (!liked) onLike(post);
+      return;
+    }
+    lastMediaTapRef.current = now;
+  };
 
   return (
     <View style={[lumoStyles.card, { width: cardWidth }]}>
@@ -129,12 +168,35 @@ export default function PostCard({
         )
       ) : post.image_url ? (
         <View style={[lumoStyles.mediaContainer, { height: mediaHeight }]}>
-          <Image
-            source={{ uri: post.image_url }}
-            style={lumoStyles.image}
-            contentFit="contain"
-            transition={250}
-          />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={handleMediaPress}
+            accessibilityRole="button"
+            accessibilityLabel="Double tap to like post"
+          >
+            <Image
+              source={{ uri: post.image_url }}
+              style={lumoStyles.image}
+              contentFit="contain"
+              transition={250}
+            />
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: heartOpacity,
+                transform: [{ scale: heartScale }, { rotate: "-10deg" }],
+              }}
+            >
+              <LumoLikeIcon size={104} active color="#E7EDF4" />
+            </Animated.View>
+          </Pressable>
         </View>
       ) : null}
 
@@ -148,13 +210,9 @@ export default function PostCard({
             accessibilityRole="button"
             accessibilityLabel={liked ? 'Unlike post' : 'Like post'}
           >
-            <Ionicons
-              name={liked ? 'heart' : 'heart-outline'}
-              size={26}
-              color={liked ? colors.like : colors.text}
-            />
+            <LumoLikeIcon size={26} active={liked} color={liked ? "#B9C7D6" : colors.text} />
             {likeCount > 0 && (
-              <Text style={[lumoStyles.actionCount, liked && { color: colors.like }]}>
+              <Text style={[lumoStyles.actionCount, liked && { color: "#B9C7D6" }]}>
                 {formatCount(likeCount)}
               </Text>
             )}

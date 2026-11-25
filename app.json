@@ -13,7 +13,7 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Lumo needs access to your photos so you can share them.",
         "NSCameraUsageDescription": "Lumo uses your camera when you start or join a live video.",
-        "NSMicrophoneUsageDescription": "Lumo uses your microphone when you speak during a live video."
+        "NSMicrophoneUsageDescription": "Lumo uses your microphone for voice messages and audio/video calls."
       }
     },
     "android": {
@@ -42,6 +42,15 @@
         }
       ],
       "expo-video",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Lumo uses your microphone for voice messages and audio/video calls.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
       "@livekit/react-native-expo-plugin",
       "@config-plugins/react-native-webrtc",
       "expo-font",

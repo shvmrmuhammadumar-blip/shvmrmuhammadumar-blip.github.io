@@ -7,14 +7,14 @@ import { StudioChip, StudioMetric, StudioSection } from '../../components/studio
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type Mode = 'followers' | 'following';
 type Person = { id: string; username: string | null; full_name: string | null; avatar_url: string | null; created_at: string };
 type AudienceData = { followers: number; following: number; recentFollowers: number; people: Person[] };
 
 export default function StudioAudienceScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const router = useRouter();
@@ -116,12 +116,12 @@ export default function StudioAudienceScreen() {
 
 const styles = StyleSheet.create({
   headingBlock: { gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   listPanel: { gap: 14, paddingHorizontal: 12 },
-  searchBox: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg },
+  searchBox: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.bg },
   searchInput: { flex: 1, color: colors.text, fontSize: 12, paddingVertical: 8, outlineStyle: 'none' as never },
   error: { color: colors.danger, fontSize: 11 },
   empty: { minHeight: 100, alignItems: 'center', justifyContent: 'center', gap: 8 },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   avatarInitial: { color: colors.accentStrong, fontSize: 14, fontWeight: '800' },
   personCopy: { flex: 1, minWidth: 0, gap: 4 },
   personName: { color: colors.text, fontSize: 11, fontWeight: '800' },
-  personHandle: { color: colors.muted, fontSize: 10 },
-  personDate: { color: colors.dim, fontSize: 9 },
-  footnote: { color: colors.dim, fontSize: 9, lineHeight: 14 },
+  personHandle: { color: colors.muted, fontSize: 11 },
+  personDate: { color: colors.dim, fontSize: 10.5 },
+  footnote: { color: colors.dim, fontSize: 10.5, lineHeight: 14 },
 });

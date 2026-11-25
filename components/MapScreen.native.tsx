@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  PanResponder,
   Pressable,
   Platform,
   ScrollView,
@@ -10,6 +12,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +80,7 @@ export default function MapScreen() {
     { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: palette.muted }] },
   ], [palette]);
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { session } = useAuth();
   const userId = session?.user.id;
   const mapRef = useRef<MapView>(null);
@@ -88,6 +92,30 @@ export default function MapScreen() {
   const [locating, setLocating] = useState(false);
   const [search, setSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const collapsedPanelHeight = Math.min(320, Math.max(260, windowHeight * 0.34));
+  const expandedPanelHeight = Math.min(620, Math.max(collapsedPanelHeight + 100, windowHeight * 0.7));
+  const panelHeight = useRef(new Animated.Value(collapsedPanelHeight)).current;
+
+  useEffect(() => {
+    const animation = Animated.spring(panelHeight, {
+      toValue: panelExpanded ? expandedPanelHeight : collapsedPanelHeight,
+      useNativeDriver: false,
+      bounciness: 0,
+      speed: 20,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [collapsedPanelHeight, expandedPanelHeight, panelExpanded, panelHeight]);
+
+  const panelPanResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_, gesture) => Math.abs(gesture.dy) > 6,
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dy < -24) setPanelExpanded(true);
+      else if (gesture.dy > 24) setPanelExpanded(false);
+    },
+    onPanResponderTerminationRequest: () => false,
+  }), []);
 
   const loadFriends = useCallback(async () => {
     if (!userId) return;
@@ -367,10 +395,21 @@ export default function MapScreen() {
         </Pressable>
       </View>
 
-      <View style={[lumoStyles.bottomPanel, { paddingBottom: Math.max(insets.bottom, 12) + 76 }]}>
-        <View style={lumoStyles.panelHandle} />
+      <Animated.View style={[lumoStyles.bottomPanel, { height: panelHeight, paddingBottom: Math.max(insets.bottom, 12) + 76 }]}>
+        <View style={lumoStyles.handleTouchArea} {...panelPanResponder.panHandlers}>
+          <Pressable
+            onPress={() => setPanelExpanded((current) => !current)}
+            style={lumoStyles.handleButton}
+            accessibilityRole="button"
+            accessibilityLabel={panelExpanded ? 'Collapse map panel' : 'Expand map panel'}
+            accessibilityState={{ expanded: panelExpanded }}
+          >
+            <View style={lumoStyles.panelHandle} />
+          </Pressable>
+        </View>
+
         <View style={lumoStyles.panelHeader}>
-          <View>
+          <View style={lumoStyles.panelHeadingCopy}>
             <Text style={lumoStyles.panelEyebrow}>YOUR CIRCLE</Text>
             <Text style={lumoStyles.panelTitle}>Following on map <Text style={lumoStyles.countText}>{friends.length}</Text></Text>
           </View>
@@ -404,49 +443,53 @@ export default function MapScreen() {
           )}
         </View>
 
-        {lastUpdated && sharingEnabled ? (
-          <Text style={lumoStyles.updatedText}>Your location updated {relativeTime(lastUpdated)}</Text>
-        ) : null}
+        {panelExpanded ? (
+          <>
+            {lastUpdated && sharingEnabled ? (
+              <Text style={lumoStyles.updatedText}>Your location updated {relativeTime(lastUpdated)}</Text>
+            ) : null}
 
-        {loading ? (
-          <View style={lumoStyles.emptyRow}>
-            <ActivityIndicator color={colors.accent} />
-            <Text style={lumoStyles.emptyText}>Finding your circleвЂ¦</Text>
-          </View>
-        ) : visibleFriends.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.friendList}>
-            {visibleFriends.map((friend) => (
-              <Pressable
-                key={friend.id}
-                style={lumoStyles.friendItem}
-                onPress={() => mapRef.current?.animateToRegion({
-                  latitude: friend.latitude,
-                  longitude: friend.longitude,
-                  latitudeDelta: 0.025,
-                  longitudeDelta: 0.025,
-                }, 550)}
-              >
-                {friend.avatar_url ? (
-                  <Image source={{ uri: friend.avatar_url }} style={lumoStyles.friendAvatar} contentFit="cover" />
-                ) : (
-                  <View style={[lumoStyles.friendAvatar, lumoStyles.friendAvatarFallback]}>
-                    <Ionicons name="person" size={19} color={colors.text} />
-                  </View>
-                )}
-                <Text style={lumoStyles.friendName} numberOfLines={1}>@{friend.username}</Text>
-                <Text style={lumoStyles.friendTime}>{relativeTime(friend.updated_at)}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={lumoStyles.emptyRow}>
-            <Ionicons name="people-outline" size={20} color={colors.dim} />
-            <Text style={lumoStyles.emptyText}>
-              {search ? 'No matching people sharing their location.' : 'No one you follow is sharing their location yet.'}
-            </Text>
-          </View>
-        )}
-      </View>
+            {loading ? (
+              <View style={lumoStyles.emptyRow}>
+                <ActivityIndicator color={colors.accent} />
+                <Text style={lumoStyles.emptyText}>Finding your circle…</Text>
+              </View>
+            ) : visibleFriends.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={lumoStyles.friendList}>
+                {visibleFriends.map((friend) => (
+                  <Pressable
+                    key={friend.id}
+                    style={lumoStyles.friendItem}
+                    onPress={() => mapRef.current?.animateToRegion({
+                      latitude: friend.latitude,
+                      longitude: friend.longitude,
+                      latitudeDelta: 0.025,
+                      longitudeDelta: 0.025,
+                    }, 550)}
+                  >
+                    {friend.avatar_url ? (
+                      <Image source={{ uri: friend.avatar_url }} style={lumoStyles.friendAvatar} contentFit="cover" />
+                    ) : (
+                      <View style={[lumoStyles.friendAvatar, lumoStyles.friendAvatarFallback]}>
+                        <Ionicons name="person" size={19} color={colors.text} />
+                      </View>
+                    )}
+                    <Text style={lumoStyles.friendName} numberOfLines={1}>@{friend.username}</Text>
+                    <Text style={lumoStyles.friendTime}>{relativeTime(friend.updated_at)}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={lumoStyles.emptyRow}>
+                <Ionicons name="people-outline" size={20} color={colors.dim} />
+                <Text style={lumoStyles.emptyText}>
+                  {search ? 'No matching people sharing their location.' : 'No one you follow is sharing their location yet.'}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : null}
+      </Animated.View>
     </View>
   );
 }
@@ -477,8 +520,11 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 0 },
   mapControls: { position: 'absolute', right: 15, top: '42%', gap: 9 },
   mapControlButton: { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18, 22, 28, 0.96)', borderWidth: 1, borderColor: colors.glassBorder },
-  bottomPanel: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(12, 16, 22, 0.97)', borderTopLeftRadius: 25, borderTopRightRadius: 25, borderTopWidth: 1, borderColor: colors.glassBorder, paddingHorizontal: 18, paddingTop: 10 },
-  panelHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#4A535E', marginBottom: 15 },
+  bottomPanel: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(12, 16, 22, 0.98)', borderTopLeftRadius: 25, borderTopRightRadius: 25, borderTopWidth: 1, borderColor: colors.glassBorder, paddingHorizontal: 18, paddingTop: 8, overflow: 'hidden' },
+  handleTouchArea: { height: 34, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginBottom: 5 },
+  handleButton: { width: 104, height: 34, alignItems: 'center', justifyContent: 'center' },
+  panelHandle: { alignSelf: 'center', width: 50, height: 5, borderRadius: 3, backgroundColor: '#778390' },
+  panelHeadingCopy: { flex: 1, minWidth: 0, gap: 2 },
   panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 },
   panelEyebrow: { color: colors.muted, fontSize: 9, letterSpacing: 1.8, fontWeight: '800' },
   panelTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 4 },

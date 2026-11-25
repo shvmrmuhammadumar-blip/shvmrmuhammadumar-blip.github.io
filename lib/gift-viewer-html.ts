@@ -19,7 +19,9 @@ export function buildGiftViewerHtml(modelUrl: string, posterUrl?: string | null,
     body { display: flex; align-items: center; justify-content: center; }
     model-viewer {
       width: 100%; height: 100%; display: block; background: ${background};
-      --poster-color: ${background}; touch-action: pan-y;
+      --poster-color: ${background};
+      /* Horizontal gestures rotate the model; vertical gestures never orbit it. */
+      touch-action: pan-y;
       outline: none;
     }
   </style>
@@ -31,15 +33,16 @@ export function buildGiftViewerHtml(modelUrl: string, posterUrl?: string | null,
     ${poster}
     alt="Interactive LUMO 3D gift"
     camera-controls
-    auto-rotate
-    auto-rotate-delay="0"
-    rotation-per-second="18deg"
+    disable-zoom
+    disable-pan
     interaction-prompt="none"
     loading="lazy"
     reveal="auto"
     shadow-intensity="0.8"
     exposure="1.05"
     camera-orbit="0deg 75deg auto"
+    min-camera-orbit="auto 75deg auto"
+    max-camera-orbit="auto 75deg auto"
   ></model-viewer>
 </body>
 </html>`;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Animated, PanResponder, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as L from 'leaflet';
@@ -130,6 +130,7 @@ export default function MapScreenWeb() {
   const lumoStyles = useThemedStyles(styles);
   const { palette, theme } = usePreferences();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { session } = useAuth();
   const userId = session?.user.id;
   const mapElementRef = useRef<HTMLDivElement | null>(null);
@@ -153,6 +154,30 @@ export default function MapScreenWeb() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<PermissionState>('unknown');
   const [message, setMessage] = useState('');
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const collapsedPanelHeight = Math.min(320, Math.max(260, windowHeight * 0.34));
+  const expandedPanelHeight = Math.min(620, Math.max(collapsedPanelHeight + 100, windowHeight * 0.74));
+  const panelHeight = useRef(new Animated.Value(collapsedPanelHeight)).current;
+
+  useEffect(() => {
+    const animation = Animated.spring(panelHeight, {
+      toValue: panelExpanded ? expandedPanelHeight : collapsedPanelHeight,
+      useNativeDriver: false,
+      bounciness: 0,
+      speed: 20,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [collapsedPanelHeight, expandedPanelHeight, panelExpanded, panelHeight]);
+
+  const panelPanResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_, gesture) => Math.abs(gesture.dy) > 6,
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dy < -24) setPanelExpanded(true);
+      else if (gesture.dy > 24) setPanelExpanded(false);
+    },
+    onPanResponderTerminationRequest: () => false,
+  }), []);
 
   const loadFriends = useCallback(async () => {
     if (!userId) return;
@@ -556,8 +581,18 @@ export default function MapScreenWeb() {
         </Pressable>
       </View>
 
-      <View style={[lumoStyles.bottomPanel, { paddingBottom: Math.max(insets.bottom, 12) + 72 }]}>
-        <View style={lumoStyles.panelHandle} />
+      <Animated.View style={[lumoStyles.bottomPanel, { height: panelHeight, paddingBottom: Math.max(insets.bottom, 12) + 72 }]}>
+        <View style={lumoStyles.handleTouchArea} {...panelPanResponder.panHandlers}>
+          <Pressable
+            onPress={() => setPanelExpanded((current) => !current)}
+            style={lumoStyles.handleButton}
+            accessibilityRole="button"
+            accessibilityLabel={panelExpanded ? 'Collapse map panel' : 'Expand map panel'}
+            accessibilityState={{ expanded: panelExpanded }}
+          >
+            <View style={lumoStyles.panelHandle} />
+          </Pressable>
+        </View>
         <View style={lumoStyles.panelHeader}>
           <View>
             <Text style={lumoStyles.panelEyebrow}>YOUR CIRCLE</Text>
@@ -589,6 +624,12 @@ export default function MapScreenWeb() {
           )}
         </View>
 
+        {panelExpanded ? (
+          <ScrollView
+            style={lumoStyles.expandedPanelContent}
+            contentContainerStyle={lumoStyles.expandedPanelContentInner}
+            showsVerticalScrollIndicator={false}
+          >
         <View style={lumoStyles.webNote}>
           <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
           <Text style={lumoStyles.webNoteText}>On the web, live updates work while this page remains open. Use the mobile app for background sharing.</Text>
@@ -644,7 +685,9 @@ export default function MapScreenWeb() {
             {locationAccuracy !== null ? ` · Accuracy ±${Math.round(locationAccuracy)} m` : ''}
           </Text>
         </View>
-      </View>
+          </ScrollView>
+        ) : null}
+      </Animated.View>
 
       <Text style={lumoStyles.attribution}>© OpenStreetMap contributors</Text>
     </View>
@@ -672,8 +715,12 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, color: colors.text, fontSize: 13, paddingVertical: 0 },
   mapControls: { position: 'absolute', right: 15, top: '41%', zIndex: 500, gap: 8 },
   mapControlButton: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(18, 22, 28, 0.96)', borderWidth: 1, borderColor: colors.glassBorder },
-  bottomPanel: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 500, backgroundColor: 'rgba(12, 16, 22, 0.97)', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: colors.glassBorder, paddingHorizontal: 18, paddingTop: 9 },
-  panelHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#4A535E', marginBottom: 13 },
+  bottomPanel: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 500, backgroundColor: 'rgba(12, 16, 22, 0.98)', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: colors.glassBorder, paddingHorizontal: 18, paddingTop: 8, overflow: 'hidden' },
+  handleTouchArea: { height: 34, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginBottom: 5 },
+  handleButton: { width: 104, height: 34, alignItems: 'center', justifyContent: 'center' },
+  panelHandle: { alignSelf: 'center', width: 50, height: 5, borderRadius: 3, backgroundColor: '#778390' },
+  expandedPanelContent: { flex: 1, minHeight: 0 },
+  expandedPanelContentInner: { paddingBottom: 6 },
   panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   panelEyebrow: { color: colors.muted, fontSize: 9, letterSpacing: 1.8, fontWeight: '800' },
   panelTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 4 },

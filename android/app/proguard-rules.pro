@@ -12,3 +12,9 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# WorkManager creates its Room database through reflection in release builds.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+
+# WorkManager also creates input mergers through reflection.
+-keep class * extends androidx.work.InputMerger { <init>(); }

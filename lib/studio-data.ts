@@ -1,5 +1,61 @@
 import { supabase } from './supabase';
 
+export type CreatorContentEvent = {
+  viewer_id: string;
+  content_id: string;
+  content_type: 'post' | 'story';
+  occurred_at: string;
+  watch_ms: number;
+  content_duration_ms: number;
+  event_type: 'open' | 'complete';
+};
+
+export async function loadCreatorContentEvents(userId: string, since?: string | null): Promise<CreatorContentEvent[]> {
+  const pageSize = 1000;
+  const events: CreatorContentEvent[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from('creator_content_events')
+      .select('viewer_id, content_id, content_type, occurred_at, watch_ms, content_duration_ms, event_type')
+      .eq('owner_id', userId)
+      .eq('event_type', 'open')
+      .order('occurred_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (since) query = query.gte('occurred_at', since);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const page = (data ?? []) as CreatorContentEvent[];
+    events.push(...page);
+    if (page.length < pageSize) return events;
+  }
+}
+
+export async function loadCreatorFollowerDates(userId: string, since: string): Promise<{ created_at: string }[]> {
+  const pageSize = 1000;
+  const dates: { created_at: string }[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from('follows')
+      .select('follower_id, created_at')
+      .eq('following_id', userId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: true })
+      .order('follower_id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+
+    const page = (data ?? []).map((row) => ({ created_at: row.created_at }));
+    dates.push(...page);
+    if (page.length < pageSize) return dates;
+  }
+}
+
 export type StudioOverview = {
   posts: number;
   followers: number;
@@ -26,9 +82,8 @@ export async function loadStudioOverview(userId: string): Promise<StudioOverview
     followersResult,
     followingResult,
     likesResult,
-    postEventsResult,
-    storyEventsResult,
     settingsResult,
+    events,
   ] = await Promise.all([
     supabase.from('posts')
       .select('id, caption, media_type, created_at, image_url, video_url', { count: 'exact' })
@@ -46,28 +101,18 @@ export async function loadStudioOverview(userId: string): Promise<StudioOverview
     supabase.from('likes')
       .select('post_id, posts!inner(user_id)', { count: 'exact', head: true })
       .eq('posts.user_id', userId),
-    supabase.from('creator_content_events')
-      .select('viewer_id, watch_ms', { count: 'exact' })
-      .eq('owner_id', userId)
-      .eq('content_type', 'post'),
-    supabase.from('creator_content_events')
-      .select('viewer_id, watch_ms', { count: 'exact' })
-      .eq('owner_id', userId)
-      .eq('content_type', 'story'),
     supabase.from('creator_settings')
       .select('account_type, category')
       .eq('user_id', userId)
       .maybeSingle(),
+    loadCreatorContentEvents(userId),
   ]);
 
-  for (const result of [postsResult, followersResult, followingResult, likesResult, postEventsResult, storyEventsResult, settingsResult]) {
+  for (const result of [postsResult, followersResult, followingResult, likesResult, settingsResult]) {
     if (result.error) throw result.error;
   }
 
-  const eventViewers = new Set<string>([
-    ...(postEventsResult.data ?? []).map((event) => event.viewer_id),
-    ...(storyEventsResult.data ?? []).map((event) => event.viewer_id),
-  ]);
+  const eventViewers = new Set(events.map((event) => event.viewer_id));
 
   return {
     posts: postsResult.count ?? 0,
@@ -76,8 +121,8 @@ export async function loadStudioOverview(userId: string): Promise<StudioOverview
     accountType: (settingsResult.data?.account_type ?? 'personal') as 'personal' | 'creator' | 'business',
     category: settingsResult.data?.category ?? null,
     likes: likesResult.count ?? 0,
-    postOpens: postEventsResult.count ?? 0,
-    storyOpens: storyEventsResult.count ?? 0,
+    postOpens: events.filter((event) => event.content_type === 'post').length,
+    storyOpens: events.filter((event) => event.content_type === 'story').length,
     uniqueViewers: eventViewers.size,
     recentPosts: postsResult.data ?? [],
   };
@@ -86,7 +131,8 @@ export async function loadStudioOverview(userId: string): Promise<StudioOverview
 export function getPeriodStart(period: '7d' | '30d' | '90d' | 'all') {
   if (period === 'all') return null;
   const date = new Date();
-  date.setDate(date.getDate() - (period === '7d' ? 7 : period === '30d' ? 30 : 90));
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - (period === '7d' ? 6 : period === '30d' ? 29 : 89));
   return date.toISOString();
 }
 

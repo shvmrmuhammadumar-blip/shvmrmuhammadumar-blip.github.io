@@ -33,6 +33,8 @@ import ChatMediaViewer, {
 } from "../../components/ChatMediaViewer";
 import Avatar from "../../components/Avatar";
 import ChatMediaAttachment from "../../components/ChatMediaAttachment";
+import VoiceMessageBubble from "../../components/VoiceMessageBubble";
+import VoiceMessageRecorderButton from "../../components/VoiceMessageRecorderButton";
 import SharedPostCard from "../../components/SharedPostCard";
 import MessageActionSurface from "../../components/MessageActionSurface";
 import { Alert } from "../../lib/alert";
@@ -43,6 +45,7 @@ import {
   pickChatFile,
   pickChatMedia,
   uploadChatMedia,
+  VOICE_MESSAGE_MAX_BYTES,
   type PickedChatMedia,
 } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
@@ -1185,6 +1188,123 @@ export default function Chat() {
     text,
   ]);
 
+  const sendVoiceMessage = useCallback(
+    async (uri: string, durationMs: number) => {
+      if (
+        !me ||
+        !otherId ||
+        !UUID_PATTERN.test(otherId) ||
+        otherId === me ||
+        durationMs < 650
+      ) return;
+
+      if (!chatFeaturesAvailable) {
+        Alert.alert(
+          "Voice messages unavailable",
+          "The chat messaging upgrade is not enabled yet.",
+        );
+        return;
+      }
+
+      setSending(true);
+      setErrorText(null);
+      let uploadedPath: string | null = null;
+
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError) throw authError;
+        if (!user || user.id !== me) {
+          throw new Error("Your session is out of date. Sign in again.");
+        }
+
+        const sourceUri = uri.split(/[?#]/)[0];
+        const rawExtension = sourceUri.split(".").pop()?.toLowerCase() ?? "";
+        const extension = ["m4a", "3gp", "webm", "aac"].includes(rawExtension)
+          ? rawExtension
+          : "m4a";
+        const mimeType =
+          extension === "3gp"
+            ? "audio/3gpp"
+            : extension === "webm"
+              ? "audio/webm"
+              : extension === "aac"
+                ? "audio/aac"
+                : "audio/mp4";
+        const fileName = `voice-${Date.now()}.${extension}`;
+        const media: PickedChatMedia = {
+          uri,
+          type: "audio",
+          mimeType,
+          fileName,
+          fileSize: null,
+        };
+
+        uploadedPath = await uploadChatMedia(
+          media,
+          me,
+          VOICE_MESSAGE_MAX_BYTES,
+        );
+
+        const result = await supabase
+          .from("messages")
+          .insert({
+            sender_id: user.id,
+            receiver_id: otherId,
+            body: null,
+            message_type: "audio",
+            media_path: uploadedPath,
+            media_mime_type: mimeType,
+            ...(chatFileNamesAvailable ? { media_file_name: fileName } : {}),
+            reply_to: replyTo?.id ?? null,
+          })
+          .select(
+            chatFileNamesAvailable
+              ? MESSAGE_SELECT_WITH_FILE_NAME
+              : MESSAGE_SELECT,
+          )
+          .returns<Message[]>()
+          .single();
+
+        if (result.error) throw result.error;
+
+        const complete = await attachSignedUrl(result.data as Message);
+        setMessages((current) =>
+          current.some((item) => item.id === complete.id)
+            ? current
+            : [complete, ...current],
+        );
+        setReplyTo(null);
+        setShowStickerPanel(false);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+        Keyboard.dismiss();
+      } catch (error) {
+        console.error("LUMO VOICE SEND ERROR:", error);
+
+        if (uploadedPath) {
+          try {
+            await supabase.storage.from("chat-media").remove([uploadedPath]);
+          } catch (cleanupError) {
+            console.error("VOICE MEDIA CLEANUP ERROR:", cleanupError);
+          }
+        }
+
+        Alert.alert(
+          "Voice message not sent",
+          error instanceof Error
+            ? error.message
+            : "Check your connection and try again.",
+        );
+      } finally {
+        setSending(false);
+      }
+    },
+    [chatFeaturesAvailable, chatFileNamesAvailable, me, otherId, replyTo],
+  );
+
   const openMedia = useCallback((message: Message) => {
     if (!message.media_url) {
       Alert.alert(
@@ -1656,18 +1776,21 @@ export default function Chat() {
                               postId={item.forwarded_from_id!}
                             />
                           )}
-                          {hasMedia && (
+                          {hasMedia && type === "audio" ? (
+                            <VoiceMessageBubble
+                              key={item.id}
+                              uri={item.media_url}
+                              mine={mine}
+                              onDownload={() => void openAttachment(item)}
+                            />
+                          ) : hasMedia ? (
                             <ChatMediaAttachment
                               key={item.id}
-                              type={type as "image" | "video" | "audio" | "file"}
+                              type={type as "image" | "video" | "file"}
                               uri={item.media_url}
                               fileName={item.media_file_name}
                               mine={mine}
-                              fileAction={
-                                type === "audio"
-                                  ? "AUDIO · TAP TO DOWNLOAD"
-                                  : "FILE · TAP TO DOWNLOAD"
-                              }
+                              fileAction="FILE · TAP TO DOWNLOAD"
                               onLongPress={
                                 chatFeaturesAvailable
                                   ? () => {
@@ -1686,7 +1809,7 @@ export default function Chat() {
                                 }
                               }}
                             />
-                          )}                          {!isSharedPost && !!item.body?.trim() && (
+                          ) : null}                          {!isSharedPost && !!item.body?.trim() && (
                             <Text
                               style={[
                                 lumoStyles.messageText,
@@ -2090,6 +2213,12 @@ export default function Chat() {
                 </Pressable>
               </View>
 
+              {!text.trim() && !pendingMedia && !editingMessage && (
+                <VoiceMessageRecorderButton
+                  disabled={sending || !chatFeaturesAvailable}
+                  onSend={sendVoiceMessage}
+                />
+              )}
               <Pressable
                 onPress={() => void send()}
                 disabled={!canSend}

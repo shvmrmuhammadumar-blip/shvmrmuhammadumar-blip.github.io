@@ -20,6 +20,7 @@ helperModule._compile(compiled, helperPath);
 
 const {
   getAppContentWidth,
+  getProfileLayoutMetrics,
   getStudioBodyWidth,
   getSearchGridMetrics,
   getEventsLayoutMode,
@@ -41,9 +42,11 @@ test('studio body width accounts for its own desktop navigation at usable widths
   assert.equal(getStudioBodyWidth(280), 280);
   assert.equal(getStudioBodyWidth(900), 900);
   assert.equal(getStudioBodyWidth(959), 959);
-  assert.equal(getStudioBodyWidth(960), 742);
-  assert.equal(getStudioBodyWidth(1160), 942);
-  assert.equal(getStudioBodyWidth(1440), 1222);
+  assert.equal(getStudioBodyWidth(960), 960);
+  assert.equal(getStudioBodyWidth(1160), 1160);
+  assert.equal(getStudioBodyWidth(1259), 1259);
+  assert.equal(getStudioBodyWidth(1260), 1016);
+  assert.equal(getStudioBodyWidth(1440), 1196);
 });
 
 test('Search discovery cards reflow cleanly around the LUMO navigation shell', () => {
@@ -180,17 +183,18 @@ test('Studio sidebar breakpoint uses the space left after the LUMO sidebar', () 
   const cases = [
     { viewport: 899, insideTabs: true, appContent: 899, studioSidebar: false, body: 899 },
     { viewport: 900, insideTabs: true, appContent: 824, studioSidebar: false, body: 824 },
-    { viewport: 1039, insideTabs: true, appContent: 963, studioSidebar: true, body: 745 },
-    { viewport: 1279, insideTabs: true, appContent: 1203, studioSidebar: true, body: 985 },
-    { viewport: 1280, insideTabs: true, appContent: 1044, studioSidebar: true, body: 826 },
-    { viewport: 1366, insideTabs: true, appContent: 1130, studioSidebar: true, body: 912 },
-    { viewport: 1396, insideTabs: true, appContent: 1160, studioSidebar: true, body: 942 },
-    { viewport: 1280, insideTabs: false, appContent: 1280, studioSidebar: true, body: 1062 },
+    { viewport: 1039, insideTabs: true, appContent: 963, studioSidebar: false, body: 963 },
+    { viewport: 1279, insideTabs: true, appContent: 1203, studioSidebar: false, body: 1203 },
+    { viewport: 1280, insideTabs: true, appContent: 1044, studioSidebar: false, body: 1044 },
+    { viewport: 1366, insideTabs: true, appContent: 1130, studioSidebar: false, body: 1130 },
+    { viewport: 1396, insideTabs: true, appContent: 1160, studioSidebar: false, body: 1160 },
+    { viewport: 1280, insideTabs: false, appContent: 1280, studioSidebar: true, body: 1036 },
+    { viewport: 1520, insideTabs: true, appContent: 1284, studioSidebar: true, body: 1040 },
   ];
 
   for (const item of cases) {
     const contentWidth = getAppContentWidth(item.viewport, item.insideTabs);
-    const studioSidebar = contentWidth >= 960;
+    const studioSidebar = contentWidth >= 1260;
 
     assert.equal(contentWidth, item.appContent);
     assert.equal(studioSidebar, item.studioSidebar);
@@ -202,7 +206,7 @@ test('Studio sidebar breakpoint uses the space left after the LUMO sidebar', () 
     'utf8',
   );
 
-  assert.match(frameSource, /const desktop = appContentWidth >= 960;/);
+  assert.match(frameSource, /const desktop = appContentWidth >= 1260;/);
   assert.ok(frameSource.includes("href: '/creator-studio'"));
   assert.ok(frameSource.includes("router.push('/creator-studio')"));
 });
@@ -347,4 +351,234 @@ test('Home shell keeps enough width for its horizontal header between tablet bre
   assert.equal(getAppContentWidth(900, true), 824);
   assert.equal(getAppContentWidth(1279, true), 1203);
   assert.equal(getAppContentWidth(1280, true), 1044);
+});
+
+
+test('People search results can be dismissed without removing suggested creators', () => {
+  const searchSource = fs.readFileSync(
+    path.join(__dirname, '..', 'app', '(tabs)', 'search.tsx'),
+    'utf8',
+  );
+
+  assert.match(searchSource, /const removable = items === results && scope === 'People' && query\.trim\(\)\.length > 0/);
+  assert.match(searchSource, /removePersonButton/);
+  assert.match(searchSource, /setResults\(\(current\) => current\.filter\(\(result\) => result\.id !== item\.id\)\)/);
+  assert.match(searchSource, /Remove.*from search results/);
+});
+
+test('Native map panel supports swipe and tap expansion', () => {
+  const mapSource = fs.readFileSync(
+    path.join(__dirname, '..', 'components', 'MapScreen.native.tsx'),
+    'utf8',
+  );
+
+  assert.match(mapSource, /PanResponder\.create/);
+  assert.match(mapSource, /onMoveShouldSetPanResponderCapture/);
+  assert.match(mapSource, /Animated\.View style=\{\[lumoStyles\.bottomPanel/);
+  assert.match(mapSource, /setPanelExpanded\(\(current\) => !current\)/);
+  assert.match(mapSource, /Collapse map panel/);
+});
+
+test('Creator Studio dashboard switches to readable phone cards and a stacked layout', () => {
+  const dashboardSource = fs.readFileSync(
+    path.join(__dirname, '..', 'app', 'creator-studio', 'index.tsx'),
+    'utf8',
+  );
+  const frameSource = fs.readFileSync(
+    path.join(__dirname, '..', 'components', 'studio', 'StudioFrame.tsx'),
+    'utf8',
+  );
+
+  assert.match(dashboardSource, /const isMobile = contentWidth < 640/);
+  assert.match(dashboardSource, /metricCardNarrowMobile/);
+  assert.match(dashboardSource, /mobilePostStats/);
+  assert.match(dashboardSource, /tableHeaderMobile: \{ display: 'none' \}/);
+  assert.match(dashboardSource, /quickActionsMobile/);
+  assert.match(frameSource, /bodyContentCompact/);
+  assert.match(frameSource, /contentWidthCompact/);
+});
+
+
+test('Web map panel has the same draggable and expandable handle as native', () => {
+  const mapSource = fs.readFileSync(
+    path.join(__dirname, '..', 'components', 'MapScreen.web.tsx'),
+    'utf8',
+  );
+
+  assert.match(mapSource, /PanResponder\.create/);
+  assert.match(mapSource, /onMoveShouldSetPanResponderCapture/);
+  assert.match(mapSource, /Animated\.View style=\{\[lumoStyles\.bottomPanel/);
+  assert.match(mapSource, /expandedPanelContent/);
+  assert.match(mapSource, /setPanelExpanded\(\(current\) => !current\)/);
+});
+
+
+test('Creator Studio keeps small supporting text readable across every Studio page', () => {
+  const themeSource = fs.readFileSync(
+    path.join(__dirname, '..', 'lib', 'theme-styles.ts'),
+    'utf8',
+  );
+  const accountSource = fs.readFileSync(
+    path.join(__dirname, '..', 'app', 'creator-studio', 'account.tsx'),
+    'utf8',
+  );
+
+  assert.match(themeSource, /export function useStudioStyles/);
+  assert.match(themeSource, /typeof fontSize === 'number' && fontSize < 10/);
+  assert.match(accountSource, /useStudioStyles/);
+});
+
+test('Creator Studio open analytics exclude completion events and paginate full history', () => {
+  const dataSource = fs.readFileSync(
+    path.join(__dirname, '..', 'lib', 'studio-data.ts'),
+    'utf8',
+  );
+  const analyticsSource = fs.readFileSync(
+    path.join(__dirname, '..', 'app', 'creator-studio', 'analytics.tsx'),
+    'utf8',
+  );
+
+  assert.match(dataSource, /\.eq\('event_type', 'open'\)/);
+  assert.match(dataSource, /const pageSize = 1000/);
+  assert.match(dataSource, /\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(analyticsSource, /loadCreatorContentEvents\(userId, since\)/);
+});
+
+test('Creator Studio planner rejects invalid calendar dates and confirms plan deletion', () => {
+  const plannerSource = fs.readFileSync(
+    path.join(__dirname, '..', 'app', 'creator-studio', 'planner.tsx'),
+    'utf8',
+  );
+
+  assert.match(plannerSource, /const isRealDate = parsed\.getFullYear\(\) === year/);
+  assert.match(plannerSource, /parsed\.getMonth\(\) === month - 1/);
+  assert.match(plannerSource, /Alert\.alert\(/);
+  assert.match(plannerSource, /onPress: \(\) => void removePlan\(plan\)/);
+});
+
+
+test('Creator Studio desktop content keeps a measurable flex column beside the sidebar', () => {
+  const frameSource = fs.readFileSync(
+    path.join(__dirname, '..', 'components', 'studio', 'StudioFrame.tsx'),
+    'utf8',
+  );
+
+  assert.match(frameSource, /main: \{[^}]*width: '100%'[^}]*minWidth: 0/);
+  assert.match(frameSource, /sidebar: \{[^}]*flexBasis: 244[^}]*flexShrink: 0/);
+  assert.match(frameSource, /const desktop = appContentWidth >= 1260/);
+  assert.match(frameSource, /workspace: \{[^}]*flex: 1[^}]*minWidth: 0[^}]*minHeight: 0/);
+  assert.match(frameSource, /mobileNavShell/);
+  assert.match(frameSource, /body: \{[^}]*width: '100%'[^}]*minWidth: 0[^}]*minHeight: 0/);
+  assert.match(frameSource, /bodyContent: \{[^}]*width: '100%'[^}]*flexGrow: 1/);
+});
+
+
+test('Profile grid and opened posts fit the exact Lumo shell width at every breakpoint', () => {
+  const cases = [
+    { width: 320, height: 740, content: 320, desktop: false, grid: 288, tile: 140, wide: false, media: 280, mediaHeight: 308 },
+    { width: 320, height: 568, content: 320, desktop: false, grid: 288, tile: 140, wide: false, media: 280, mediaHeight: 305 },
+    { width: 390, height: 390, content: 390, desktop: false, grid: 358, tile: 175, wide: false, media: 350, mediaHeight: 184 },
+    { width: 390, height: 844, content: 390, desktop: false, grid: 358, tile: 175, wide: false, media: 350, mediaHeight: 385 },
+    { width: 899, height: 900, content: 899, desktop: false, grid: 867, tile: 429.5, wide: false, media: 720, mediaHeight: 530 },
+    { width: 900, height: 900, content: 824, desktop: false, grid: 792, tile: 392, wide: false, media: 720, mediaHeight: 530 },
+    { width: 901, height: 768, content: 825, desktop: false, grid: 793, tile: 392.5, wide: false, media: 720, mediaHeight: 441 },
+    { width: 900, height: 600, content: 824, desktop: false, grid: 792, tile: 392, wide: false, media: 720, mediaHeight: 326 },
+    { width: 960, height: 900, content: 884, desktop: false, grid: 852, tile: 422, wide: false, media: 720, mediaHeight: 530 },
+    { width: 1040, height: 900, content: 964, desktop: false, grid: 932, tile: 462, wide: false, media: 720, mediaHeight: 530 },
+    { width: 1055, height: 900, content: 979, desktop: false, grid: 947, tile: 469.5, wide: false, media: 720, mediaHeight: 530 },
+    { width: 1056, height: 900, content: 980, desktop: true, grid: 588, tile: 290, wide: true, media: '100%', mediaHeight: 558 },
+    { width: 1279, height: 900, content: 1203, desktop: true, grid: 811, tile: 401.5, wide: true, media: '100%', mediaHeight: 640 },
+    { width: 1280, height: 640, content: 1044, desktop: true, grid: 652, tile: 322, wide: false, media: 720, mediaHeight: 354 },
+    { width: 1280, height: 900, content: 1044, desktop: true, grid: 652, tile: 322, wide: true, media: '100%', mediaHeight: 601 },
+    { width: 1440, height: 960, content: 1204, desktop: true, grid: 812, tile: 402, wide: true, media: '100%', mediaHeight: 640 },
+  ];
+
+  for (const item of cases) {
+    const metrics = getProfileLayoutMetrics(item.width, item.height, true);
+    assert.equal(metrics.contentWidth, item.content);
+    assert.equal(metrics.desktopProfile, item.desktop);
+    assert.equal(metrics.gridWidth, item.grid);
+    assert.equal(metrics.tileWidth, item.tile);
+    assert.equal(metrics.widePost, item.wide);
+    assert.equal(metrics.postMediaWidth, item.media);
+    assert.equal(metrics.postMediaHeight, item.mediaHeight);
+
+    if (metrics.postMediaWidth !== '100%') {
+      assert.ok(metrics.postMediaWidth <= item.width - 32);
+      assert.ok(metrics.postMediaWidth <= 720);
+    }
+    assert.ok(metrics.tileWidth * 2 + 8 <= metrics.gridWidth + 0.01);
+  }
+});
+
+test('Profile post viewer switches layout using the real content width after the LUMO rail', () => {
+  const at900 = getProfileLayoutMetrics(900, 900, true);
+  const at1024 = getProfileLayoutMetrics(1024, 900, true);
+  const justBelowSplit = getProfileLayoutMetrics(1055, 900, true);
+  const split = getProfileLayoutMetrics(1056, 900, true);
+  const shortSplit = getProfileLayoutMetrics(1056, 699, true);
+
+  assert.equal(at900.contentWidth, 824);
+  assert.equal(at900.widePost, false);
+  assert.equal(at900.postMediaWidth, 720);
+  assert.equal(at1024.widePost, false);
+  assert.equal(justBelowSplit.contentWidth, 979);
+  assert.equal(justBelowSplit.widePost, false);
+  assert.equal(split.contentWidth, 980);
+  assert.equal(split.widePost, true);
+  assert.equal(split.postMediaWidth, '100%');
+  assert.equal(split.postMediaHeight, 558);
+  assert.equal(shortSplit.widePost, false);
+  assert.equal(shortSplit.postMediaWidth, 720);
+  assert.ok(split.postMediaHeight + 106 <= 900);
+});
+
+test('Profile post media frames cannot grow wider than their media viewport', () => {
+  const profileSource = fs.readFileSync(
+    path.join(__dirname, '..', 'components', 'ProfileView.tsx'),
+    'utf8',
+  );
+  assert.match(profileSource, /getProfileLayoutMetrics\(/);
+  assert.match(profileSource, /postMediaWidth/);
+  assert.match(profileSource, /postImageFrame: \{[\s\S]*?width: "100%"[\s\S]*?marginHorizontal: 0/);
+  assert.match(profileSource, /postMediaUnavailable: \{[\s\S]*?marginHorizontal: 0/);
+  assert.match(profileSource, /desktopPostMediaWrap: \{[\s\S]*?maxWidth: "100%"/);
+  assert.match(profileSource, /modalScreen: \{[\s\S]*?width: "100%"[\s\S]*?minWidth: 0[\s\S]*?overflow: "hidden"/);
+  assert.match(profileSource, /postViewerWideLayout: \{[\s\S]*?alignItems: "stretch"/);
+  assert.match(profileSource, /postViewerDetailsCard: \{[\s\S]*?width: "36%"[\s\S]*?minWidth: 320[\s\S]*?minHeight: 0/);
+  assert.match(profileSource, /postViewerCompactScroll: \{[\s\S]*?width: "100%"[\s\S]*?minWidth: 0[\s\S]*?minHeight: 0/);
+  assert.match(profileSource, /postViewerActionsGrid: \{[\s\S]*?flexWrap: "nowrap"/);
+  assert.match(profileSource, /postViewerActionCard: \{[\s\S]*?minHeight: 42[\s\S]*?height: 42/);
+  assert.match(profileSource, /postViewerSaveAction: \{[\s\S]*?marginLeft: "auto"/);
+  assert.doesNotMatch(profileSource, /postViewerCommentsButton|COMMENTS & REPLIES/);
+  assert.match(profileSource, /PanResponder\.create/);
+  assert.match(profileSource, /imageZoomResponder\.panHandlers/);
+  assert.match(profileSource, /Math\.min\(4,/);
+  assert.match(profileSource, /imagePressTimerRef\.current = setTimeout/);
+  assert.match(profileSource, /onPress=\{openImageViewer\}/);
+  assert.match(profileSource, /postViewerHeader: \{[\s\S]*?height: Platform\.OS === "android" \? 100 : 76/);
+  assert.match(profileSource, /selectedPost\?\.user_id === me/);
+  assert.match(profileSource, /accessibilityLabel="Delete post"/);
+  assert.match(profileSource, /requestDeleteSelectedPost/);
+  assert.match(profileSource, /\.eq\("user_id", me\)/);
+  assert.match(profileSource, /setPosts\(\(current\) => current\.filter\(\(item\) => item\.id !== selectedPost\.id\)\)/);
+  assert.match(profileSource, /usePreferences\(\)/);
+  assert.match(profileSource, /t\(locale, "Delete this post\?"\)/);
+  assert.match(profileSource, /t\(locale, "This post will be permanently deleted\. This action cannot be undone\."\)/);
+  assert.match(profileSource, /postViewerMediaCanvas: \{[\s\S]*?overflow: "hidden"/);
+  assert.match(profileSource, /postViewerCompactContent: \{[\s\S]*?maxWidth: 860/);
+  assert.doesNotMatch(profileSource, /postCommentsAction = \(/);
+  assert.doesNotMatch(profileSource, /height: postMediaHeight \+ 62/);
+
+  const giftViewerSource = fs.readFileSync(
+    path.join(__dirname, '..', 'lib', 'gift-viewer-html.ts'),
+    'utf8',
+  );
+  assert.match(giftViewerSource, /camera-controls/);
+  assert.match(giftViewerSource, /disable-zoom/);
+  assert.match(giftViewerSource, /disable-pan/);
+  assert.match(giftViewerSource, /min-camera-orbit="auto 75deg auto"/);
+  assert.match(giftViewerSource, /max-camera-orbit="auto 75deg auto"/);
+  assert.match(giftViewerSource, /touch-action: pan-y/);
+  assert.doesNotMatch(giftViewerSource, /auto-rotate|rotation-per-second/);
 });

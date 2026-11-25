@@ -9,12 +9,12 @@ import { formatStudioNumber, loadStudioOverview, type StudioOverview } from '../
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { useThemedStyles } from "../../lib/theme-styles";
+import { useStudioStyles } from "../../lib/theme-styles";
 
 type Profile = { username: string | null; full_name: string | null; bio: string | null; avatar_url: string | null };
 
 export default function StudioMediaKitScreen() {
-  const lumoStyles = useThemedStyles(styles);
+  const lumoStyles = useStudioStyles(styles);
   const { session } = useAuth();
   const userId = session?.user.id ?? '';
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -108,28 +108,28 @@ export default function StudioMediaKitScreen() {
 
 const styles = StyleSheet.create({
   headingBlock: { gap: 4 },
-  heading: { color: colors.text, fontSize: 25, fontWeight: '900', letterSpacing: -0.8 },
-  subheading: { color: colors.muted, fontSize: 11 },
+  heading: { color: colors.text, fontSize: 27, fontWeight: '900', letterSpacing: -0.8 },
+  subheading: { color: colors.muted, fontSize: 12 },
   error: { color: colors.danger, fontSize: 11 },
   kitCard: { padding: 22, gap: 18, borderRadius: 22 },
-  kitHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  kitHeader: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
   avatar: { width: 58, height: 58, borderRadius: 20, backgroundColor: colors.surfaceRaised },
   avatarFallback: { width: 58, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
-  identity: { flex: 1, gap: 4 },
+  identity: { flex: 1, minWidth: 0, gap: 4 },
   name: { color: colors.text, fontSize: 16, fontWeight: '900' },
   handle: { color: colors.muted, fontSize: 11 },
-  category: { color: colors.accentStrong, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  category: { color: colors.accentStrong, fontSize: 10.5, fontWeight: '900', letterSpacing: 1.1 },
   bio: { color: colors.text, fontSize: 12, lineHeight: 19 },
   bioEmpty: { color: colors.dim, fontSize: 11, fontStyle: 'italic' },
   stats: { flexDirection: 'row', alignItems: 'center', paddingVertical: 17, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border },
   stat: { flex: 1, alignItems: 'center', gap: 5 },
   statValue: { color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.7 },
-  statLabel: { color: colors.dim, fontSize: 8, fontWeight: '900', letterSpacing: 0.9 },
+  statLabel: { color: colors.dim, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.9 },
   statDivider: { width: 1, height: 34, backgroundColor: colors.border },
-  kitFooter: { color: colors.dim, fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },
+  kitFooter: { color: colors.dim, fontSize: 10.5, fontWeight: '900', letterSpacing: 1.5 },
   shareButton: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, backgroundColor: colors.accent },
   shareText: { color: colors.bg, fontSize: 12, fontWeight: '900' },
   profileButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   profileButtonText: { color: colors.accentStrong, fontSize: 11, fontWeight: '800' },
-  note: { color: colors.dim, fontSize: 9, lineHeight: 14 },
+  note: { color: colors.dim, fontSize: 10.5, lineHeight: 14 },
 });
