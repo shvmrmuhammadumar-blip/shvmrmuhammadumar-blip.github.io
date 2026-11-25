@@ -1,0 +1,1 @@
+__d(function(g,r,i,a,m,_e,d){"use strict";Object.defineProperty(_e,'__esModule',{value:!0}),Object.defineProperty(_e,"default",{enumerable:!0,get:function(){return l}}),r(d[0]);var e,u=r(d[1]),t=(e=u)&&e.__esModule?e:{default:e},n=r(d[2]),s=r(d[3]);function l(){const{session:e}=(0,n.useAuth)();return e?(0,s.jsx)(t.default,{userId:e.user.id}):null}},769,[12,865,843,6]);

@@ -1,0 +1,1 @@
+__d(function(g,r,i,a,m,_e,d){"use strict";Object.defineProperty(_e,'__esModule',{value:!0}),Object.defineProperty(_e,"default",{enumerable:!0,get:function(){return o}}),r(d[0]);var e,t=r(d[1]),u=r(d[2]),n=(e=u)&&e.__esModule?e:{default:e},c=r(d[3]);function o(){const{id:e}=(0,t.useLocalSearchParams)();return(0,c.jsx)(n.default,{userId:e})}},836,[12,838,865,6]);
